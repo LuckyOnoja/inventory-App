@@ -69,7 +69,7 @@ export default function ProductsScreen({ navigation }: any) {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/products`);
-      setProducts(response.data);
+      setProducts(response.data.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       Alert.alert('Error', 'Failed to load products');

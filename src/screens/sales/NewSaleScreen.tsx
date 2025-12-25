@@ -79,7 +79,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/products`);
-      const activeProducts = response.data.filter((p: Product) => p.currentStock > 0);
+      const activeProducts = response.data.data.filter((p: Product) => p.currentStock > 0);
       setProducts(activeProducts);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -233,7 +233,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
       
       Alert.alert(
         'Success',
-        `Sale #${response.data.saleNumber} completed successfully!`,
+        `Sale #${response.data.data.saleNumber} completed successfully!`,
         [
           {
             text: 'Print Receipt',

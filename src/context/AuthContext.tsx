@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
-import axios from 'axios';
-import config from '../config';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
+import axios from "axios";
+import config from "../config";
 
 const API_URL = config.API_URL;
 
@@ -10,7 +16,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'SALES_AGENT' | 'SUPERVISOR';
+  role: "SUPER_ADMIN" | "SALES_AGENT" | "SUPERVISOR";
   business?: {
     id: string;
     name: string;
@@ -42,12 +48,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,17 +66,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('token');
-      const storedUser = await AsyncStorage.getItem('user');
-      
+      const storedToken = await AsyncStorage.getItem("token");
+      const storedUser = await AsyncStorage.getItem("user");
+
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         // Set default axios header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${storedToken}`;
       }
     } catch (error) {
-      console.error('Failed to load stored auth:', error);
+      console.error("Failed to load stored auth:", error);
     } finally {
       setIsLoading(false);
     }
@@ -81,73 +91,76 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         password,
       });
 
-      const { user: userData, token: authToken } = response.data;
-      
+      // FIX: Access the nested data property
+      const { user: userData, token: authToken } = response.data.data;
+
       // Store token and user
-      await AsyncStorage.setItem('token', authToken);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      
+      await AsyncStorage.setItem("token", authToken);
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+
       // Set axios default header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-      
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+
       setUser(userData);
       setToken(authToken);
     } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error.response?.data?.error || 'Login failed. Please try again.';
+      console.error("Login error:", error);
+      const errorMessage =
+        error.response?.data?.error || "Login failed. Please try again.";
       throw new Error(errorMessage);
     }
   };
-const register = async (data: RegisterData) => {
-  try {
-    console.log('📤 Sending registration request:', data);
-    const response = await axios.post(`${API_URL}/auth/register`, data);
-    console.log('✅ Registration response:', response.data);
-    
-    const { user: userData, token: authToken } = response.data;
-    
-    // Store token and user
-    await AsyncStorage.setItem('token', authToken);
-    await AsyncStorage.setItem('user', JSON.stringify(userData));
-    
-    // Set axios default header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-    
-    setUser(userData);
-    setToken(authToken);
-  } catch (error: any) {
-    console.error('❌ Registration error details:', {
-      message: error.message,
-      response: error.response,
-      data: error.response?.data,
-      status: error.response?.status,
-      headers: error.response?.headers,
-    });
-    
-    // Try multiple error message locations
-    const errorMessage = 
-      error.response?.data?.error || 
-      error.response?.data?.message || 
-      error.message || 
-      'Registration failed. Please try again.';
-    
-    throw new Error(errorMessage);
-  }
-};
+  const register = async (data: RegisterData) => {
+    try {
+      console.log("📤 Sending registration request:", data);
+      const response = await axios.post(`${API_URL}/auth/register`, data);
+      console.log("✅ Registration response:", response.data);
+
+      // FIX: Access the nested data property
+      const { user: userData, token: authToken } = response.data.data;
+
+      // Store token and user
+      await AsyncStorage.setItem("token", authToken);
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+
+      // Set axios default header
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authToken}`;
+
+      setUser(userData);
+      setToken(authToken);
+    } catch (error: any) {
+      console.error("❌ Registration error details:", {
+        message: error.message,
+        response: error.response,
+        data: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+      });
+
+      // Try multiple error message locations
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        "Registration failed. Please try again.";
+
+      throw new Error(errorMessage);
+    }
+  };
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
-      
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+
       // Remove axios header
-      delete axios.defaults.headers.common['Authorization'];
-      
+      delete axios.defaults.headers.common["Authorization"];
+
       setUser(null);
       setToken(null);
     } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to logout');
+      console.error("Logout error:", error);
+      Alert.alert("Error", "Failed to logout");
     }
   };
 
@@ -155,7 +168,7 @@ const register = async (data: RegisterData) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      AsyncStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 

@@ -72,7 +72,7 @@ export default function EditProductScreen({ route, navigation }: any) {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/products/${productId}`);
-      const product = response.data;
+      const product = response.data.data;
       
       setFormData({
         name: product.name,

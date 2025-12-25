@@ -64,7 +64,7 @@ export default function SalesScreen({ navigation }: any) {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/sales`);
-      setSales(response.data);
+      setSales(response.data.data);
     } catch (error) {
       console.error('Failed to fetch sales:', error);
     } finally {
