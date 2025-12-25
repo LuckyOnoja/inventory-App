@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
+  Alert,
 } from "react-native";
 
 // Auth Screens
@@ -98,10 +99,26 @@ function SalesAgentTabs() {
         },
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Sales" component={SalesScreen} />
-      <Tab.Screen name="Products" component={ProductsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Sales" 
+        component={SalesScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Products" 
+        component={ProductsScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
     </Tab.Navigator>
   );
 }
@@ -111,10 +128,12 @@ const SideMenu = ({
   visible,
   onClose,
   user,
+  onLogout,
 }: {
   visible: boolean;
   onClose: () => void;
   user: any;
+  onLogout: () => Promise<void>;
 }) => {
   const menuItems = [
     { name: "Dashboard", icon: "grid-outline", screen: "Dashboard" },
@@ -137,6 +156,31 @@ const SideMenu = ({
       globalNavigationRef.navigate(screen);
       onClose();
     }
+  };
+
+  const handleLogout = async () => {
+    onClose();
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await onLogout();
+            } catch (error) {
+              Alert.alert("Error", "Failed to logout");
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -214,7 +258,10 @@ const SideMenu = ({
               </View>
 
               {/* Logout Button */}
-              <TouchableOpacity style={styles.logoutButton}>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={handleLogout}
+              >
                 <Ionicons
                   name="log-out-outline"
                   size={22}
@@ -246,7 +293,9 @@ const SuperAdminHeader = ({
         <Ionicons name="menu" size={24} color={colors.text} />
       </TouchableOpacity>
       <View style={headerStyles.titleContainer}>
-        <Text style={headerStyles.title}>{route?.name || "Dashboard"}</Text>
+        <Text style={headerStyles.title}>
+          {route?.params?.title || route?.name || "Dashboard"}
+        </Text>
         <Text style={headerStyles.subtitle}>
           {user?.business?.name || "Business"}
         </Text>
@@ -266,7 +315,7 @@ const SuperAdminHeader = ({
 
 // Super Admin Stack Navigator
 function SuperAdminNavigator() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
@@ -282,27 +331,73 @@ function SuperAdminNavigator() {
           ),
         })}
       >
-        <SuperAdminStack.Screen name="Dashboard" component={DashboardScreen} />
-        <SuperAdminStack.Screen name="Products" component={ProductsScreen} />
-        <SuperAdminStack.Screen name="Sales" component={SalesScreen} />
-        <SuperAdminStack.Screen name="Inventory" component={InventoryScreen} />
-        <SuperAdminStack.Screen name="Staff" component={StaffScreen} />
-        <SuperAdminStack.Screen name="AddStaff" component={AddStaffScreen} />
-        <Stack.Screen name="EditStaff" component={EditStaffScreen} />
-        <Stack.Screen name="StaffSales" component={StaffSalesScreen} />
-        <SuperAdminStack.Screen name="Cameras" component={CameraScreen} />
-        <SuperAdminStack.Screen name="Reports" component={ReportsScreen} />
-        <SuperAdminStack.Screen
-          name="Notifications"
-          component={NotificationsScreen}
+        <SuperAdminStack.Screen 
+          name="Dashboard" 
+          component={DashboardScreen}
+          options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen name="Settings" component={SettingsScreen} />
+        <SuperAdminStack.Screen 
+          name="Products" 
+          component={ProductsScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Sales" 
+          component={SalesScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Inventory" 
+          component={InventoryScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Staff" 
+          component={StaffScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="AddStaff" 
+          component={AddStaffScreen}
+          options={{ headerShown: false }}
+        />
+        <SuperAdminStack.Screen 
+          name="EditStaff" 
+          component={EditStaffScreen}
+          options={{ headerShown: false }}
+        />
+        <SuperAdminStack.Screen 
+          name="StaffSales" 
+          component={StaffSalesScreen}
+          options={{ headerShown: false }}
+        />
+        <SuperAdminStack.Screen 
+          name="Cameras" 
+          component={CameraScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Reports" 
+          component={ReportsScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="Settings" 
+          component={SettingsScreen}
+          options={{ headerShown: true }}
+        />
       </SuperAdminStack.Navigator>
 
       <SideMenu
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         user={user}
+        onLogout={logout}
       />
     </>
   );
@@ -310,7 +405,7 @@ function SuperAdminNavigator() {
 
 // Main App Navigator
 export default function AppNavigator() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const navigationRef = useRef<any>(null);
 
   React.useEffect(() => {
@@ -320,7 +415,11 @@ export default function AppNavigator() {
   }, []);
 
   if (isLoading) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   return (
@@ -350,7 +449,10 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Login"
               component={LoginScreen}
-              options={{ headerShown: false }}
+              options={{ 
+                headerShown: false,
+                animationTypeForReplace: user ? "push" : "pop"
+              }}
             />
             <Stack.Screen
               name="Register"
@@ -368,14 +470,20 @@ export default function AppNavigator() {
           <Stack.Screen
             name="SalesAgentMain"
             component={SalesAgentTabs}
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              gestureEnabled: false
+            }}
           />
         ) : (
           // Super Admin Flow
           <Stack.Screen
             name="SuperAdminMain"
             component={SuperAdminNavigator}
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              gestureEnabled: false
+            }}
           />
         )}
 
