@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
-import { View, TouchableOpacity, Text, StyleSheet, Modal } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Modal, ScrollView } from 'react-native';
 
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -31,6 +31,10 @@ import ReportsScreen from '../screens/reports/ReportsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const SuperAdminStack = createStackNavigator();
+
+// Global reference to navigation
+let globalNavigationRef: any = null;
 
 // Tab Navigator for Sales Agents
 function SalesAgentTabs() {
@@ -96,12 +100,10 @@ function SalesAgentTabs() {
 const SideMenu = ({ 
   visible, 
   onClose, 
-  navigation,
   user 
 }: { 
   visible: boolean; 
   onClose: () => void; 
-  navigation: any;
   user: any;
 }) => {
   const menuItems = [
@@ -117,8 +119,10 @@ const SideMenu = ({
   ];
 
   const navigateTo = (screen: string) => {
-    navigation.navigate(screen);
-    onClose();
+    if (globalNavigationRef) {
+      globalNavigationRef.navigate(screen);
+      onClose();
+    }
   };
 
   return (
@@ -139,60 +143,62 @@ const SideMenu = ({
             onPress={() => {}}
             style={styles.sideMenuContent}
           >
-            {/* User Profile Section */}
-            <View style={styles.profileSection}>
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </Text>
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.userName}>{user?.name || 'User'}</Text>
-                  <Text style={styles.userEmail}>{user?.email || 'email@example.com'}</Text>
-                  <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>
-                      {user?.role?.replace('_', ' ') || 'User'}
+            <ScrollView>
+              {/* User Profile Section */}
+              <View style={styles.profileSection}>
+                <View style={styles.avatarContainer}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
                     </Text>
                   </View>
+                  <View style={styles.profileInfo}>
+                    <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                    <Text style={styles.userEmail}>{user?.email || 'email@example.com'}</Text>
+                    <View style={styles.roleBadge}>
+                      <Text style={styles.roleText}>
+                        {user?.role?.replace('_', ' ') || 'User'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.businessInfo}>
+                  <Ionicons name="business-outline" size={16} color={colors.textSecondary} />
+                  <Text style={styles.businessName}>
+                    {user?.business?.name || 'Business Name'}
+                  </Text>
                 </View>
               </View>
-              <View style={styles.businessInfo}>
-                <Ionicons name="business-outline" size={16} color={colors.textSecondary} />
-                <Text style={styles.businessName}>
-                  {user?.business?.name || 'Business Name'}
-                </Text>
+
+              {/* Menu Items */}
+              <View style={styles.menuItems}>
+                {menuItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.name}
+                    style={styles.menuItem}
+                    onPress={() => navigateTo(item.screen)}
+                  >
+                    <Ionicons 
+                      name={item.icon as any} 
+                      size={22} 
+                      color={colors.textSecondary} 
+                    />
+                    <Text style={styles.menuItemText}>{item.name}</Text>
+                    {item.name === 'Notifications' && (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>3</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
               </View>
-            </View>
 
-            {/* Menu Items */}
-            <View style={styles.menuItems}>
-              {menuItems.map((item) => (
-                <TouchableOpacity
-                  key={item.name}
-                  style={styles.menuItem}
-                  onPress={() => navigateTo(item.screen)}
-                >
-                  <Ionicons 
-                    name={item.icon as any} 
-                    size={22} 
-                    color={colors.textSecondary} 
-                  />
-                  <Text style={styles.menuItemText}>{item.name}</Text>
-                  {item.name === 'Notifications' && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>3</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Logout Button */}
-            <TouchableOpacity style={styles.logoutButton}>
-              <Ionicons name="log-out-outline" size={22} color={colors.error} />
-              <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
+              {/* Logout Button */}
+              <TouchableOpacity style={styles.logoutButton}>
+                <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -202,11 +208,11 @@ const SideMenu = ({
 
 // Header with Menu Button for Super Admin
 const SuperAdminHeader = ({ 
-  navigation, 
+  route,
   user,
   onMenuPress 
 }: { 
-  navigation: any; 
+  route: any;
   user: any;
   onMenuPress: () => void;
 }) => {
@@ -217,13 +223,16 @@ const SuperAdminHeader = ({
       </TouchableOpacity>
       <View style={headerStyles.titleContainer}>
         <Text style={headerStyles.title}>
-          {navigation.getState()?.routes?.[0]?.name || 'Dashboard'}
+          {route?.name || 'Dashboard'}
         </Text>
         <Text style={headerStyles.subtitle}>
           {user?.business?.name || 'Business'}
         </Text>
       </View>
-      <TouchableOpacity style={headerStyles.notificationButton}>
+      <TouchableOpacity 
+        style={headerStyles.notificationButton}
+        onPress={() => globalNavigationRef?.navigate('Notifications')}
+      >
         <Ionicons name="notifications-outline" size={22} color={colors.text} />
         <View style={headerStyles.notificationBadge}>
           <Text style={headerStyles.notificationBadgeText}>3</Text>
@@ -233,39 +242,38 @@ const SuperAdminHeader = ({
   );
 };
 
-// Main Stack for Super Admin
-function SuperAdminStack({ navigation }: { navigation: any }) {
+// Super Admin Stack Navigator
+function SuperAdminNavigator() {
   const { user } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
     <>
-      <Stack.Navigator
-        screenOptions={{
-          header: ({ navigation: nav, route }) => (
+      <SuperAdminStack.Navigator
+        screenOptions={({ route }) => ({
+          header: () => (
             <SuperAdminHeader 
-              navigation={nav} 
+              route={route}
               user={user}
               onMenuPress={() => setMenuVisible(true)}
             />
           ),
-        }}
+        })}
       >
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
-        <Stack.Screen name="Products" component={ProductsScreen} />
-        <Stack.Screen name="Sales" component={SalesScreen} />
-        <Stack.Screen name="Inventory" component={InventoryScreen} />
-        <Stack.Screen name="Staff" component={StaffScreen} />
-        <Stack.Screen name="Cameras" component={CameraScreen} />
-        <Stack.Screen name="Reports" component={ReportsScreen} />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
-      </Stack.Navigator>
+        <SuperAdminStack.Screen name="Dashboard" component={DashboardScreen} />
+        <SuperAdminStack.Screen name="Products" component={ProductsScreen} />
+        <SuperAdminStack.Screen name="Sales" component={SalesScreen} />
+        <SuperAdminStack.Screen name="Inventory" component={InventoryScreen} />
+        <SuperAdminStack.Screen name="Staff" component={StaffScreen} />
+        <SuperAdminStack.Screen name="Cameras" component={CameraScreen} />
+        <SuperAdminStack.Screen name="Reports" component={ReportsScreen} />
+        <SuperAdminStack.Screen name="Notifications" component={NotificationsScreen} />
+        <SuperAdminStack.Screen name="Settings" component={SettingsScreen} />
+      </SuperAdminStack.Navigator>
 
       <SideMenu
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
-        navigation={navigation}
         user={user}
       />
     </>
@@ -275,13 +283,25 @@ function SuperAdminStack({ navigation }: { navigation: any }) {
 // Main App Navigator
 export default function AppNavigator() {
   const { user, isLoading } = useAuth();
+  const navigationRef = useRef<any>(null);
+
+  React.useEffect(() => {
+    if (navigationRef.current) {
+      globalNavigationRef = navigationRef.current;
+    }
+  }, []);
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer 
+      ref={navigationRef}
+      onReady={() => {
+        globalNavigationRef = navigationRef.current;
+      }}
+    >
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -326,7 +346,7 @@ export default function AppNavigator() {
           // Super Admin Flow
           <Stack.Screen 
             name="SuperAdminMain" 
-            component={SuperAdminStack}
+            component={SuperAdminNavigator}
             options={{ headerShown: false }}
           />
         )}
@@ -445,7 +465,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuItems: {
-    flex: 1,
     paddingTop: 10,
   },
   menuItem: {
@@ -482,6 +501,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.surfaceLight,
+    marginTop: 10,
   },
   logoutText: {
     fontSize: 16,
