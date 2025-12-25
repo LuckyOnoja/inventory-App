@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api'; // Change to your backend URL
+const API_URL = 'http://172.20.10.2:5000/api';
+
 
 interface User {
   id: string;
@@ -97,28 +98,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error(errorMessage);
     }
   };
-
-  const register = async (data: RegisterData) => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/register`, data);
-      
-      const { user: userData, token: authToken } = response.data;
-      
-      // Store token and user
-      await AsyncStorage.setItem('token', authToken);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      
-      // Set axios default header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
-      
-      setUser(userData);
-      setToken(authToken);
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.error || 'Registration failed. Please try again.';
-      throw new Error(errorMessage);
-    }
-  };
+const register = async (data: RegisterData) => {
+  try {
+    console.log('📤 Sending registration request:', data);
+    const response = await axios.post(`${API_URL}/auth/register`, data);
+    console.log('✅ Registration response:', response.data);
+    
+    const { user: userData, token: authToken } = response.data;
+    
+    // Store token and user
+    await AsyncStorage.setItem('token', authToken);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    
+    // Set axios default header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    
+    setUser(userData);
+    setToken(authToken);
+  } catch (error: any) {
+    console.error('❌ Registration error details:', {
+      message: error.message,
+      response: error.response,
+      data: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers,
+    });
+    
+    // Try multiple error message locations
+    const errorMessage = 
+      error.response?.data?.error || 
+      error.response?.data?.message || 
+      error.message || 
+      'Registration failed. Please try again.';
+    
+    throw new Error(errorMessage);
+  }
+};
 
   const logout = async () => {
     try {

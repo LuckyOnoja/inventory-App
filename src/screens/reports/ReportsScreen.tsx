@@ -17,7 +17,7 @@ import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import moment from 'moment';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://172.20.10.2:5000/api';
 const { width: screenWidth } = Dimensions.get('window');
 
 interface ReportData {
