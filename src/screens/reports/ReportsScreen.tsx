@@ -16,8 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import axios from 'axios';
 import moment from 'moment';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
+const API_URL = config.API_URL;
 const { width: screenWidth } = Dimensions.get('window');
 
 interface ReportData {

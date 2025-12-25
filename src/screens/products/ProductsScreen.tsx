@@ -17,8 +17,9 @@ import ProductCard from '../../components/products/ProductCard';
 import FilterModal from '../../components/products/FilterModal';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
+const API_URL = config.API_URL;
 
 interface Product {
   id: string;

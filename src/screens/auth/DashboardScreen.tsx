@@ -18,8 +18,9 @@ import LowStockAlert from '../../components/dashboard/LowStockAlert';
 import QuickActions from '../../components/dashboard/QuickActions';
 import { LineChart } from 'react-native-chart-kit';
 import axios from 'axios';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
+const API_URL = config.API_URL;
 
 interface DashboardStats {
   todaySales: number;

@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 import axios from 'axios';
+import config from '../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
-
+const API_URL = config.API_URL;
 
 interface User {
   id: string;

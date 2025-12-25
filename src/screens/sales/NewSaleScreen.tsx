@@ -16,8 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
+const API_URL = config.API_URL;
 
 interface Product {
   id: string;

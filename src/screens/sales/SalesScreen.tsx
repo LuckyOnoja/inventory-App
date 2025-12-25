@@ -15,8 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SaleCard from '../../components/sales/SaleCard';
 import SalesFilterModal from '../../components/sales/SalesFilterModal';
 import axios from 'axios';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.2:5000/api';
+const API_URL = config.API_URL;
 
 interface Sale {
   id: string;
