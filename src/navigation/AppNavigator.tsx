@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
+import { View, TouchableOpacity, Text, StyleSheet, Modal } from 'react-native';
 
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -29,12 +29,8 @@ import StaffScreen from '../screens/staff/StaffScreen';
 import CameraScreen from '../screens/camera/CameraScreen';
 import ReportsScreen from '../screens/reports/ReportsScreen';
 
-// Components
-import CustomDrawer from '../components/navigation/CustomDrawer';
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-const Drawer = createDrawerNavigator();
 
 // Tab Navigator for Sales Agents
 function SalesAgentTabs() {
@@ -96,141 +92,185 @@ function SalesAgentTabs() {
   );
 }
 
-// Drawer Navigator for Super Admin
-function SuperAdminDrawer() {
+// Custom Side Menu Component
+const SideMenu = ({ 
+  visible, 
+  onClose, 
+  navigation,
+  user 
+}: { 
+  visible: boolean; 
+  onClose: () => void; 
+  navigation: any;
+  user: any;
+}) => {
+  const menuItems = [
+    { name: 'Dashboard', icon: 'grid-outline', screen: 'Dashboard' },
+    { name: 'Products', icon: 'cube-outline', screen: 'Products' },
+    { name: 'Sales', icon: 'cart-outline', screen: 'Sales' },
+    { name: 'Inventory', icon: 'clipboard-outline', screen: 'Inventory' },
+    { name: 'Staff', icon: 'people-outline', screen: 'Staff' },
+    { name: 'Cameras', icon: 'camera-outline', screen: 'Cameras' },
+    { name: 'Reports', icon: 'document-text-outline', screen: 'Reports' },
+    { name: 'Notifications', icon: 'notifications-outline', screen: 'Notifications' },
+    { name: 'Settings', icon: 'settings-outline', screen: 'Settings' },
+  ];
+
+  const navigateTo = (screen: string) => {
+    navigation.navigate(screen);
+    onClose();
+  };
+
   return (
-    <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawer {...props} />}
-      screenOptions={{
-        drawerStyle: {
-          backgroundColor: colors.surface,
-          width: 280,
-        },
-        drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: colors.textSecondary,
-        drawerLabelStyle: {
-          marginLeft: -20,
-          fontSize: 14,
-          fontWeight: '500',
-        },
-        headerStyle: {
-          backgroundColor: colors.surface,
-          shadowColor: 'transparent',
-          elevation: 0,
-        },
-        headerTintColor: colors.text,
-        headerTitleStyle: {
-          fontWeight: '600',
-          fontSize: 18,
-        },
-      }}
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
     >
-      <Drawer.Screen 
-        name="Dashboard" 
-        component={DashboardScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <View style={styles.sideMenuContainer}>
+          <TouchableOpacity 
+            activeOpacity={1} 
+            onPress={() => {}}
+            style={styles.sideMenuContent}
+          >
+            {/* User Profile Section */}
+            <View style={styles.profileSection}>
+              <View style={styles.avatarContainer}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </Text>
+                </View>
+                <View style={styles.profileInfo}>
+                  <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                  <Text style={styles.userEmail}>{user?.email || 'email@example.com'}</Text>
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleText}>
+                      {user?.role?.replace('_', ' ') || 'User'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.businessInfo}>
+                <Ionicons name="business-outline" size={16} color={colors.textSecondary} />
+                <Text style={styles.businessName}>
+                  {user?.business?.name || 'Business Name'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Menu Items */}
+            <View style={styles.menuItems}>
+              {menuItems.map((item) => (
+                <TouchableOpacity
+                  key={item.name}
+                  style={styles.menuItem}
+                  onPress={() => navigateTo(item.screen)}
+                >
+                  <Ionicons 
+                    name={item.icon as any} 
+                    size={22} 
+                    color={colors.textSecondary} 
+                  />
+                  <Text style={styles.menuItemText}>{item.name}</Text>
+                  {item.name === 'Notifications' && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>3</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Logout Button */}
+            <TouchableOpacity style={styles.logoutButton}>
+              <Ionicons name="log-out-outline" size={22} color={colors.error} />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
+
+// Header with Menu Button for Super Admin
+const SuperAdminHeader = ({ 
+  navigation, 
+  user,
+  onMenuPress 
+}: { 
+  navigation: any; 
+  user: any;
+  onMenuPress: () => void;
+}) => {
+  return (
+    <View style={headerStyles.container}>
+      <TouchableOpacity onPress={onMenuPress} style={headerStyles.menuButton}>
+        <Ionicons name="menu" size={24} color={colors.text} />
+      </TouchableOpacity>
+      <View style={headerStyles.titleContainer}>
+        <Text style={headerStyles.title}>
+          {navigation.getState()?.routes?.[0]?.name || 'Dashboard'}
+        </Text>
+        <Text style={headerStyles.subtitle}>
+          {user?.business?.name || 'Business'}
+        </Text>
+      </View>
+      <TouchableOpacity style={headerStyles.notificationButton}>
+        <Ionicons name="notifications-outline" size={22} color={colors.text} />
+        <View style={headerStyles.notificationBadge}>
+          <Text style={headerStyles.notificationBadgeText}>3</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// Main Stack for Super Admin
+function SuperAdminStack({ navigation }: { navigation: any }) {
+  const { user } = useAuth();
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  return (
+    <>
+      <Stack.Navigator
+        screenOptions={{
+          header: ({ navigation: nav, route }) => (
+            <SuperAdminHeader 
+              navigation={nav} 
+              user={user}
+              onMenuPress={() => setMenuVisible(true)}
+            />
           ),
         }}
+      >
+        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        <Stack.Screen name="Products" component={ProductsScreen} />
+        <Stack.Screen name="Sales" component={SalesScreen} />
+        <Stack.Screen name="Inventory" component={InventoryScreen} />
+        <Stack.Screen name="Staff" component={StaffScreen} />
+        <Stack.Screen name="Cameras" component={CameraScreen} />
+        <Stack.Screen name="Reports" component={ReportsScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+      </Stack.Navigator>
+
+      <SideMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        navigation={navigation}
+        user={user}
       />
-      <Drawer.Screen 
-        name="Products" 
-        component={ProductsScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Sales" 
-        component={SalesScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="cart-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Inventory" 
-        component={InventoryScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="clipboard-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Staff" 
-        component={StaffScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Cameras" 
-        component={CameraScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="camera-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Reports" 
-        component={ReportsScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="document-text-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen 
-        name="Notifications" 
-        component={NotificationsScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
-          ),
-          drawerBadge: () => <Badge count={3} />,
-        }}
-      />
-      <Drawer.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Drawer.Navigator>
+    </>
   );
 }
-
-// Badge Component
-const Badge: React.FC<{ count: number }> = ({ count }) => (
-  <div style={{
-    backgroundColor: colors.error,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-  }}>
-    <span style={{
-      color: colors.white,
-      fontSize: 12,
-      fontWeight: 'bold',
-    }}>
-      {count}
-    </span>
-  </div>
-);
 
 // Main App Navigator
 export default function AppNavigator() {
@@ -286,7 +326,7 @@ export default function AppNavigator() {
           // Super Admin Flow
           <Stack.Screen 
             name="SuperAdminMain" 
-            component={SuperAdminDrawer}
+            component={SuperAdminStack}
             options={{ headerShown: false }}
           />
         )}
@@ -323,3 +363,180 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+// Styles
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sideMenuContainer: {
+    flex: 1,
+    width: 280,
+  },
+  sideMenuContent: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    paddingTop: 40,
+  },
+  profileSection: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surfaceDark,
+  },
+  avatarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 6,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  roleText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.primary,
+    textTransform: 'uppercase',
+  },
+  businessInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceLight,
+    padding: 10,
+    borderRadius: 8,
+  },
+  businessName: {
+    fontSize: 12,
+    color: colors.text,
+    marginLeft: 8,
+    flex: 1,
+  },
+  menuItems: {
+    flex: 1,
+    paddingTop: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 15,
+    flex: 1,
+  },
+  badge: {
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surfaceLight,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.error,
+    marginLeft: 15,
+  },
+});
+
+const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  notificationButton: {
+    padding: 8,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: colors.error,
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});
