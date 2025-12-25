@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       console.log("📤 Sending registration request:", data);
       const response = await axios.post(`${API_URL}/auth/register`, data);
-      console.log("✅ Registration response:", response.data);
+      console.log("✅ Registration response:", response.data.data);
 
       // FIX: Access the nested data property
       const { user: userData, token: authToken } = response.data.data;

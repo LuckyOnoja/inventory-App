@@ -34,6 +34,8 @@ import ProfileScreen from "../screens/profile/ProfileScreen";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import StaffScreen from "../screens/staff/StaffScreen";
 import AddStaffScreen from "../screens/staff/AddStaffScreen";
+import EditStaffScreen from "../screens/staff/EditStaffScreen";
+import StaffSalesScreen from "../screens/staff/StaffSalesScreen";
 import CameraScreen from "../screens/camera/CameraScreen";
 import ReportsScreen from "../screens/reports/ReportsScreen";
 
@@ -286,6 +288,8 @@ function SuperAdminNavigator() {
         <SuperAdminStack.Screen name="Inventory" component={InventoryScreen} />
         <SuperAdminStack.Screen name="Staff" component={StaffScreen} />
         <SuperAdminStack.Screen name="AddStaff" component={AddStaffScreen} />
+        <Stack.Screen name="EditStaff" component={EditStaffScreen} />
+        <Stack.Screen name="StaffSales" component={StaffSalesScreen} />
         <SuperAdminStack.Screen name="Cameras" component={CameraScreen} />
         <SuperAdminStack.Screen name="Reports" component={ReportsScreen} />
         <SuperAdminStack.Screen
@@ -406,6 +410,16 @@ export default function AppNavigator() {
             name="AddStaff"
             component={AddStaffScreen}
             options={{ title: "Add New Staff" }}
+          />
+          <Stack.Screen
+            name="EditStaff"
+            component={EditStaffScreen}
+            options={{ title: "Edit Existing Staff" }}
+          />
+          <Stack.Screen
+            name="StaffSales"
+            component={StaffSalesScreen}
+            options={{ title: "Track Staff Sales" }}
           />
         </Stack.Group>
       </Stack.Navigator>

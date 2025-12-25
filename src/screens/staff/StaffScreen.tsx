@@ -24,16 +24,18 @@ const API_URL = config.API_URL;
 interface StaffMember {
   id: string;
   staffId: string;
-  name: string;
   email: string;
+  name: string;
   phone: string;
   role: 'SALES_AGENT' | 'SUPERVISOR' | 'MANAGER';
-  status: 'active' | 'inactive' | 'on_leave';
+  status: 'active' | 'inactive';
   joinDate: string;
   lastActive: string;
-  salesCount: number;
-  totalSales: number;
-  permissions: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  salesCount?: number;
+  totalSales?: number;
+  permissions?: string[];
 }
 
 export default function StaffScreen({ navigation }: any) {
@@ -44,7 +46,7 @@ export default function StaffScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   useEffect(() => {
     fetchStaff();
@@ -57,86 +59,52 @@ export default function StaffScreen({ navigation }: any) {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      // Mock data - replace with API call
-      const mockStaff: StaffMember[] = [
-        {
-          id: '1',
-          staffId: 'AG001',
-          name: 'John Doe',
-          email: 'john@store.com',
-          phone: '08012345678',
-          role: 'SALES_AGENT',
-          status: 'active',
-          joinDate: '2024-01-15',
-          lastActive: new Date().toISOString(),
-          salesCount: 157,
-          totalSales: 2450000,
-          permissions: ['sales', 'inventory_view'],
+      const response = await axios.get(`${API_URL}/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          id: '2',
-          staffId: 'AG002',
-          name: 'Jane Smith',
-          email: 'jane@store.com',
-          phone: '08023456789',
-          role: 'SALES_AGENT',
-          status: 'active',
-          joinDate: '2024-02-20',
-          lastActive: new Date(Date.now() - 2 * 3600000).toISOString(),
-          salesCount: 89,
-          totalSales: 1450000,
-          permissions: ['sales', 'inventory_view'],
-        },
-        {
-          id: '3',
-          staffId: 'SP001',
-          name: 'Robert Johnson',
-          email: 'robert@store.com',
-          phone: '08034567890',
-          role: 'SUPERVISOR',
-          status: 'active',
-          joinDate: '2024-01-05',
-          lastActive: new Date(Date.now() - 1 * 3600000).toISOString(),
-          salesCount: 0,
-          totalSales: 0,
-          permissions: ['sales', 'inventory', 'staff_view'],
-        },
-        {
-          id: '4',
-          staffId: 'AG003',
-          name: 'Sarah Williams',
-          email: 'sarah@store.com',
-          phone: '08045678901',
-          role: 'SALES_AGENT',
-          status: 'inactive',
-          joinDate: '2024-03-10',
-          lastActive: new Date(Date.now() - 7 * 24 * 3600000).toISOString(),
-          salesCount: 45,
-          totalSales: 780000,
-          permissions: ['sales'],
-        },
-        {
-          id: '5',
-          staffId: 'AG004',
-          name: 'Michael Brown',
-          email: 'michael@store.com',
-          phone: '08056789012',
-          role: 'SALES_AGENT',
-          status: 'on_leave',
-          joinDate: '2024-02-01',
-          lastActive: new Date(Date.now() - 3 * 24 * 3600000).toISOString(),
-          salesCount: 112,
-          totalSales: 1890000,
-          permissions: ['sales', 'inventory_view'],
-        },
-      ];
-      setStaff(mockStaff);
-    } catch (error) {
+      });
+
+      if (response.data.success) {
+        // Transform the API data to match your frontend interface
+        const staffData: StaffMember[] = response.data.data.map((user: any) => ({
+          id: user.id,
+          staffId: user.id.substring(0, 6).toUpperCase(), // Generate a short ID for display
+          name: user.name,
+          email: user.email,
+          phone: user.phone || 'Not provided',
+          role: user.role as 'SALES_AGENT' | 'SUPERVISOR' | 'MANAGER',
+          status: user.status ? 'active' : 'inactive',
+          joinDate: new Date(user.createdAt).toISOString().split('T')[0],
+          lastActive: new Date(user.updatedAt).toISOString(),
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          salesCount: 0, // You might want to fetch this separately
+          totalSales: 0, // You might want to fetch this separately
+          permissions: getPermissionsByRole(user.role),
+        }));
+        setStaff(staffData);
+      }
+    } catch (error: any) {
       console.error('Failed to fetch staff:', error);
-      Alert.alert('Error', 'Failed to load staff data');
+      Alert.alert(
+        'Error',
+        error.response?.data?.error || 'Failed to load staff data'
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const getPermissionsByRole = (role: string): string[] => {
+    switch (role) {
+      case 'SALES_AGENT':
+        return ['sales', 'inventory_view'];
+      case 'SUPERVISOR':
+        return ['sales', 'inventory', 'staff_view'];
+      default:
+        return [];
     }
   };
 
@@ -152,7 +120,6 @@ export default function StaffScreen({ navigation }: any) {
     if (searchQuery.trim()) {
       filtered = filtered.filter(member =>
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.staffId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.email.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
@@ -172,33 +139,29 @@ export default function StaffScreen({ navigation }: any) {
     setFilteredStaff(filtered);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: 'active' | 'inactive'): string => {
     switch (status) {
       case 'active':
         return theme.colors.success;
       case 'inactive':
         return theme.colors.error;
-      case 'on_leave':
-        return theme.colors.warning;
       default:
         return theme.colors.info;
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: 'active' | 'inactive'): string => {
     switch (status) {
       case 'active':
         return 'Active';
       case 'inactive':
         return 'Inactive';
-      case 'on_leave':
-        return 'On Leave';
       default:
         return 'Unknown';
     }
   };
 
-  const getRoleText = (role: string) => {
+  const getRoleText = (role: string): string => {
     switch (role) {
       case 'SALES_AGENT':
         return 'Sales Agent';
@@ -219,22 +182,54 @@ export default function StaffScreen({ navigation }: any) {
     navigation.navigate('EditStaff', { staffId: staffMember.id });
   };
 
-  const handleToggleStatus = (staffMember: StaffMember) => {
+  const handleToggleStatus = async (staffMember: StaffMember) => {
+    const newStatus = staffMember.status === 'active' ? false : true;
+    const statusText = newStatus ? 'active' : 'inactive';
+    
     Alert.alert(
       'Change Status',
-      `Change ${staffMember.name}'s status to ${staffMember.status === 'active' ? 'inactive' : 'active'}?`,
+      `Change ${staffMember.name}'s status to ${statusText}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Confirm',
-          onPress: () => {
-            // API call to update status
-            Alert.alert('Success', `Status updated for ${staffMember.name}`);
-            fetchStaff();
+          onPress: async () => {
+            try {
+              const response = await axios.put(
+                `${API_URL}/users/${staffMember.id}/status`,
+                { status: newStatus },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+
+              if (response.data.success) {
+                Alert.alert('Success', `Status updated for ${staffMember.name}`);
+                fetchStaff(); // Refresh the list
+              }
+            } catch (error: any) {
+              console.error('Failed to update status:', error);
+              Alert.alert(
+                'Error',
+                error.response?.data?.error || 'Failed to update status'
+              );
+            }
           },
         },
       ]
     );
+  };
+
+  const handleEditPermissions = (staffMember: StaffMember) => {
+    // Navigate to edit permissions screen
+    navigation.navigate('EditPermissions', { staffId: staffMember.id });
+  };
+
+  const handleViewSales = (staffMember: StaffMember) => {
+    // Navigate to staff sales screen
+    navigation.navigate('StaffSales', { staffId: staffMember.id, staffName: staffMember.name });
   };
 
   const renderHeader = () => (
@@ -266,7 +261,7 @@ export default function StaffScreen({ navigation }: any) {
       <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
       <TextInput
         style={[styles.searchInput, { color: theme.colors.text }]}
-        placeholder="Search staff by name or ID..."
+        placeholder="Search staff by name or email..."
         placeholderTextColor={theme.colors.textTertiary}
         value={searchQuery}
         onChangeText={setSearchQuery}
@@ -345,7 +340,7 @@ export default function StaffScreen({ navigation }: any) {
         <View style={styles.staffHeader}>
           <View style={styles.avatarContainer}>
             <Image
-              source={{ uri: `https://ui-avatars.com/api/?name=${item.name}&background=${statusColor.replace('#', '')}&color=fff` }}
+              source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=${statusColor.replace('#', '')}&color=fff` }}
               style={styles.avatar}
             />
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
@@ -369,6 +364,9 @@ export default function StaffScreen({ navigation }: any) {
             <Text style={[styles.staffEmail, { color: theme.colors.textSecondary }]}>
               {item.email}
             </Text>
+            <Text style={[styles.staffPhone, { color: theme.colors.textTertiary }]}>
+              📞 {item.phone}
+            </Text>
           </View>
           
           <TouchableOpacity
@@ -379,8 +377,9 @@ export default function StaffScreen({ navigation }: any) {
                 `Select action for ${item.name}:`,
                 [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'View Sales', onPress: () => navigation.navigate('StaffSales', { staffId: item.id }) },
-                  { text: 'Edit Permissions', onPress: () => navigation.navigate('EditPermissions', { staffId: item.id }) },
+                  { text: 'View Details', onPress: () => handleEditStaff(item) },
+                  { text: 'View Sales', onPress: () => handleViewSales(item) },
+                  { text: 'Edit Permissions', onPress: () => handleEditPermissions(item) },
                   { 
                     text: item.status === 'active' ? 'Deactivate' : 'Activate', 
                     style: item.status === 'active' ? 'destructive' : 'default',
@@ -397,10 +396,10 @@ export default function StaffScreen({ navigation }: any) {
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-              Sales
+              Join Date
             </Text>
             <Text style={[styles.statValue, { color: theme.colors.text }]}>
-              {item.salesCount}
+              {new Date(item.joinDate).toLocaleDateString()}
             </Text>
           </View>
           
@@ -408,10 +407,10 @@ export default function StaffScreen({ navigation }: any) {
           
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
-              Revenue
+              Last Active
             </Text>
             <Text style={[styles.statValue, { color: theme.colors.text }]}>
-              ₦{(item.totalSales / 1000).toFixed(0)}k
+              {new Date(item.lastActive).toLocaleDateString()}
             </Text>
           </View>
           
@@ -637,6 +636,10 @@ const styles = StyleSheet.create({
   },
   staffEmail: {
     fontSize: 12,
+    marginBottom: 2,
+  },
+  staffPhone: {
+    fontSize: 11,
   },
   moreButton: {
     padding: 4,
@@ -659,8 +662,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
   },
   statDivider: {
     width: 1,
