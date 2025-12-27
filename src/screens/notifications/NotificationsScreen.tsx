@@ -10,9 +10,12 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import moment from 'moment';
@@ -22,13 +25,29 @@ const API_URL = config.API_URL;
 
 interface Notification {
   id: string;
-  type: 'inventory' | 'security' | 'sales' | 'system';
+  type: string;
   title: string;
   message: string;
-  timestamp: string;
   read: boolean;
-  priority: 'low' | 'medium' | 'high';
   data?: any;
+  createdAt: string;
+}
+
+interface NotificationStats {
+  total: number;
+  unread: number;
+  read: number;
+  byType: Array<{
+    type: string;
+    count: number;
+  }>;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
 }
 
 export default function NotificationsScreen({ navigation }: any) {
@@ -36,8 +55,22 @@ export default function NotificationsScreen({ navigation }: any) {
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'unread' | 'security' | 'inventory'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | string>('all');
+  const [stats, setStats] = useState<NotificationStats>({
+    total: 0,
+    unread: 0,
+    read: 0,
+    byType: [],
+  });
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 1,
+  });
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const { theme } = useTheme();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchNotifications();
@@ -47,132 +80,165 @@ export default function NotificationsScreen({ navigation }: any) {
     applyFilter();
   }, [notifications, filter]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (page = 1) => {
     try {
       setLoading(true);
-      // Mock data - replace with API call
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'security',
-          title: 'Camera Offline',
-          message: 'Camera #3 in main store is offline. Please check connection.',
-          timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-          read: false,
-          priority: 'high',
-        },
-        {
-          id: '2',
-          type: 'inventory',
-          title: 'Low Stock Alert',
-          message: 'Coke 50cl is running low (12 units left). Minimum stock: 30 units.',
-          timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-          read: true,
-          priority: 'medium',
-        },
-        {
-          id: '3',
-          type: 'sales',
-          title: 'Large Sale Completed',
-          message: 'A sale of ₦45,000 was completed by Agent John Doe.',
-          timestamp: new Date(Date.now() - 5 * 3600000).toISOString(),
-          read: true,
-          priority: 'low',
-        },
-        {
-          id: '4',
-          type: 'inventory',
-          title: 'Inventory Check Due',
-          message: 'Daily inventory check is due. Please complete stock count.',
-          timestamp: new Date(Date.now() - 8 * 3600000).toISOString(),
-          read: false,
-          priority: 'medium',
-        },
-        {
-          id: '5',
-          type: 'security',
-          title: 'Camera Tampering Detected',
-          message: 'Camera #1 was moved unexpectedly at 14:30.',
-          timestamp: new Date(Date.now() - 24 * 3600000).toISOString(),
-          read: true,
-          priority: 'high',
-        },
-        {
-          id: '6',
-          type: 'system',
-          title: 'System Update Available',
-          message: 'A new version of the app is available for download.',
-          timestamp: new Date(Date.now() - 2 * 24 * 3600000).toISOString(),
-          read: true,
-          priority: 'low',
-        },
-        {
-          id: '7',
-          type: 'inventory',
-          title: 'Discrepancy Found',
-          message: 'Inventory check found 5 units missing for Golden Penny Spaghetti.',
-          timestamp: new Date(Date.now() - 3 * 24 * 3600000).toISOString(),
-          read: true,
-          priority: 'high',
-        },
-      ];
-      setNotifications(mockNotifications);
-    } catch (error) {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+
+      if (filter !== 'all') {
+        if (filter === 'unread') {
+          params.append('read', 'false');
+        } else {
+          params.append('type', filter);
+        }
+      }
+
+      const response = await axios.get(`${API_URL}/notifications?${params}`);
+      
+      if (response.data.success) {
+        const data = response.data.data;
+        setNotifications(data);
+        setStats(response.data.statistics || {
+          total: data.length,
+          unread: data.filter((n: Notification) => !n.read).length,
+          read: data.filter((n: Notification) => n.read).length,
+          byType: [],
+        });
+        setPagination(response.data.pagination || {
+          page: 1,
+          limit: 20,
+          total: data.length,
+          pages: Math.ceil(data.length / 20),
+        });
+      }
+    } catch (error: any) {
       console.error('Failed to fetch notifications:', error);
-      Alert.alert('Error', 'Failed to load notifications');
+      Alert.alert('Error', error.response?.data?.error || 'Failed to load notifications');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/notifications/unread-count`);
+      if (response.data.success) {
+        setStats(prev => ({
+          ...prev,
+          unread: response.data.data.count,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchNotifications();
+    fetchUnreadCount();
   };
 
   const applyFilter = () => {
     let filtered = [...notifications];
     
-    switch (filter) {
-      case 'unread':
-        filtered = filtered.filter(notification => !notification.read);
-        break;
-      case 'security':
-        filtered = filtered.filter(notification => notification.type === 'security');
-        break;
-      case 'inventory':
-        filtered = filtered.filter(notification => notification.type === 'inventory');
-        break;
+    if (filter === 'unread') {
+      filtered = filtered.filter(notification => !notification.read);
+    } else if (filter !== 'all') {
+      filtered = filtered.filter(notification => notification.type === filter);
     }
     
     setFilteredNotifications(filtered);
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => prev.map(notif => 
-      notif.id === notificationId ? { ...notif, read: true } : notif
-    ));
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const response = await axios.put(`${API_URL}/notifications/${notificationId}/read`);
+      
+      if (response.data.success) {
+        setNotifications(prev => prev.map(notif => 
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        ));
+        fetchUnreadCount();
+      }
+    } catch (error: any) {
+      console.error('Failed to mark as read:', error);
+      Alert.alert('Error', error.response?.data?.error || 'Failed to mark notification as read');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      const response = await axios.put(`${API_URL}/notifications/read-all`);
+      
+      if (response.data.success) {
+        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+        fetchUnreadCount();
+        Alert.alert('Success', response.data.message);
+      }
+    } catch (error: any) {
+      console.error('Failed to mark all as read:', error);
+      Alert.alert('Error', error.response?.data?.error || 'Failed to mark all notifications as read');
+    }
   };
 
-  const deleteNotification = (notificationId: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+  const deleteNotification = async (notificationId: string) => {
+    Alert.alert(
+      'Delete Notification',
+      'Are you sure you want to delete this notification?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await axios.delete(`${API_URL}/notifications/${notificationId}`);
+              
+              if (response.data.success) {
+                setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+                fetchUnreadCount();
+              }
+            } catch (error: any) {
+              console.error('Failed to delete notification:', error);
+              Alert.alert('Error', error.response?.data?.error || 'Failed to delete notification');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'security':
-        return 'shield-outline';
-      case 'inventory':
+      case 'device_offline':
+      case 'camera_alert':
+      case 'device_tamper':
+        return 'camera-outline';
+      case 'low_stock':
+      case 'inventory_check':
+      case 'discrepancy':
+      case 'restock':
+      case 'inventory_adjustment':
         return 'cube-outline';
-      case 'sales':
+      case 'sale':
         return 'cart-outline';
       case 'system':
+      case 'welcome':
+      case 'role_change':
+      case 'account_status':
         return 'settings-outline';
+      case 'user':
+        return 'person-outline';
       default:
         return 'notifications-outline';
     }
@@ -180,16 +246,76 @@ export default function NotificationsScreen({ navigation }: any) {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'security':
+      case 'device_offline':
+      case 'camera_alert':
+      case 'device_tamper':
         return theme.colors.error;
-      case 'inventory':
+      case 'low_stock':
+      case 'discrepancy':
+      case 'inventory_adjustment':
         return theme.colors.warning;
-      case 'sales':
+      case 'sale':
+      case 'restock':
         return theme.colors.success;
-      case 'system':
+      case 'inventory_check':
         return theme.colors.info;
-      default:
+      case 'system':
+      case 'welcome':
+      case 'role_change':
+      case 'account_status':
         return theme.colors.primary;
+      default:
+        return theme.colors.text;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'device_offline':
+        return 'Camera Offline';
+      case 'camera_alert':
+        return 'Camera Alert';
+      case 'device_tamper':
+        return 'Device Tampering';
+      case 'low_stock':
+        return 'Low Stock';
+      case 'inventory_check':
+        return 'Inventory Check';
+      case 'discrepancy':
+        return 'Discrepancy';
+      case 'restock':
+        return 'Restock';
+      case 'inventory_adjustment':
+        return 'Inventory Adjustment';
+      case 'sale':
+        return 'Sale';
+      case 'system':
+        return 'System';
+      case 'welcome':
+        return 'Welcome';
+      case 'role_change':
+        return 'Role Change';
+      case 'account_status':
+        return 'Account Status';
+      case 'user':
+        return 'User Activity';
+      default:
+        return type.replace('_', ' ');
+    }
+  };
+
+  const getPriority = (type: string): 'low' | 'medium' | 'high' => {
+    switch (type) {
+      case 'device_offline':
+      case 'device_tamper':
+      case 'camera_alert':
+      case 'discrepancy':
+        return 'high';
+      case 'low_stock':
+      case 'inventory_adjustment':
+        return 'medium';
+      default:
+        return 'low';
     }
   };
 
@@ -207,18 +333,44 @@ export default function NotificationsScreen({ navigation }: any) {
   };
 
   const handleNotificationPress = (notification: Notification) => {
-    markAsRead(notification.id);
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
     
-    // Navigate based on notification type
+    // Parse data if available
+    let notificationData = null;
+    if (notification.data) {
+      try {
+        notificationData = JSON.parse(notification.data);
+      } catch (error) {
+        console.error('Failed to parse notification data:', error);
+      }
+    }
+    
+    // Navigate based on notification type and data
     switch (notification.type) {
-      case 'security':
+      case 'device_offline':
+      case 'camera_alert':
+      case 'device_tamper':
         navigation.navigate('Cameras');
         break;
-      case 'inventory':
+      case 'low_stock':
+      case 'inventory_check':
+      case 'discrepancy':
+      case 'restock':
+      case 'inventory_adjustment':
         navigation.navigate('Inventory');
         break;
-      case 'sales':
-        navigation.navigate('Sales');
+      case 'sale':
+        if (notificationData?.saleId) {
+          navigation.navigate('SaleDetail', { saleId: notificationData.saleId });
+        } else {
+          navigation.navigate('Sales');
+        }
+        break;
+      case 'role_change':
+      case 'account_status':
+        navigation.navigate('Profile');
         break;
       default:
         // Just mark as read
@@ -233,16 +385,16 @@ export default function NotificationsScreen({ navigation }: any) {
           Notifications
         </Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-          {notifications.filter(n => !n.read).length} unread • {notifications.length} total
+          {stats.unread} unread • {stats.total} total
         </Text>
       </View>
       <TouchableOpacity
         style={styles.markAllButton}
         onPress={markAllAsRead}
-        disabled={notifications.filter(n => !n.read).length === 0}
+        disabled={stats.unread === 0}
       >
         <Text style={[styles.markAllText, { 
-          color: notifications.filter(n => !n.read).length === 0 
+          color: stats.unread === 0 
             ? theme.colors.textTertiary 
             : theme.colors.primary 
         }]}>
@@ -253,122 +405,180 @@ export default function NotificationsScreen({ navigation }: any) {
   );
 
   const renderFilterButtons = () => (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      style={styles.filterContainer}
-      contentContainerStyle={styles.filterContent}
-    >
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
-          { 
-            backgroundColor: filter === 'all' 
-              ? theme.colors.primary + '20' 
-              : theme.colors.surface,
-            borderColor: filter === 'all' 
-              ? theme.colors.primary 
-              : theme.colors.border,
-          }
-        ]}
-        onPress={() => setFilter('all')}
+    <View style={styles.filterSection}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterContent}
       >
-        <Text style={[
-          styles.filterText,
-          { color: filter === 'all' ? theme.colors.primary : theme.colors.text }
-        ]}>
-          All
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
-          { 
-            backgroundColor: filter === 'unread' 
-              ? theme.colors.primary + '20' 
-              : theme.colors.surface,
-            borderColor: filter === 'unread' 
-              ? theme.colors.primary 
-              : theme.colors.border,
-          }
-        ]}
-        onPress={() => setFilter('unread')}
-      >
-        <Text style={[
-          styles.filterText,
-          { color: filter === 'unread' ? theme.colors.primary : theme.colors.text }
-        ]}>
-          Unread
-        </Text>
-        {notifications.filter(n => !n.read).length > 0 && (
-          <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
-            <Text style={styles.filterBadgeText}>
-              {notifications.filter(n => !n.read).length}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
-          { 
-            backgroundColor: filter === 'security' 
-              ? theme.colors.error + '20' 
-              : theme.colors.surface,
-            borderColor: filter === 'security' 
-              ? theme.colors.error 
-              : theme.colors.border,
-          }
-        ]}
-        onPress={() => setFilter('security')}
-      >
-        <Ionicons 
-          name="shield-outline" 
-          size={14} 
-          color={filter === 'security' ? theme.colors.error : theme.colors.text} 
-        />
-        <Text style={[
-          styles.filterText,
-          { color: filter === 'security' ? theme.colors.error : theme.colors.text }
-        ]}>
-          Security
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        style={[
-          styles.filterButton,
-          { 
-            backgroundColor: filter === 'inventory' 
-              ? theme.colors.warning + '20' 
-              : theme.colors.surface,
-            borderColor: filter === 'inventory' 
-              ? theme.colors.warning 
-              : theme.colors.border,
-          }
-        ]}
-        onPress={() => setFilter('inventory')}
-      >
-        <Ionicons 
-          name="cube-outline" 
-          size={14} 
-          color={filter === 'inventory' ? theme.colors.warning : theme.colors.text} 
-        />
-        <Text style={[
-          styles.filterText,
-          { color: filter === 'inventory' ? theme.colors.warning : theme.colors.text }
-        ]}>
-          Inventory
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { 
+              backgroundColor: filter === 'all' 
+                ? theme.colors.primary + '20' 
+                : theme.colors.surface,
+              borderColor: filter === 'all' 
+                ? theme.colors.primary 
+                : theme.colors.border,
+            }
+          ]}
+          onPress={() => setFilter('all')}
+        >
+          <Text style={[
+            styles.filterText,
+            { color: filter === 'all' ? theme.colors.primary : theme.colors.text }
+          ]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            { 
+              backgroundColor: filter === 'unread' 
+                ? theme.colors.primary + '20' 
+                : theme.colors.surface,
+              borderColor: filter === 'unread' 
+                ? theme.colors.primary 
+                : theme.colors.border,
+            }
+          ]}
+          onPress={() => setFilter('unread')}
+        >
+          <Text style={[
+            styles.filterText,
+            { color: filter === 'unread' ? theme.colors.primary : theme.colors.text }
+          ]}>
+            Unread
+          </Text>
+          {stats.unread > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
+              <Text style={styles.filterBadgeText}>
+                {stats.unread}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.moreFiltersButton}
+          onPress={() => setShowFilterModal(true)}
+        >
+          <Ionicons 
+            name="options-outline" 
+            size={16} 
+            color={theme.colors.text} 
+          />
+          <Text style={[styles.moreFiltersText, { color: theme.colors.text }]}>
+            More
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
+
+  const renderFilterModal = () => {
+    const typeFilters = stats.byType.map(stat => stat.type);
+    const uniqueTypes = Array.from(new Set(['sale', 'inventory_check', 'low_stock', 'device_offline', ...typeFilters]));
+    
+    return (
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowFilterModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                    Filter by Type
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+                    <Ionicons name="close" size={24} color={theme.colors.text} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.typeList}>
+                  {uniqueTypes.map((type) => {
+                    const typeCount = stats.byType.find(t => t.type === type)?.count || 0;
+                    const isSelected = filter === type;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={type}
+                        style={[
+                          styles.typeItem,
+                          { 
+                            backgroundColor: isSelected 
+                              ? theme.colors.primary + '20' 
+                              : 'transparent',
+                            borderBottomColor: theme.colors.border,
+                          }
+                        ]}
+                        onPress={() => {
+                          setFilter(type);
+                          setShowFilterModal(false);
+                        }}
+                      >
+                        <View style={styles.typeItemContent}>
+                          <View style={[styles.typeIcon, { backgroundColor: getTypeColor(type) + '20' }]}>
+                            <Ionicons 
+                              name={getTypeIcon(type) as any} 
+                              size={16} 
+                              color={getTypeColor(type)} 
+                            />
+                          </View>
+                          <View style={styles.typeTexts}>
+                            <Text style={[
+                              styles.typeLabel,
+                              { color: isSelected ? theme.colors.primary : theme.colors.text }
+                            ]}>
+                              {getTypeLabel(type)}
+                            </Text>
+                            <Text style={[styles.typeCount, { color: theme.colors.textSecondary }]}>
+                              {typeCount} notifications
+                            </Text>
+                          </View>
+                        </View>
+                        {isSelected && (
+                          <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={[styles.resetButton, { borderColor: theme.colors.border }]}
+                    onPress={() => {
+                      setFilter('all');
+                      setShowFilterModal(false);
+                    }}
+                  >
+                    <Text style={[styles.resetText, { color: theme.colors.text }]}>
+                      Show All
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    );
+  };
 
   const renderNotificationItem = ({ item }: { item: Notification }) => {
     const typeColor = getTypeColor(item.type);
-    const priorityColor = getPriorityColor(item.priority);
+    const priority = getPriority(item.type);
+    const priorityColor = getPriorityColor(priority);
     
     return (
       <TouchableOpacity
@@ -377,7 +587,8 @@ export default function NotificationsScreen({ navigation }: any) {
           { 
             backgroundColor: theme.colors.surface,
             borderLeftColor: typeColor,
-            borderLeftWidth: item.read ? 0 : 4,
+            borderLeftWidth: item.read ? 2 : 4,
+            opacity: item.read ? 0.9 : 1,
           }
         ]}
         onPress={() => handleNotificationPress(item)}
@@ -386,7 +597,7 @@ export default function NotificationsScreen({ navigation }: any) {
         <View style={styles.notificationHeader}>
           <View style={styles.typeIconContainer}>
             <View style={[styles.typeIcon, { backgroundColor: typeColor + '20' }]}>
-              <Ionicons name={getTypeIcon(item.type)} size={16} color={typeColor} />
+              <Ionicons name={getTypeIcon(item.type)} size={18} color={typeColor} />
             </View>
           </View>
           
@@ -397,7 +608,7 @@ export default function NotificationsScreen({ navigation }: any) {
               </Text>
               <View style={[styles.priorityBadge, { backgroundColor: priorityColor + '20' }]}>
                 <Text style={[styles.priorityText, { color: priorityColor }]}>
-                  {item.priority}
+                  {priority}
                 </Text>
               </View>
             </View>
@@ -407,13 +618,21 @@ export default function NotificationsScreen({ navigation }: any) {
             </Text>
             
             <View style={styles.notificationFooter}>
-              <Text style={[styles.timestamp, { color: theme.colors.textTertiary }]}>
-                {moment(item.timestamp).fromNow()}
-              </Text>
+              <View style={styles.typeBadge}>
+                <Text style={[styles.typeText, { color: typeColor }]}>
+                  {getTypeLabel(item.type)}
+                </Text>
+              </View>
               
-              {!item.read && (
-                <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
-              )}
+              <View style={styles.footerRight}>
+                <Text style={[styles.timestamp, { color: theme.colors.textTertiary }]}>
+                  {moment(item.createdAt).fromNow()}
+                </Text>
+                
+                {!item.read && (
+                  <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
+                )}
+              </View>
             </View>
           </View>
           
@@ -432,21 +651,52 @@ export default function NotificationsScreen({ navigation }: any) {
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-off-outline" size={64} color={theme.colors.textTertiary} />
       <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-        No Notifications
+        {filter !== 'all' 
+          ? 'No Notifications Found'
+          : 'No Notifications Yet'
+        }
       </Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
         {filter !== 'all' 
-          ? 'No notifications match your filter'
-          : 'You\'re all caught up!'
+          ? `No ${filter === 'unread' ? 'unread' : getTypeLabel(filter)} notifications found`
+          : 'You\'re all caught up! New notifications will appear here.'
         }
       </Text>
+      {filter !== 'all' && (
+        <TouchableOpacity
+          style={[styles.emptyButton, { backgroundColor: theme.colors.primary }]}
+          onPress={() => setFilter('all')}
+        >
+          <Text style={[styles.emptyButtonText, { color: theme.colors.white }]}>
+            Show All Notifications
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
+
+  const renderLoadMore = () => {
+    if (pagination.page >= pagination.pages) return null;
+    
+    return (
+      <TouchableOpacity
+        style={[styles.loadMoreButton, { borderColor: theme.colors.border }]}
+        onPress={() => fetchNotifications(pagination.page + 1)}
+      >
+        <Text style={[styles.loadMoreText, { color: theme.colors.text }]}>
+          Load More
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading && !refreshing) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+          Loading notifications...
+        </Text>
       </View>
     );
   }
@@ -471,8 +721,17 @@ export default function NotificationsScreen({ navigation }: any) {
           />
         }
         ListEmptyComponent={renderEmptyState}
+        ListFooterComponent={renderLoadMore}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        onEndReached={() => {
+          if (pagination.page < pagination.pages) {
+            fetchNotifications(pagination.page + 1);
+          }
+        }}
+        onEndReachedThreshold={0.5}
       />
+
+      {renderFilterModal()}
     </SafeAreaView>
   );
 }
@@ -485,6 +744,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
   },
   header: {
     flexDirection: 'row',
@@ -513,9 +777,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  filterContainer: {
-    paddingHorizontal: 20,
+  filterSection: {
     marginBottom: 16,
+  },
+  filterScroll: {
+    paddingHorizontal: 20,
   },
   filterContent: {
     gap: 8,
@@ -546,6 +812,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  moreFiltersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+    gap: 6,
+  },
+  moreFiltersText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 80,
@@ -558,6 +838,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'transparent',
+    borderLeftWidth: 4,
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -580,7 +861,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   notificationTitle: {
     fontSize: 16,
@@ -601,12 +882,28 @@ const styles = StyleSheet.create({
   notificationMessage: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   notificationFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+  },
+  typeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   timestamp: {
     fontSize: 12,
@@ -637,5 +934,96 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadMoreButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: 16,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  typeList: {
+    maxHeight: 400,
+  },
+  typeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  typeItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  typeTexts: {
+    flex: 1,
+  },
+  typeLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  typeCount: {
+    fontSize: 12,
+  },
+  modalActions: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  resetButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  resetText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

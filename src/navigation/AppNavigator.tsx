@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -14,6 +14,10 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import axios from "axios";
+import config from "../config";
+
+const API_URL = config.API_URL;
 
 // Auth Screens
 import LoginScreen from "../screens/auth/LoginScreen";
@@ -49,6 +53,26 @@ let globalNavigationRef: any = null;
 
 // Tab Navigator for Sales Agents
 function SalesAgentTabs() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    // Set up interval to refresh count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/notifications/unread-count`);
+      if (response.data.success) {
+        setUnreadCount(response.data.data.count);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -64,6 +88,9 @@ function SalesAgentTabs() {
               break;
             case "Products":
               iconName = focused ? "cube" : "cube-outline";
+              break;
+            case "Notifications":
+              iconName = focused ? "notifications" : "notifications-outline";
               break;
             case "Profile":
               iconName = focused ? "person" : "person-outline";
@@ -102,17 +129,40 @@ function SalesAgentTabs() {
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardScreen}
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          tabBarBadge: undefined 
+        }}
       />
       <Tab.Screen 
         name="Sales" 
         component={SalesScreen}
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          tabBarBadge: undefined 
+        }}
       />
       <Tab.Screen 
         name="Products" 
         component={ProductsScreen}
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          tabBarBadge: undefined 
+        }}
+      />
+      <Tab.Screen 
+        name="Notifications" 
+        component={NotificationsScreen}
+        options={{ 
+          headerShown: false,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.error,
+            fontSize: 10,
+            minWidth: 18,
+            height: 18,
+          }
+        }}
       />
       <Tab.Screen 
         name="Profile" 
@@ -129,11 +179,13 @@ const SideMenu = ({
   onClose,
   user,
   onLogout,
+  unreadCount,
 }: {
   visible: boolean;
   onClose: () => void;
   user: any;
   onLogout: () => Promise<void>;
+  unreadCount: number;
 }) => {
   const menuItems = [
     { name: "Dashboard", icon: "grid-outline", screen: "Dashboard" },
@@ -147,6 +199,7 @@ const SideMenu = ({
       name: "Notifications",
       icon: "notifications-outline",
       screen: "Notifications",
+      badge: unreadCount,
     },
     { name: "Settings", icon: "settings-outline", screen: "Settings" },
   ];
@@ -248,9 +301,11 @@ const SideMenu = ({
                       color={colors.textSecondary}
                     />
                     <Text style={styles.menuItemText}>{item.name}</Text>
-                    {item.name === "Notifications" && (
+                    {item.badge && item.badge > 0 && (
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>3</Text>
+                        <Text style={styles.badgeText}>
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -282,11 +337,19 @@ const SuperAdminHeader = ({
   route,
   user,
   onMenuPress,
+  unreadCount,
 }: {
   route: any;
   user: any;
   onMenuPress: () => void;
+  unreadCount: number;
 }) => {
+  const navigateToNotifications = () => {
+    if (globalNavigationRef) {
+      globalNavigationRef.navigate("Notifications");
+    }
+  };
+
   return (
     <View style={headerStyles.container}>
       <TouchableOpacity onPress={onMenuPress} style={headerStyles.menuButton}>
@@ -302,12 +365,16 @@ const SuperAdminHeader = ({
       </View>
       <TouchableOpacity
         style={headerStyles.notificationButton}
-        onPress={() => globalNavigationRef?.navigate("Notifications")}
+        onPress={navigateToNotifications}
       >
         <Ionicons name="notifications-outline" size={22} color={colors.text} />
-        <View style={headerStyles.notificationBadge}>
-          <Text style={headerStyles.notificationBadgeText}>3</Text>
-        </View>
+        {unreadCount > 0 && (
+          <View style={headerStyles.notificationBadge}>
+            <Text style={headerStyles.notificationBadgeText}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -317,6 +384,27 @@ const SuperAdminHeader = ({
 function SuperAdminNavigator() {
   const { user, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      // Set up interval to refresh count every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/notifications/unread-count`);
+      if (response.data.success) {
+        setUnreadCount(response.data.data.count);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
 
   return (
     <>
@@ -327,6 +415,7 @@ function SuperAdminNavigator() {
               route={route}
               user={user}
               onMenuPress={() => setMenuVisible(true)}
+              unreadCount={unreadCount}
             />
           ),
         })}
@@ -350,6 +439,21 @@ function SuperAdminNavigator() {
           name="Inventory" 
           component={InventoryScreen}
           options={{ headerShown: true }}
+        />
+        <SuperAdminStack.Screen 
+          name="InventoryCheck" 
+          component={InventoryCheckScreen}
+          options={{ 
+            headerShown: true,
+            header: () => (
+              <SuperAdminHeader
+                route={{ name: "Inventory Check", params: { title: "Inventory Check" } }}
+                user={user}
+                onMenuPress={() => setMenuVisible(true)}
+                unreadCount={unreadCount}
+              />
+            )
+          }}
         />
         <SuperAdminStack.Screen 
           name="Staff" 
@@ -384,7 +488,17 @@ function SuperAdminNavigator() {
         <SuperAdminStack.Screen 
           name="Notifications" 
           component={NotificationsScreen}
-          options={{ headerShown: true }}
+          options={{ 
+            headerShown: true,
+            header: () => (
+              <SuperAdminHeader
+                route={{ name: "Notifications", params: { title: "Notifications" } }}
+                user={user}
+                onMenuPress={() => setMenuVisible(true)}
+                unreadCount={unreadCount}
+              />
+            )
+          }}
         />
         <SuperAdminStack.Screen 
           name="Settings" 
@@ -398,6 +512,7 @@ function SuperAdminNavigator() {
         onClose={() => setMenuVisible(false)}
         user={user}
         onLogout={logout}
+        unreadCount={unreadCount}
       />
     </>
   );
@@ -416,8 +531,13 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <Text>Loading...</Text>
+      <View style={{ 
+        flex: 1, 
+        justifyContent: "center", 
+        alignItems: "center", 
+        backgroundColor: colors.background 
+      }}>
+        <Text style={{ color: colors.text }}>Loading...</Text>
       </View>
     );
   }
@@ -476,7 +596,7 @@ export default function AppNavigator() {
             }}
           />
         ) : (
-          // Super Admin Flow
+          // Super Admin & Supervisor Flow
           <Stack.Screen
             name="SuperAdminMain"
             component={SuperAdminNavigator}
@@ -492,42 +612,154 @@ export default function AppNavigator() {
           <Stack.Screen
             name="AddProduct"
             component={AddProductScreen}
-            options={{ title: "Add New Product" }}
+            options={{ 
+              title: "Add New Product",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Add New Product</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="EditProduct"
             component={EditProductScreen}
-            options={{ title: "Edit Product" }}
+            options={{ 
+              title: "Edit Product",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Edit Product</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="NewSale"
             component={NewSaleScreen}
-            options={{ title: "New Sale" }}
+            options={{ 
+              title: "New Sale",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>New Sale</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="SaleDetail"
             component={SaleDetailScreen}
-            options={{ title: "Sale Details" }}
+            options={{ 
+              title: "Sale Details",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Sale Details</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="InventoryCheck"
             component={InventoryCheckScreen}
-            options={{ title: "Inventory Check" }}
+            options={{ 
+              title: "Inventory Check",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Inventory Check</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="AddStaff"
             component={AddStaffScreen}
-            options={{ title: "Add New Staff" }}
+            options={{ 
+              title: "Add New Staff",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Add New Staff</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="EditStaff"
             component={EditStaffScreen}
-            options={{ title: "Edit Existing Staff" }}
+            options={{ 
+              title: "Edit Staff",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Edit Staff</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
           <Stack.Screen
             name="StaffSales"
             component={StaffSalesScreen}
-            options={{ title: "Track Staff Sales" }}
+            options={{ 
+              title: "Staff Sales",
+              header: ({ navigation }) => (
+                <View style={modalHeaderStyles.container}>
+                  <TouchableOpacity 
+                    style={modalHeaderStyles.backButton} 
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={modalHeaderStyles.title}>Staff Sales</Text>
+                  <View style={modalHeaderStyles.rightButton} />
+                </View>
+              )
+            }}
           />
         </Stack.Group>
       </Stack.Navigator>
@@ -635,14 +867,15 @@ const styles = StyleSheet.create({
   badge: {
     backgroundColor: colors.error,
     borderRadius: 10,
-    width: 20,
+    minWidth: 20,
     height: 20,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 4,
   },
   badgeText: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "bold",
   },
   logoutButton: {
@@ -700,14 +933,43 @@ const headerStyles = StyleSheet.create({
     right: 4,
     backgroundColor: colors.error,
     borderRadius: 8,
-    width: 16,
-    height: 16,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 4,
   },
   notificationBadgeText: {
     color: colors.white,
     fontSize: 10,
     fontWeight: "bold",
+  },
+});
+
+const modalHeaderStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  title: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text,
+    textAlign: "center",
+    marginRight: 40,
+  },
+  rightButton: {
+    width: 40,
   },
 });
