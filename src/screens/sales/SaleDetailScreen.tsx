@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,42 +15,62 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import moment from 'moment';
 import config from '../../config';
+import { useAuth } from '../../context/AuthContext'; // Assuming you have AuthContext
 
 const API_URL = config.API_URL;
 
 interface SaleItem {
   id: string;
+  productId: string;
   productName: string;
-  productCode: string;
+  sku: string | null;
   quantity: number;
   unitPrice: number;
   discount: number;
-  total: number;
+  total?: number;
+  product?: {
+    id: string;
+    name: string;
+    sku: string | null;
+    category: string;
+    unit: string;
+    costPrice: number;
+    sellingPrice: number;
+  };
 }
 
 interface SaleDetail {
   id: string;
   saleNumber: string;
   totalAmount: number;
-  subtotal: number;
-  tax: number;
+  subtotal?: number;
+  tax?: number;
   discount: number;
-  paymentMethod: string;
+  paymentMethod: 'CASH' | 'TRANSFER' | 'POS' | 'CARD' | 'OTHER';
   agentName: string;
   agentId: string;
-  customerName: string;
-  customerPhone: string;
+  agent?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string | null;
+  };
+  customerName: string | null;
+  customerPhone?: string;
   createdAt: string;
-  status: 'completed' | 'pending' | 'cancelled';
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
   items: SaleItem[];
-  notes: string;
+  notes: string | null;
 }
 
 export default function SaleDetailScreen({ route, navigation }: any) {
   const { saleId } = route.params;
   const [sale, setSale] = useState<SaleDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const { theme } = useTheme();
+  const { user, token } = useAuth(); // Get auth token
 
   useEffect(() => {
     fetchSaleDetail();
@@ -58,108 +79,248 @@ export default function SaleDetailScreen({ route, navigation }: any) {
   const fetchSaleDetail = async () => {
     try {
       setLoading(true);
-      // Mock data - replace with API call
-      const mockSale: SaleDetail = {
-        id: saleId,
-        saleNumber: 'S-00157',
-        totalAmount: 24500,
-        subtotal: 23000,
-        tax: 1500,
-        discount: 1000,
-        paymentMethod: 'cash',
-        agentName: 'John Doe',
-        agentId: 'AG001',
-        customerName: 'Customer A',
-        customerPhone: '08012345678',
-        createdAt: new Date().toISOString(),
-        status: 'completed',
-        notes: 'Regular customer',
-        items: [
-          {
-            id: '1',
-            productName: 'Indomie Chicken',
-            productCode: 'IND-001',
-            quantity: 5,
-            unitPrice: 2000,
-            discount: 200,
-            total: 9800,
-          },
-          {
-            id: '2',
-            productName: 'Coke 50cl',
-            productCode: 'COK-001',
-            quantity: 3,
-            unitPrice: 1500,
-            discount: 100,
-            total: 4400,
-          },
-          {
-            id: '3',
-            productName: 'Peak Milk Tin',
-            productCode: 'PM-001',
-            quantity: 2,
-            unitPrice: 1800,
-            discount: 0,
-            total: 3600,
-          },
-        ],
-      };
-      setSale(mockSale);
-    } catch (error) {
+      const response = await axios.get(`${API_URL}/sales/${saleId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        const saleData = response.data.data;
+        
+        // Calculate subtotal and tax from items
+        let subtotal = 0;
+        saleData.items.forEach((item: any) => {
+          const itemTotal = item.quantity * item.unitPrice;
+          subtotal += itemTotal;
+        });
+
+        // Tax is typically 7.5% of subtotal
+        const tax = subtotal * 0.075;
+        
+        // Set the sale data with calculated values
+        setSale({
+          ...saleData,
+          subtotal,
+          tax,
+          agentName: saleData.agent?.name || 'Unknown',
+          agentId: saleData.agentId,
+          customerName: saleData.customerName || '',
+          customerPhone: saleData.customerPhone || '',
+          notes: saleData.notes || '',
+          items: saleData.items.map((item: any) => ({
+            ...item,
+            productName: item.product?.name || 'Unknown Product',
+            sku: item.product?.sku || '',
+            total: (item.unitPrice - item.discount) * item.quantity,
+          })),
+        });
+      }
+    } catch (error: any) {
       console.error('Failed to fetch sale details:', error);
-      Alert.alert('Error', 'Failed to load sale details');
+      
+      if (error.response?.status === 404) {
+        Alert.alert('Error', 'Sale not found');
+      } else if (error.response?.status === 401) {
+        Alert.alert('Error', 'Please login again');
+      } else {
+        Alert.alert('Error', error.response?.data?.message || 'Failed to load sale details');
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchSaleDetail();
   };
 
   const getStatusColor = () => {
     switch (sale?.status) {
-      case 'completed':
+      case 'COMPLETED':
         return theme.colors.success;
-      case 'pending':
+      case 'PENDING':
         return theme.colors.warning;
-      case 'cancelled':
+      case 'CANCELLED':
         return theme.colors.error;
       default:
         return theme.colors.info;
     }
   };
 
+  const getStatusDisplayText = (status: string) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'Completed';
+      case 'PENDING':
+        return 'Pending';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  };
+
   const getPaymentIcon = () => {
     switch (sale?.paymentMethod) {
-      case 'cash':
+      case 'CASH':
         return 'cash-outline';
-      case 'card':
+      case 'CARD':
         return 'card-outline';
-      case 'transfer':
+      case 'TRANSFER':
         return 'swap-horizontal-outline';
+      case 'POS':
+        return 'card-outline';
       default:
         return 'wallet-outline';
     }
   };
 
-  const handlePrintReceipt = () => {
-    Alert.alert('Print', 'Receipt printing functionality would be implemented here');
+  const getPaymentMethodDisplayText = (method: string) => {
+    switch (method) {
+      case 'CASH':
+        return 'Cash';
+      case 'CARD':
+        return 'Card';
+      case 'TRANSFER':
+        return 'Transfer';
+      case 'POS':
+        return 'POS';
+      case 'OTHER':
+        return 'Other';
+      default:
+        return method;
+    }
   };
 
-  const handleCancelSale = () => {
+  const handlePrintReceipt = () => {
+    if (!sale) return;
+    
     Alert.alert(
-      'Cancel Sale',
-      'Are you sure you want to cancel this sale?',
+      'Print Receipt',
+      'Do you want to print the receipt?',
       [
-        { text: 'No', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Yes', 
-          style: 'destructive',
-          onPress: () => {
-            // API call to cancel sale
-            Alert.alert('Success', 'Sale cancelled successfully');
-            navigation.goBack();
+          text: 'Print', 
+          onPress: async () => {
+            try {
+              // In a real app, you would integrate with a printing library
+              // For now, we'll show a success message
+              Alert.alert('Success', 'Receipt sent to printer');
+              
+              // You could also navigate to a receipt preview screen
+              // navigation.navigate('ReceiptPreview', { saleId });
+            } catch (error) {
+              Alert.alert('Error', 'Failed to print receipt');
+            }
           }
         },
       ]
     );
+  };
+
+  const handleCancelSale = async () => {
+    if (!sale) return;
+    
+    if (sale.status === 'CANCELLED') {
+      Alert.alert('Info', 'This sale is already cancelled');
+      return;
+    }
+
+    // Check if sale is older than 24 hours
+    const saleDate = moment(sale.createdAt);
+    const hoursDiff = moment().diff(saleDate, 'hours');
+    
+    if (hoursDiff > 24) {
+      Alert.alert(
+        'Cannot Cancel Sale',
+        'Sales can only be cancelled within 24 hours of creation.',
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Cancel Sale',
+      'Are you sure you want to cancel this sale? This action cannot be undone and will restore product stock.',
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Yes, Cancel Sale', 
+          style: 'destructive',
+          onPress: () => confirmCancelSale()
+        },
+      ]
+    );
+  };
+
+  const confirmCancelSale = async () => {
+    try {
+      setCanceling(true);
+      
+      const response = await axios.put(
+        `${API_URL}/sales/${saleId}/cancel`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        Alert.alert('Success', 'Sale cancelled successfully');
+        // Update local state to reflect cancellation
+        if (sale) {
+          setSale({
+            ...sale,
+            status: 'CANCELLED',
+          });
+        }
+        // Emit event to refresh sales list
+        // navigation.navigate('Sales', { refresh: true });
+      }
+    } catch (error: any) {
+      console.error('Failed to cancel sale:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Failed to cancel sale'
+      );
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  const handleCompleteSale = async () => {
+    if (!sale || sale.status !== 'PENDING') return;
+    
+    Alert.alert(
+      'Mark as Complete',
+      'Are you sure you want to mark this sale as complete?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Complete', 
+          onPress: async () => {
+            try {
+              // Note: Your backend doesn't have a mark as complete endpoint yet
+              // You would need to add this functionality
+              Alert.alert('Coming Soon', 'This feature will be available soon');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to complete sale');
+            }
+          }
+        },
+      ]
+    );
+  };
+
+  const calculateTotalDiscount = () => {
+    if (!sale?.items) return 0;
+    return sale.items.reduce((total, item) => total + (item.discount * item.quantity), 0);
   };
 
   if (loading) {
@@ -172,15 +333,41 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
   if (!sale) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.text }}>Sale not found</Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="receipt-outline" size={64} color={theme.colors.textSecondary} />
+          <Text style={[styles.errorText, { color: theme.colors.text }]}>
+            Sale not found
+          </Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+            onPress={fetchSaleDetail}
+          >
+            <Text style={[styles.retryButtonText, { color: theme.colors.white }]}>
+              Retry
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
+  const totalDiscount = calculateTotalDiscount();
+  const displaySubtotal = sale.subtotal || sale.totalAmount - (sale.tax || 0) + totalDiscount;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity 
@@ -211,13 +398,13 @@ export default function SaleDetailScreen({ route, navigation }: any) {
         <View style={[styles.statusBanner, { backgroundColor: getStatusColor() + '20' }]}>
           <View style={styles.statusRow}>
             <Ionicons 
-              name={sale.status === 'completed' ? 'checkmark-circle' : 
-                    sale.status === 'pending' ? 'time' : 'close-circle'} 
+              name={sale.status === 'COMPLETED' ? 'checkmark-circle' : 
+                    sale.status === 'PENDING' ? 'time' : 'close-circle'} 
               size={20} 
               color={getStatusColor()} 
             />
             <Text style={[styles.statusText, { color: getStatusColor() }]}>
-              {sale.status.charAt(0).toUpperCase() + sale.status.slice(1)}
+              {getStatusDisplayText(sale.status)}
             </Text>
           </View>
           <Text style={[styles.amount, { color: theme.colors.text }]}>
@@ -249,7 +436,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
             <View style={styles.paymentInfo}>
               <Ionicons name={getPaymentIcon()} size={16} color={theme.colors.textSecondary} />
               <Text style={[styles.infoValue, { color: theme.colors.text }]}>
-                {sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)}
+                {getPaymentMethodDisplayText(sale.paymentMethod)}
               </Text>
             </View>
           </View>
@@ -287,19 +474,24 @@ export default function SaleDetailScreen({ route, navigation }: any) {
                     {item.productName}
                   </Text>
                   <Text style={[styles.itemCode, { color: theme.colors.textTertiary }]}>
-                    {item.productCode}
+                    {item.sku || item.product?.sku || 'No SKU'}
                   </Text>
+                  {item.product?.category && (
+                    <Text style={[styles.itemCategory, { color: theme.colors.textTertiary }]}>
+                      {item.product.category}
+                    </Text>
+                  )}
                 </View>
                 <View style={styles.itemDetails}>
                   <Text style={[styles.itemQuantity, { color: theme.colors.textSecondary }]}>
-                    {item.quantity} × ₦{item.unitPrice.toLocaleString()}
+                    {item.quantity} {item.product?.unit || 'unit'} × ₦{item.unitPrice.toLocaleString()}
                   </Text>
                   <Text style={[styles.itemTotal, { color: theme.colors.text }]}>
-                    ₦{item.total.toLocaleString()}
+                    ₦{((item.unitPrice - item.discount) * item.quantity).toLocaleString()}
                   </Text>
                   {item.discount > 0 && (
                     <Text style={[styles.itemDiscount, { color: theme.colors.error }]}>
-                      -₦{item.discount.toLocaleString()}
+                      -₦{(item.discount * item.quantity).toLocaleString()}
                     </Text>
                   )}
                 </View>
@@ -315,27 +507,31 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               Subtotal
             </Text>
             <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-              ₦{sale.subtotal.toLocaleString()}
+              ₦{displaySubtotal.toLocaleString()}
             </Text>
           </View>
           
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
-              Tax
-            </Text>
-            <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
-              ₦{sale.tax.toLocaleString()}
-            </Text>
-          </View>
+          {sale.tax && sale.tax > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                Tax (7.5%)
+              </Text>
+              <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
+                ₦{sale.tax.toLocaleString()}
+              </Text>
+            </View>
+          )}
           
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
-              Discount
-            </Text>
-            <Text style={[styles.summaryValue, { color: theme.colors.error }]}>
-              -₦{sale.discount.toLocaleString()}
-            </Text>
-          </View>
+          {totalDiscount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+                Discount
+              </Text>
+              <Text style={[styles.summaryValue, { color: theme.colors.error }]}>
+                -₦{totalDiscount.toLocaleString()}
+              </Text>
+            </View>
+          )}
           
           <View style={styles.divider} />
           
@@ -350,26 +546,43 @@ export default function SaleDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Actions */}
-        {sale.status === 'pending' && (
+        {sale.status === 'PENDING' && (
           <View style={styles.actionsContainer}>
             <TouchableOpacity 
               style={[styles.completeButton, { backgroundColor: theme.colors.success }]}
-              onPress={() => Alert.alert('Complete', 'Mark as complete functionality')}
+              onPress={handleCompleteSale}
             >
-              <Ionicons name="checkmark" size={20} color={theme.colors.white} />
-              <Text style={[styles.completeButtonText, { color: theme.colors.white }]}>
-                Mark as Complete
-              </Text>
+              {canceling ? (
+                <ActivityIndicator size="small" color={theme.colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="checkmark" size={20} color={theme.colors.white} />
+                  <Text style={[styles.completeButtonText, { color: theme.colors.white }]}>
+                    Mark as Complete
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
-            
+          </View>
+        )}
+        
+        {sale.status === 'COMPLETED' && user?.role !== 'SALES_AGENT' && (
+          <View style={styles.actionsContainer}>
             <TouchableOpacity 
               style={[styles.cancelButton, { borderColor: theme.colors.error }]}
               onPress={handleCancelSale}
+              disabled={canceling}
             >
-              <Ionicons name="close" size={20} color={theme.colors.error} />
-              <Text style={[styles.cancelButtonText, { color: theme.colors.error }]}>
-                Cancel Sale
-              </Text>
+              {canceling ? (
+                <ActivityIndicator size="small" color={theme.colors.error} />
+              ) : (
+                <>
+                  <Ionicons name="close" size={20} color={theme.colors.error} />
+                  <Text style={[styles.cancelButtonText, { color: theme.colors.error }]}>
+                    Cancel Sale
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -386,6 +599,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    marginTop: 12,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -447,7 +681,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
   infoRow: {
     flexDirection: 'row',
@@ -492,7 +726,7 @@ const styles = StyleSheet.create({
   itemsCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(148, 163, 184, 0.1)',
     overflow: 'hidden',
   },
   itemRow: {
@@ -513,6 +747,11 @@ const styles = StyleSheet.create({
   },
   itemCode: {
     fontSize: 12,
+  },
+  itemCategory: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   itemDetails: {
     alignItems: 'flex-end',
@@ -536,7 +775,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: 'rgba(148, 163, 184, 0.1)',
   },
   summaryRow: {
     flexDirection: 'row',
