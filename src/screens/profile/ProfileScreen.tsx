@@ -15,9 +15,16 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+interface MenuItem {
+  title: string;
+  icon: string;
+  color: string;
+  onPress: () => void;
+}
+
 export default function ProfileScreen({ navigation }: any) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [offlineMode, setOfflineMode] = useState(true);
@@ -40,7 +47,7 @@ export default function ProfileScreen({ navigation }: any) {
     );
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       title: 'Personal Information',
       icon: 'person-outline',
@@ -79,26 +86,19 @@ export default function ProfileScreen({ navigation }: any) {
     },
   ];
 
-  const statsItems = [
-    {
-      title: 'Total Sales',
-      value: '1,245',
-      icon: 'cart-outline',
-      color: theme.colors.success,
-    },
-    {
-      title: 'Products',
-      value: '89',
-      icon: 'cube-outline',
-      color: theme.colors.info,
-    },
-    {
-      title: 'This Month',
-      value: '₦245,000',
-      icon: 'cash-outline',
-      color: theme.colors.primary,
-    },
-  ];
+  // Get user role display text
+  const getRoleDisplayText = (role?: string) => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return 'Super Admin';
+      case 'SALES_AGENT':
+        return 'Sales Agent';
+      case 'SUPERVISOR':
+        return 'Supervisor';
+      default:
+        return 'User';
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -126,10 +126,10 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: 'https://via.placeholder.com/100' }}
+                source={{ uri: user?.avatar || 'https://via.placeholder.com/100' }}
                 style={styles.avatar}
               />
-              <View style={[styles.statusDot, { backgroundColor: theme.colors.success }]} />
+              <View style={[styles.statusDot, { backgroundColor: user?.status ? theme.colors.success : theme.colors.error }]} />
             </View>
             
             <View style={styles.profileInfo}>
@@ -137,42 +137,20 @@ export default function ProfileScreen({ navigation }: any) {
                 {user?.name || 'Business Owner'}
               </Text>
               <Text style={[styles.profileRole, { color: theme.colors.textSecondary }]}>
-                {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Sales Agent'}
+                {getRoleDisplayText(user?.role)}
               </Text>
               <Text style={[styles.profileEmail, { color: theme.colors.textTertiary }]}>
                 {user?.email || 'owner@business.com'}
               </Text>
+              {user?.phone && (
+                <Text style={[styles.profilePhone, { color: theme.colors.textTertiary }]}>
+                  {user.phone}
+                </Text>
+              )}
             </View>
-            
-            <TouchableOpacity
-              style={[styles.editButton, { borderColor: theme.colors.border }]}
-              onPress={() => navigation.navigate('EditProfile')}
-            >
-              <Ionicons name="create-outline" size={18} color={theme.colors.text} />
-              <Text style={[styles.editButtonText, { color: theme.colors.text }]}>
-                Edit
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            {statsItems.map((stat, index) => (
-              <View key={index} style={styles.statItem}>
-                <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
-                  <Ionicons name={stat.icon as any} size={20} color={stat.color} />
-                </View>
-                <View style={styles.statContent}>
-                  <Text style={[styles.statValue, { color: theme.colors.text }]}>
-                    {stat.value}
-                  </Text>
-                  <Text style={[styles.statTitle, { color: theme.colors.textSecondary }]}>
-                    {stat.title}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
+          {/* Removed stats section as requested */}
         </View>
 
         {/* Quick Settings */}
@@ -270,9 +248,10 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Switch
                 value={theme.mode === 'dark'}
-                onValueChange={toggleTheme}
+                onValueChange={() => {}} // Theme toggle removed as per ThemeContext
                 trackColor={{ false: theme.colors.border, true: theme.colors.warning + '80' }}
                 thumbColor={theme.mode === 'dark' ? theme.colors.warning : '#f4f3f4'}
+                disabled={true}
               />
             </View>
           </View>
@@ -368,8 +347,7 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+    alignItems: 'flex-start',
   },
   avatarContainer: {
     position: 'relative',
@@ -405,48 +383,9 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: 12,
   },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 4,
-  },
-  editButtonText: {
+  profilePhone: {
     fontSize: 12,
-    fontWeight: '600',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(148, 163, 184, 0.1)',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statContent: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  statTitle: {
-    fontSize: 12,
+    marginTop: 2,
   },
   section: {
     paddingHorizontal: 20,

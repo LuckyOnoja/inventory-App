@@ -23,6 +23,9 @@ interface User {
     type: string;
     location: string;
   };
+  avatar: string | null;
+  status: "ACTIVE" | "INACTIVE";
+  phone?: string;
 }
 
 interface AuthContextType {
