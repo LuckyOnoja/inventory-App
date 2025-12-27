@@ -24,7 +24,7 @@ interface MenuItem {
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, logout } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme(); // Added toggleTheme here
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [offlineMode, setOfflineMode] = useState(true);
@@ -149,8 +149,6 @@ export default function ProfileScreen({ navigation }: any) {
               )}
             </View>
           </View>
-
-          {/* Removed stats section as requested */}
         </View>
 
         {/* Quick Settings */}
@@ -248,10 +246,9 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Switch
                 value={theme.mode === 'dark'}
-                onValueChange={() => {}} // Theme toggle removed as per ThemeContext
+                onValueChange={toggleTheme} // Now using the toggleTheme function
                 trackColor={{ false: theme.colors.border, true: theme.colors.warning + '80' }}
                 thumbColor={theme.mode === 'dark' ? theme.colors.warning : '#f4f3f4'}
-                disabled={true}
               />
             </View>
           </View>
