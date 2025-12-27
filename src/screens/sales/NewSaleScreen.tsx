@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// screens/sales/NewSaleScreen.tsx
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,12 +12,12 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import axios from 'axios';
-import config from '../../config';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../context/ThemeContext";
+import { SafeAreaView } from "react-native-safe-area-context";
+import axios from "axios";
+import config from "../../config";
 
 const API_URL = config.API_URL;
 
@@ -37,11 +38,13 @@ interface CartItem {
   discount: number;
 }
 
+// Update payment methods to match backend enum
 const paymentMethods = [
-  { value: 'cash', label: 'Cash', icon: 'cash-outline' },
-  { value: 'card', label: 'Card', icon: 'card-outline' },
-  { value: 'transfer', label: 'Transfer', icon: 'swap-horizontal-outline' },
-  { value: 'pos', label: 'POS', icon: 'hardware-chip-outline' },
+  { value: "CASH", label: "Cash", icon: "cash-outline" },
+  { value: "CARD", label: "Card", icon: "card-outline" },
+  { value: "TRANSFER", label: "Transfer", icon: "swap-horizontal-outline" },
+  { value: "POS", label: "POS", icon: "hardware-chip-outline" },
+  { value: "OTHER", label: "Other", icon: "ellipsis-horizontal-outline" },
 ];
 
 export default function NewSaleScreen({ navigation, route }: any) {
@@ -49,12 +52,12 @@ export default function NewSaleScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
-  const [customerName, setCustomerName] = useState('');
-  const [notes, setNotes] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("CASH");
+  const [customerName, setCustomerName] = useState("");
+  const [notes, setNotes] = useState("");
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -64,8 +67,8 @@ export default function NewSaleScreen({ navigation, route }: any) {
   useEffect(() => {
     if (productId) {
       // If coming from product quick action, add that product to cart
-      const product = products.find(p => p.id === productId);
-      if (product && !cart.find(item => item.product.id === productId)) {
+      const product = products.find((p) => p.id === productId);
+      if (product && !cart.find((item) => item.product.id === productId)) {
         addToCart(product);
       }
     }
@@ -79,11 +82,13 @@ export default function NewSaleScreen({ navigation, route }: any) {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/products`);
-      const activeProducts = response.data.data.filter((p: Product) => p.currentStock > 0);
+      const activeProducts = response.data.data.filter(
+        (p: Product) => p.currentStock > 0
+      );
       setProducts(activeProducts);
     } catch (error) {
-      console.error('Failed to fetch products:', error);
-      Alert.alert('Error', 'Failed to load products');
+      console.error("Failed to fetch products:", error);
+      Alert.alert("Error", "Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -95,60 +100,64 @@ export default function NewSaleScreen({ navigation, route }: any) {
       return;
     }
 
-    const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredProducts(filtered);
   };
 
   const addToCart = (product: Product) => {
-    setCart(prev => {
-      const existingItem = prev.find(item => item.product.id === product.id);
+    setCart((prev) => {
+      const existingItem = prev.find((item) => item.product.id === product.id);
       if (existingItem) {
         // Increase quantity if already in cart
-        return prev.map(item =>
+        return prev.map((item) =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
         // Add new item to cart
-        return [...prev, {
-          product,
-          quantity: 1,
-          unitPrice: product.sellingPrice,
-          discount: 0,
-        }];
+        return [
+          ...prev,
+          {
+            product,
+            quantity: 1,
+            unitPrice: product.sellingPrice,
+            discount: 0,
+          },
+        ];
       }
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+    setCart((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
   const updateCartItem = (productId: string, updates: Partial<CartItem>) => {
-    setCart(prev =>
-      prev.map(item =>
-        item.product.id === productId
-          ? { ...item, ...updates }
-          : item
+    setCart((prev) =>
+      prev.map((item) =>
+        item.product.id === productId ? { ...item, ...updates } : item
       )
     );
   };
 
   const calculateTotals = () => {
-    const subtotal = cart.reduce((sum, item) => 
-      sum + (item.unitPrice * item.quantity), 0
+    const subtotal = cart.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0
     );
-    const totalDiscount = cart.reduce((sum, item) => 
-      sum + (item.discount * item.quantity), 0
+    const totalDiscount = cart.reduce(
+      (sum, item) => sum + item.discount * item.quantity,
+      0
     );
     const tax = subtotal * 0.075; // 7.5% tax
     const total = subtotal - totalDiscount + tax;
-    
+
     return {
       subtotal,
       totalDiscount,
@@ -163,21 +172,24 @@ export default function NewSaleScreen({ navigation, route }: any) {
       removeFromCart(productId);
       return;
     }
-    
-    const cartItem = cart.find(item => item.product.id === productId);
+
+    const cartItem = cart.find((item) => item.product.id === productId);
     if (cartItem && quantity > cartItem.product.currentStock) {
-      Alert.alert('Error', `Only ${cartItem.product.currentStock} items in stock`);
+      Alert.alert(
+        "Error",
+        `Only ${cartItem.product.currentStock} items in stock`
+      );
       return;
     }
-    
+
     updateCartItem(productId, { quantity });
   };
 
   const handleDiscountChange = (productId: string, discount: string) => {
     const discountValue = parseFloat(discount) || 0;
-    const cartItem = cart.find(item => item.product.id === productId);
+    const cartItem = cart.find((item) => item.product.id === productId);
     if (cartItem && discountValue > cartItem.unitPrice) {
-      Alert.alert('Error', 'Discount cannot exceed unit price');
+      Alert.alert("Error", "Discount cannot exceed unit price");
       return;
     }
     updateCartItem(productId, { discount: discountValue });
@@ -186,7 +198,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
   const handlePriceChange = (productId: string, price: string) => {
     const priceValue = parseFloat(price) || 0;
     if (priceValue < 0) {
-      Alert.alert('Error', 'Price cannot be negative');
+      Alert.alert("Error", "Price cannot be negative");
       return;
     }
     updateCartItem(productId, { unitPrice: priceValue });
@@ -194,7 +206,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   const validateSale = () => {
     if (cart.length === 0) {
-      Alert.alert('Error', 'Please add at least one product to the sale');
+      Alert.alert("Error", "Please add at least one product to the sale");
       return false;
     }
 
@@ -202,7 +214,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
     for (const item of cart) {
       if (item.quantity > item.product.currentStock) {
         Alert.alert(
-          'Insufficient Stock',
+          "Insufficient Stock",
           `Only ${item.product.currentStock} ${item.product.unit}s of ${item.product.name} available`
         );
         return false;
@@ -218,7 +230,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
     setProcessing(true);
     try {
       const saleData = {
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -227,41 +239,52 @@ export default function NewSaleScreen({ navigation, route }: any) {
         paymentMethod: selectedPaymentMethod,
         customerName: customerName.trim() || undefined,
         notes: notes.trim() || undefined,
+        discount: calculateTotals().totalDiscount,
       };
 
       const response = await axios.post(`${API_URL}/sales`, saleData);
-      
-      Alert.alert(
-        'Success',
-        `Sale #${response.data.data.saleNumber} completed successfully!`,
-        [
-          {
-            text: 'Print Receipt',
-            onPress: () => {
-              // Handle receipt printing
+
+      if (response.data.success) {
+        Alert.alert(
+          "Success",
+          `Sale #${response.data.data.saleNumber} completed successfully!`,
+          [
+            {
+              text: "New Sale",
+              onPress: () => {
+                resetForm();
+                fetchProducts();
+              },
             },
-          },
-          {
-            text: 'New Sale',
-            onPress: () => {
-              resetForm();
+            {
+              text: "View Sale",
+              onPress: () => {
+                resetForm();
+                fetchProducts();
+                navigation.navigate("SaleDetail", {
+                  saleId: response.data.data.id,
+                });
+              },
             },
-          },
-          {
-            text: 'Done',
-            onPress: () => {
-              navigation.goBack();
-              navigation.navigate('Sales');
+            {
+              text: "Done",
+              onPress: () => {
+                resetForm();
+                fetchProducts();
+                navigation.goBack();
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
     } catch (error: any) {
-      console.error('Failed to complete sale:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.error || 'Failed to complete sale. Please try again.'
-      );
+      console.error("Failed to complete sale:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to complete sale. Please try again.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -269,10 +292,10 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   const resetForm = () => {
     setCart([]);
-    setCustomerName('');
-    setNotes('');
-    setSelectedPaymentMethod('cash');
-    setSearchQuery('');
+    setCustomerName("");
+    setNotes("");
+    setSelectedPaymentMethod("CASH");
+    setSearchQuery("");
   };
 
   const renderProductItem = ({ item }: { item: Product }) => (
@@ -286,16 +309,27 @@ export default function NewSaleScreen({ navigation, route }: any) {
           {item.name}
         </Text>
         <View style={styles.productDetails}>
-          <Text style={[styles.productCategory, { color: theme.colors.textTertiary }]}>
+          <Text
+            style={[
+              styles.productCategory,
+              { color: theme.colors.textTertiary },
+            ]}
+          >
             {item.category}
           </Text>
-          <Text style={[styles.productStock, { 
-            color: item.currentStock === 0 
-              ? theme.colors.error 
-              : item.currentStock <= 10 
-                ? theme.colors.warning 
-                : theme.colors.success 
-          }]}>
+          <Text
+            style={[
+              styles.productStock,
+              {
+                color:
+                  item.currentStock === 0
+                    ? theme.colors.error
+                    : item.currentStock <= 10
+                    ? theme.colors.warning
+                    : theme.colors.success,
+              },
+            ]}
+          >
             {item.currentStock} {item.unit} in stock
           </Text>
         </View>
@@ -307,19 +341,24 @@ export default function NewSaleScreen({ navigation, route }: any) {
         <TouchableOpacity
           style={[
             styles.addButton,
-            { 
-              backgroundColor: item.currentStock === 0 
-                ? theme.colors.error + '20' 
-                : theme.colors.primary + '20' 
-            }
+            {
+              backgroundColor:
+                item.currentStock === 0
+                  ? theme.colors.error + "20"
+                  : theme.colors.primary + "20",
+            },
           ]}
           onPress={() => addToCart(item)}
           disabled={item.currentStock === 0}
         >
-          <Ionicons 
-            name={item.currentStock === 0 ? 'close-outline' : 'add'} 
-            size={20} 
-            color={item.currentStock === 0 ? theme.colors.error : theme.colors.primary} 
+          <Ionicons
+            name={item.currentStock === 0 ? "close-outline" : "add"}
+            size={20}
+            color={
+              item.currentStock === 0
+                ? theme.colors.error
+                : theme.colors.primary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -332,35 +371,53 @@ export default function NewSaleScreen({ navigation, route }: any) {
         <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
           {item.product.name}
         </Text>
-        <TouchableOpacity
-          onPress={() => removeFromCart(item.product.id)}
-        >
+        <TouchableOpacity onPress={() => removeFromCart(item.product.id)}>
           <Ionicons name="close" size={20} color={theme.colors.error} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.cartItemDetails}>
         {/* Quantity */}
         <View style={styles.cartItemField}>
-          <Text style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}>
+          <Text
+            style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}
+          >
             Qty
           </Text>
           <View style={styles.quantityContainer}>
             <TouchableOpacity
-              style={[styles.quantityButton, { backgroundColor: theme.colors.surfaceLight }]}
-              onPress={() => handleQuantityChange(item.product.id, (item.quantity - 1).toString())}
+              style={[
+                styles.quantityButton,
+                { backgroundColor: theme.colors.surfaceLight },
+              ]}
+              onPress={() =>
+                handleQuantityChange(
+                  item.product.id,
+                  (item.quantity - 1).toString()
+                )
+              }
             >
               <Ionicons name="remove" size={16} color={theme.colors.text} />
             </TouchableOpacity>
             <TextInput
               style={[styles.quantityInput, { color: theme.colors.text }]}
               value={item.quantity.toString()}
-              onChangeText={(value) => handleQuantityChange(item.product.id, value)}
+              onChangeText={(value) =>
+                handleQuantityChange(item.product.id, value)
+              }
               keyboardType="number-pad"
             />
             <TouchableOpacity
-              style={[styles.quantityButton, { backgroundColor: theme.colors.surfaceLight }]}
-              onPress={() => handleQuantityChange(item.product.id, (item.quantity + 1).toString())}
+              style={[
+                styles.quantityButton,
+                { backgroundColor: theme.colors.surfaceLight },
+              ]}
+              onPress={() =>
+                handleQuantityChange(
+                  item.product.id,
+                  (item.quantity + 1).toString()
+                )
+              }
               disabled={item.quantity >= item.product.currentStock}
             >
               <Ionicons name="add" size={16} color={theme.colors.text} />
@@ -370,17 +427,28 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
         {/* Unit Price */}
         <View style={styles.cartItemField}>
-          <Text style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}>
+          <Text
+            style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}
+          >
             Unit Price
           </Text>
-          <View style={[styles.priceInputContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-            <Text style={[styles.currency, { color: theme.colors.textTertiary }]}>
+          <View
+            style={[
+              styles.priceInputContainer,
+              { backgroundColor: theme.colors.surfaceLight },
+            ]}
+          >
+            <Text
+              style={[styles.currency, { color: theme.colors.textTertiary }]}
+            >
               ₦
             </Text>
             <TextInput
               style={[styles.priceInput, { color: theme.colors.text }]}
               value={item.unitPrice.toString()}
-              onChangeText={(value) => handlePriceChange(item.product.id, value)}
+              onChangeText={(value) =>
+                handlePriceChange(item.product.id, value)
+              }
               keyboardType="decimal-pad"
             />
           </View>
@@ -388,17 +456,28 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
         {/* Discount */}
         <View style={styles.cartItemField}>
-          <Text style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}>
+          <Text
+            style={[styles.fieldLabel, { color: theme.colors.textTertiary }]}
+          >
             Discount
           </Text>
-          <View style={[styles.priceInputContainer, { backgroundColor: theme.colors.surfaceLight }]}>
-            <Text style={[styles.currency, { color: theme.colors.textTertiary }]}>
+          <View
+            style={[
+              styles.priceInputContainer,
+              { backgroundColor: theme.colors.surfaceLight },
+            ]}
+          >
+            <Text
+              style={[styles.currency, { color: theme.colors.textTertiary }]}
+            >
               ₦
             </Text>
             <TextInput
               style={[styles.priceInput, { color: theme.colors.text }]}
               value={item.discount.toString()}
-              onChangeText={(value) => handleDiscountChange(item.product.id, value)}
+              onChangeText={(value) =>
+                handleDiscountChange(item.product.id, value)
+              }
               keyboardType="decimal-pad"
             />
           </View>
@@ -421,16 +500,23 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -449,27 +535,47 @@ export default function NewSaleScreen({ navigation, route }: any) {
               New Sale
             </Text>
             <TouchableOpacity
-              style={[styles.clearButton, { backgroundColor: theme.colors.error + '20' }]}
+              style={[
+                styles.clearButton,
+                { backgroundColor: theme.colors.error + "20" },
+              ]}
               onPress={() => {
                 if (cart.length > 0) {
                   Alert.alert(
-                    'Clear Cart',
-                    'Are you sure you want to clear all items from the cart?',
+                    "Clear Cart",
+                    "Are you sure you want to clear all items from the cart?",
                     [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Clear', style: 'destructive', onPress: () => setCart([]) },
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Clear",
+                        style: "destructive",
+                        onPress: () => setCart([]),
+                      },
                     ]
                   );
                 }
               }}
             >
-              <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color={theme.colors.error}
+              />
             </TouchableOpacity>
           </View>
 
           {/* Search Bar */}
-          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
-            <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
+          <View
+            style={[
+              styles.searchContainer,
+              { backgroundColor: theme.colors.surface },
+            ]}
+          >
+            <Ionicons
+              name="search-outline"
+              size={20}
+              color={theme.colors.textTertiary}
+            />
             <TextInput
               style={[styles.searchInput, { color: theme.colors.text }]}
               placeholder="Search products to add..."
@@ -502,19 +608,38 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 Cart Items ({cart.length})
               </Text>
               {cart.length > 0 && (
-                <Text style={[styles.cartTotal, { color: theme.colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.cartTotal,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   Total: ₦{totals.total.toLocaleString()}
                 </Text>
               )}
             </View>
-            
+
             {cart.length === 0 ? (
               <View style={styles.emptyCart}>
-                <Ionicons name="cart-outline" size={48} color={theme.colors.textTertiary} />
-                <Text style={[styles.emptyCartText, { color: theme.colors.textSecondary }]}>
+                <Ionicons
+                  name="cart-outline"
+                  size={48}
+                  color={theme.colors.textTertiary}
+                />
+                <Text
+                  style={[
+                    styles.emptyCartText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
                   Your cart is empty
                 </Text>
-                <Text style={[styles.emptyCartSubtext, { color: theme.colors.textTertiary }]}>
+                <Text
+                  style={[
+                    styles.emptyCartSubtext,
+                    { color: theme.colors.textTertiary },
+                  ]}
+                >
                   Search and add products above
                 </Text>
               </View>
@@ -525,7 +650,9 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 keyExtractor={(item) => item.product.id}
                 scrollEnabled={false}
                 contentContainerStyle={styles.cartList}
-                ItemSeparatorComponent={() => <View style={styles.cartSeparator} />}
+                ItemSeparatorComponent={() => (
+                  <View style={styles.cartSeparator} />
+                )}
               />
             )}
           </View>
@@ -542,11 +669,14 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 Customer Name (Optional)
               </Text>
               <TextInput
-                style={[styles.input, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.text,
+                  },
+                ]}
                 placeholder="Enter customer name"
                 placeholderTextColor={theme.colors.textTertiary}
                 value={customerName}
@@ -565,33 +695,39 @@ export default function NewSaleScreen({ navigation, route }: any) {
                     key={method.value}
                     style={[
                       styles.paymentMethodButton,
-                      { 
-                        backgroundColor: selectedPaymentMethod === method.value 
-                          ? theme.colors.primary + '20' 
-                          : theme.colors.surfaceLight,
-                        borderColor: selectedPaymentMethod === method.value 
-                          ? theme.colors.primary 
-                          : theme.colors.border,
-                      }
+                      {
+                        backgroundColor:
+                          selectedPaymentMethod === method.value
+                            ? theme.colors.primary + "20"
+                            : theme.colors.surfaceLight,
+                        borderColor:
+                          selectedPaymentMethod === method.value
+                            ? theme.colors.primary
+                            : theme.colors.border,
+                      },
                     ]}
                     onPress={() => setSelectedPaymentMethod(method.value)}
                   >
-                    <Ionicons 
-                      name={method.icon as any} 
-                      size={20} 
-                      color={selectedPaymentMethod === method.value 
-                        ? theme.colors.primary
-                        : theme.colors.text
-                      } 
-                    />
-                    <Text style={[
-                      styles.paymentMethodText,
-                      { 
-                        color: selectedPaymentMethod === method.value 
+                    <Ionicons
+                      name={method.icon as any}
+                      size={20}
+                      color={
+                        selectedPaymentMethod === method.value
                           ? theme.colors.primary
-                          : theme.colors.text 
+                          : theme.colors.text
                       }
-                    ]}>
+                    />
+                    <Text
+                      style={[
+                        styles.paymentMethodText,
+                        {
+                          color:
+                            selectedPaymentMethod === method.value
+                              ? theme.colors.primary
+                              : theme.colors.text,
+                        },
+                      ]}
+                    >
                       {method.label}
                     </Text>
                   </TouchableOpacity>
@@ -605,11 +741,14 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 Notes (Optional)
               </Text>
               <TextInput
-                style={[styles.textArea, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                }]}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.text,
+                  },
+                ]}
                 placeholder="Add any notes for this sale..."
                 placeholderTextColor={theme.colors.textTertiary}
                 value={notes}
@@ -622,45 +761,79 @@ export default function NewSaleScreen({ navigation, route }: any) {
           </View>
 
           {/* Summary */}
-          <View style={[styles.summarySection, { backgroundColor: theme.colors.surface }]}>
+          <View
+            style={[
+              styles.summarySection,
+              { backgroundColor: theme.colors.surface },
+            ]}
+          >
             <Text style={[styles.summaryTitle, { color: theme.colors.text }]}>
               Order Summary
             </Text>
-            
+
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 Subtotal
               </Text>
               <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
                 ₦{totals.subtotal.toLocaleString()}
               </Text>
             </View>
-            
+
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 Discount
               </Text>
-              <Text style={[styles.summaryValue, { color: theme.colors.error }]}>
+              <Text
+                style={[styles.summaryValue, { color: theme.colors.error }]}
+              >
                 -₦{totals.totalDiscount.toLocaleString()}
               </Text>
             </View>
-            
+
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.summaryLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 Tax (7.5%)
               </Text>
               <Text style={[styles.summaryValue, { color: theme.colors.text }]}>
                 ₦{totals.tax.toLocaleString()}
               </Text>
             </View>
-            
-            <View style={[styles.summaryDivider, { backgroundColor: theme.colors.border }]} />
-            
+
+            <View
+              style={[
+                styles.summaryDivider,
+                { backgroundColor: theme.colors.border },
+              ]}
+            />
+
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryTotalLabel, { color: theme.colors.text }]}>
+              <Text
+                style={[styles.summaryTotalLabel, { color: theme.colors.text }]}
+              >
                 Total Amount
               </Text>
-              <Text style={[styles.summaryTotalValue, { color: theme.colors.primary }]}>
+              <Text
+                style={[
+                  styles.summaryTotalValue,
+                  { color: theme.colors.primary },
+                ]}
+              >
                 ₦{totals.total.toLocaleString()}
               </Text>
             </View>
@@ -669,25 +842,33 @@ export default function NewSaleScreen({ navigation, route }: any) {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.cancelButton, { 
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              }]}
+              style={[
+                styles.cancelButton,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
               onPress={() => navigation.goBack()}
               disabled={processing}
             >
-              <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>
+              <Text
+                style={[styles.cancelButtonText, { color: theme.colors.text }]}
+              >
                 Cancel
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.completeButton,
-                { 
-                  backgroundColor: cart.length === 0 ? theme.colors.textTertiary : theme.colors.primary,
+                {
+                  backgroundColor:
+                    cart.length === 0
+                      ? theme.colors.textTertiary
+                      : theme.colors.primary,
                   opacity: processing ? 0.7 : 1,
-                }
+                },
               ]}
               onPress={handleCompleteSale}
               disabled={cart.length === 0 || processing}
@@ -696,8 +877,17 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 <ActivityIndicator color={theme.colors.white} />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle-outline" size={20} color={theme.colors.white} />
-                  <Text style={[styles.completeButtonText, { color: theme.colors.white }]}>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={20}
+                    color={theme.colors.white}
+                  />
+                  <Text
+                    style={[
+                      styles.completeButtonText,
+                      { color: theme.colors.white },
+                    ]}
+                  >
                     Complete Sale
                   </Text>
                 </>
@@ -716,8 +906,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   keyboardView: {
     flex: 1,
@@ -726,9 +916,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
@@ -738,22 +928,22 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   clearButton: {
     padding: 8,
     borderRadius: 8,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   searchInput: {
     flex: 1,
@@ -766,7 +956,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
   },
   productsList: {
@@ -777,14 +967,14 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   productInfo: {
     marginBottom: 12,
   },
   productName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   productDetails: {
@@ -795,46 +985,46 @@ const styles = StyleSheet.create({
   },
   productStock: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   productPrice: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   priceText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   addButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   cartSection: {
     marginBottom: 24,
     paddingHorizontal: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   cartTotal: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptyCart: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 40,
   },
   emptyCartText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 12,
     marginBottom: 4,
   },
@@ -848,22 +1038,22 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   cartItemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   cartItemName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     flex: 1,
     marginRight: 12,
   },
   cartItemDetails: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 12,
   },
@@ -872,13 +1062,13 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(148, 163, 184, 0.1)",
     borderRadius: 8,
     padding: 4,
   },
@@ -886,48 +1076,48 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   quantityInput: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
     minWidth: 40,
   },
   priceInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
   },
   currency: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginRight: 4,
   },
   priceInput: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   cartItemTotal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(148, 163, 184, 0.1)',
+    borderTopColor: "rgba(148, 163, 184, 0.1)",
   },
   totalLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   totalAmount: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cartSeparator: {
     height: 12,
@@ -941,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 8,
   },
   input: {
@@ -952,23 +1142,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   paymentMethods: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
   paymentMethodButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     gap: 8,
-    minWidth: '48%',
+    minWidth: "48%",
   },
   paymentMethodText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   textArea: {
     fontSize: 16,
@@ -977,7 +1167,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   summarySection: {
     marginHorizontal: 20,
@@ -985,17 +1175,17 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   summaryTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   summaryLabel: {
@@ -1003,7 +1193,7 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   summaryDivider: {
     height: 1,
@@ -1011,14 +1201,14 @@ const styles = StyleSheet.create({
   },
   summaryTotalLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   summaryTotalValue: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 20,
     gap: 12,
   },
@@ -1027,23 +1217,23 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     borderWidth: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   completeButton: {
     flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
   },
   completeButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
