@@ -123,10 +123,10 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   const addToCart = (product: Product, size?: string) => {
     setCart((prev) => {
-      const existingItem = prev.find((item) => 
-        item.product.id === product.id && item.size === size
+      const existingItem = prev.find(
+        (item) => item.product.id === product.id && item.size === size
       );
-      
+
       if (existingItem) {
         return prev.map((item) =>
           item.product.id === product.id && item.size === size
@@ -149,39 +149,83 @@ export default function NewSaleScreen({ navigation, route }: any) {
   };
 
   const handleProductScanned = (scannedProduct: any) => {
-    // Create product object from scanned data
-    const product: Product = {
-      id: scannedProduct.productId || `temp_${Date.now()}`,
-      name: scannedProduct.name,
-      sku: scannedProduct.sku || `SCAN_${Date.now()}`,
-      category: scannedProduct.category || "Scanned",
-      currentStock: scannedProduct.currentStock || 999,
-      sellingPrice: scannedProduct.sellingPrice || 0,
-      unit: scannedProduct.unit || "piece",
-      hasSizes: scannedProduct.hasSizes,
-      sizeOptions: scannedProduct.sizeOptions ? 
-        JSON.stringify(scannedProduct.sizeOptions) : undefined,
-    };
+    console.log("Scanned product received:", scannedProduct);
 
-    addToCart(product, scannedProduct.size);
-    
-    Alert.alert(
-      "Product Added",
-      `${scannedProduct.name} ${scannedProduct.size ? `(${scannedProduct.size})` : ''} added to cart`,
-      [{ text: "OK" }]
-    );
+    // If we have a matched product with productId, use it directly
+    if (
+      scannedProduct.productId &&
+      scannedProduct.productId.startsWith("prod_")
+    ) {
+      // This is a real product from database
+      const product: Product = {
+        id: scannedProduct.productId,
+        name: scannedProduct.name,
+        sku: scannedProduct.sku || `SCAN_${Date.now()}`,
+        category: scannedProduct.category || "Scanned",
+        currentStock: scannedProduct.currentStock || 0,
+        sellingPrice: scannedProduct.sellingPrice || 0,
+        unit: scannedProduct.unit || "piece",
+        hasSizes: scannedProduct.hasSizes,
+        sizeOptions: scannedProduct.sizeOptions
+          ? JSON.stringify(scannedProduct.sizeOptions)
+          : undefined,
+      };
+
+      addToCart(product, scannedProduct.size);
+
+      Alert.alert(
+        "✅ Product Added to Cart",
+        `${scannedProduct.name} has been added to your cart.\n\n` +
+          `Price: ₦${scannedProduct.sellingPrice?.toLocaleString()}\n` +
+          `Stock: ${scannedProduct.currentStock} ${scannedProduct.unit}`,
+        [{ text: "OK" }]
+      );
+    } else {
+      // This is a temporary/scanned product (no database match)
+      const product: Product = {
+        id: scannedProduct.productId || `temp_${Date.now()}`,
+        name: scannedProduct.name,
+        sku: scannedProduct.sku || `SCAN_${Date.now()}`,
+        category: scannedProduct.category || "Scanned",
+        currentStock: scannedProduct.currentStock || 999,
+        sellingPrice: scannedProduct.sellingPrice || 0,
+        unit: scannedProduct.unit || "piece",
+        hasSizes: scannedProduct.hasSizes,
+        sizeOptions: scannedProduct.sizeOptions
+          ? JSON.stringify(scannedProduct.sizeOptions)
+          : undefined,
+      };
+
+      addToCart(product, scannedProduct.size);
+
+      Alert.alert(
+        "Product Added",
+        `${scannedProduct.name} ${
+          scannedProduct.size ? `(${scannedProduct.size})` : ""
+        } added to cart`,
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const removeFromCart = (productId: string, size?: string) => {
-    setCart((prev) => prev.filter((item) => 
-      !(item.product.id === productId && item.size === size)
-    ));
+    setCart((prev) =>
+      prev.filter(
+        (item) => !(item.product.id === productId && item.size === size)
+      )
+    );
   };
 
-  const updateCartItem = (productId: string, size: string | undefined, updates: Partial<CartItem>) => {
+  const updateCartItem = (
+    productId: string,
+    size: string | undefined,
+    updates: Partial<CartItem>
+  ) => {
     setCart((prev) =>
       prev.map((item) =>
-        item.product.id === productId && item.size === size ? { ...item, ...updates } : item
+        item.product.id === productId && item.size === size
+          ? { ...item, ...updates }
+          : item
       )
     );
   };
@@ -206,14 +250,20 @@ export default function NewSaleScreen({ navigation, route }: any) {
     };
   };
 
-  const handleQuantityChange = (productId: string, size: string | undefined, newQuantity: string) => {
+  const handleQuantityChange = (
+    productId: string,
+    size: string | undefined,
+    newQuantity: string
+  ) => {
     const quantity = parseInt(newQuantity) || 0;
     if (quantity < 1) {
       removeFromCart(productId, size);
       return;
     }
 
-    const cartItem = cart.find((item) => item.product.id === productId && item.size === size);
+    const cartItem = cart.find(
+      (item) => item.product.id === productId && item.size === size
+    );
     if (cartItem && quantity > cartItem.product.currentStock) {
       Alert.alert(
         "Error",
@@ -225,9 +275,15 @@ export default function NewSaleScreen({ navigation, route }: any) {
     updateCartItem(productId, size, { quantity });
   };
 
-  const handleDiscountChange = (productId: string, size: string | undefined, discount: string) => {
+  const handleDiscountChange = (
+    productId: string,
+    size: string | undefined,
+    discount: string
+  ) => {
     const discountValue = parseFloat(discount) || 0;
-    const cartItem = cart.find((item) => item.product.id === productId && item.size === size);
+    const cartItem = cart.find(
+      (item) => item.product.id === productId && item.size === size
+    );
     if (cartItem && discountValue > cartItem.unitPrice) {
       Alert.alert("Error", "Discount cannot exceed unit price");
       return;
@@ -235,7 +291,11 @@ export default function NewSaleScreen({ navigation, route }: any) {
     updateCartItem(productId, size, { discount: discountValue });
   };
 
-  const handlePriceChange = (productId: string, size: string | undefined, price: string) => {
+  const handlePriceChange = (
+    productId: string,
+    size: string | undefined,
+    price: string
+  ) => {
     const priceValue = parseFloat(price) || 0;
     if (priceValue < 0) {
       Alert.alert("Error", "Price cannot be negative");
@@ -413,22 +473,28 @@ export default function NewSaleScreen({ navigation, route }: any) {
   );
 
   const renderCartItem = ({ item }: { item: CartItem }) => {
-    const cartItemId = `${item.product.id}-${item.size || 'no-size'}`;
-    
+    const cartItemId = `${item.product.id}-${item.size || "no-size"}`;
+
     return (
-      <View style={[styles.cartItem, { backgroundColor: theme.colors.surface }]}>
+      <View
+        style={[styles.cartItem, { backgroundColor: theme.colors.surface }]}
+      >
         <View style={styles.cartItemHeader}>
           <View style={styles.cartItemTitle}>
             <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
               {item.product.name}
             </Text>
             {item.size && (
-              <Text style={[styles.cartItemSize, { color: theme.colors.primary }]}>
+              <Text
+                style={[styles.cartItemSize, { color: theme.colors.primary }]}
+              >
                 ({item.size})
               </Text>
             )}
           </View>
-          <TouchableOpacity onPress={() => removeFromCart(item.product.id, item.size)}>
+          <TouchableOpacity
+            onPress={() => removeFromCart(item.product.id, item.size)}
+          >
             <Ionicons name="close" size={20} color={theme.colors.error} />
           </TouchableOpacity>
         </View>
@@ -545,11 +611,17 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
         {/* Line Total */}
         <View style={styles.cartItemTotal}>
-          <Text style={[styles.totalLabel, { color: theme.colors.textTertiary }]}>
+          <Text
+            style={[styles.totalLabel, { color: theme.colors.textTertiary }]}
+          >
             Line Total:
           </Text>
           <Text style={[styles.totalAmount, { color: theme.colors.text }]}>
-            ₦{((item.unitPrice - item.discount) * item.quantity).toLocaleString()}
+            ₦
+            {(
+              (item.unitPrice - item.discount) *
+              item.quantity
+            ).toLocaleString()}
           </Text>
         </View>
       </View>
@@ -596,18 +668,35 @@ export default function NewSaleScreen({ navigation, route }: any) {
             </Text>
             <View style={styles.headerRight}>
               <TouchableOpacity
-                style={[styles.scanButton, { backgroundColor: theme.colors.primary + "20" }]}
+                style={[
+                  styles.scanButton,
+                  { backgroundColor: theme.colors.primary + "20" },
+                ]}
                 onPress={handleScanPress}
               >
-                <Ionicons name="scan-outline" size={20} color={theme.colors.primary} />
-                <Text style={[styles.scanButtonText, { color: theme.colors.primary }]}>
+                <Ionicons
+                  name="scan-outline"
+                  size={20}
+                  color={theme.colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.scanButtonText,
+                    { color: theme.colors.primary },
+                  ]}
+                >
                   AI Scan
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.clearButton,
-                  { backgroundColor: cart.length > 0 ? theme.colors.error + "20" : theme.colors.surfaceLight },
+                  {
+                    backgroundColor:
+                      cart.length > 0
+                        ? theme.colors.error + "20"
+                        : theme.colors.surfaceLight,
+                  },
                 ]}
                 onPress={() => {
                   if (cart.length > 0) {
@@ -630,7 +719,11 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 <Ionicons
                   name="trash-outline"
                   size={20}
-                  color={cart.length > 0 ? theme.colors.error : theme.colors.textTertiary}
+                  color={
+                    cart.length > 0
+                      ? theme.colors.error
+                      : theme.colors.textTertiary
+                  }
                 />
               </TouchableOpacity>
             </View>
@@ -638,19 +731,40 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
           {/* Scan Banner */}
           <TouchableOpacity
-            style={[styles.scanBanner, { backgroundColor: theme.colors.primary + "10" }]}
+            style={[
+              styles.scanBanner,
+              { backgroundColor: theme.colors.primary + "10" },
+            ]}
             onPress={handleScanPress}
           >
-            <Ionicons name="scan-outline" size={24} color={theme.colors.primary} />
+            <Ionicons
+              name="scan-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
             <View style={styles.scanBannerContent}>
-              <Text style={[styles.scanBannerTitle, { color: theme.colors.primary }]}>
+              <Text
+                style={[
+                  styles.scanBannerTitle,
+                  { color: theme.colors.primary },
+                ]}
+              >
                 Quick AI Scan
               </Text>
-              <Text style={[styles.scanBannerText, { color: theme.colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.scanBannerText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 Use camera to instantly identify products
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={theme.colors.primary}
+            />
           </TouchableOpacity>
 
           {/* Search Bar */}
@@ -736,7 +850,9 @@ export default function NewSaleScreen({ navigation, route }: any) {
               <FlatList
                 data={cart}
                 renderItem={renderCartItem}
-                keyExtractor={(item) => `${item.product.id}-${item.size || 'no-size'}`}
+                keyExtractor={(item) =>
+                  `${item.product.id}-${item.size || "no-size"}`
+                }
                 scrollEnabled={false}
                 contentContainerStyle={styles.cartList}
                 ItemSeparatorComponent={() => (
@@ -1012,7 +1128,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  
+
   // Header
   header: {
     flexDirection: "row",
@@ -1050,7 +1166,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
   },
-  
+
   // Scan Banner
   scanBanner: {
     flexDirection: "row",
@@ -1075,7 +1191,7 @@ const styles = StyleSheet.create({
   scanBannerText: {
     fontSize: 13,
   },
-  
+
   // Search
   searchContainer: {
     flexDirection: "row",
@@ -1093,7 +1209,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 12,
   },
-  
+
   // Products Section
   productsSection: {
     marginBottom: 24,
@@ -1148,7 +1264,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  
+
   // Cart Section
   cartSection: {
     marginBottom: 24,
@@ -1278,7 +1394,7 @@ const styles = StyleSheet.create({
   cartSeparator: {
     height: 12,
   },
-  
+
   // Customer & Payment
   detailsSection: {
     marginBottom: 24,
@@ -1327,7 +1443,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     textAlignVertical: "top",
   },
-  
+
   // Summary
   summarySection: {
     marginHorizontal: 20,
@@ -1367,7 +1483,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-  
+
   // Action Buttons
   actionButtons: {
     flexDirection: "row",
