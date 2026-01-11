@@ -14,8 +14,9 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import AIScannerService from "../../services/aiScanner.service";
-import axios from 'axios';
-import config from '../../config';
+import ProductSelectionModal from "./ProductSelectionModal";
+import axios from "axios";
+import config from "../../config";
 
 const API_URL = config.API_URL;
 
@@ -42,6 +43,11 @@ export default function AIScanner({
     Array<{ value: string; label: string }>
   >([]);
   const [step, setStep] = useState<"camera" | "result" | "manual">("camera");
+  const [showProductSelection, setShowProductSelection] = useState(false);
+  const [productAlternatives, setProductAlternatives] = useState<any[]>([]);
+  const [recognitionSearchTerms, setRecognitionSearchTerms] = useState<
+    string[]
+  >([]);
 
   const cameraRef = useRef<CameraView>(null);
 
@@ -61,133 +67,252 @@ export default function AIScanner({
   };
 
   const handleTakePicture = async () => {
-  if (!cameraRef.current) return;
+    if (!cameraRef.current) return;
 
-  setIsScanning(true);
-  try {
-    const photo = await cameraRef.current.takePictureAsync({
-      quality: 0.8,
-      base64: false,
-    });
+    setIsScanning(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+      });
 
-    setScannedImage(photo.uri);
+      setScannedImage(photo.uri);
 
-    // Call AI service
-    const result = await AIScannerService.scanProduct(photo.uri, token);
+      // Call AI service
+      const result = await AIScannerService.scanProduct(photo.uri, token);
 
-    if (result.success && result.data.success) {
-      const productData = result.data.primaryMatch || result.data;
-      setRecognitionResult(productData);
-
-      // Get sizes if product has sizes
-      if (productData.hasSizes && productData.productId) {
-        const sizes = await AIScannerService.getProductSizes(
-          productData.productId,
-          token
-        );
-        setAvailableSizes(sizes);
-        if (sizes.length > 0) {
-          setSelectedSize(sizes[0].value);
+      if (result.success) {
+        // Store search terms
+        if (result.data.searchTerms) {
+          setRecognitionSearchTerms(result.data.searchTerms);
         }
-      }
 
-      setStep("result");
-      
-      // Show appropriate message based on match
-      if (result.data.primaryMatch) {
-        Alert.alert(
-          "Product Found! 🎯",
-          `Successfully matched with: ${result.data.primaryMatch.name}\n\n` +
-          `Category: ${result.data.primaryMatch.category}\n` +
-          `Price: ₦${result.data.primaryMatch.sellingPrice?.toLocaleString()}\n` +
-          `Stock: ${result.data.primaryMatch.currentStock} ${result.data.primaryMatch.unit}\n\n` +
-          `Confidence: ${Math.round((result.data.confidence || 0) * 100)}%`,
-          [{ text: "Add to Cart" }]
-        );
-      } else if (result.data.alternatives && result.data.alternatives.length > 0) {
-        // Show alternatives for user to choose from
-        Alert.alert(
-          "Multiple Matches Found",
-          "Select a product:",
-          result.data.alternatives.map((alt: { name: any; confidence: number; productId: string; }) => ({
-            text: `${alt.name} (${Math.round(alt.confidence * 100)}%)`,
-            onPress: () => {
-              // Fetch the selected product details
-              handleSelectAlternative(alt.productId);
+        // FIRST: Check if AI recognition was successful
+        if (!result.data.success) {
+          Alert.alert(
+            "Scan Failed",
+            result.data.message || "Could not recognize product.",
+            [
+              { text: "Try Again", onPress: resetScanner },
+              { text: "Manual Search", onPress: () => setStep("manual") },
+            ]
+          );
+          return;
+        }
+
+        // SECOND: Check if we have ANY matches (primary OR alternatives)
+        const hasPrimaryMatch =
+          result.data.primaryMatch && result.data.primaryMatch.productId;
+        const hasAlternatives =
+          result.data.alternatives && result.data.alternatives.length > 0;
+
+        if (!hasPrimaryMatch && !hasAlternatives) {
+          // No match found at all
+          Alert.alert(
+            "Product Not in Inventory",
+            `The AI recognized this as: ${result.data.searchTerms
+              ?.slice(0, 3)
+              .join(", ")}\n\n` +
+              "This product is not currently in your inventory.\n\n" +
+              "Options:",
+            [
+              {
+                text: "Add as New Product",
+                onPress: () => {
+                  // Navigate to add product screen or create temp product
+                  onClose(); // Close scanner
+                  // You can add navigation to product creation screen here
+                  Alert.alert(
+                    "Add New Product",
+                    "Would you like to add this product to your inventory?",
+                    [
+                      {
+                        text: "Yes, Add Product",
+                        onPress: () => {
+                          // You can navigate to product creation with the scanned data
+                          console.log("Add product with data:", {
+                            name: result.data.searchTerms?.[0] || "New Product",
+                            category: "To be categorized",
+                            searchTerms: result.data.searchTerms,
+                          });
+                        },
+                      },
+                      { text: "Cancel", style: "cancel" },
+                    ]
+                  );
+                },
+              },
+              {
+                text: "Add to Cart as Unknown",
+                onPress: () => {
+                  const tempProduct = {
+                    productId: `temp_${Date.now()}`,
+                    name:
+                      result.data.searchTerms?.[0] || "Unidentified Product",
+                    sku: `SCAN_${Date.now()}`,
+                    category: "Scanned",
+                    sellingPrice: 0,
+                    currentStock: 999,
+                    unit: "piece",
+                    confidence: result.data.confidence || 0.5,
+                    searchTerms: result.data.searchTerms,
+                  };
+                  setRecognitionResult(tempProduct);
+                  setStep("result");
+                },
+              },
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: resetScanner,
+              },
+            ]
+          );
+          return;
+        }
+
+        // THIRD: Check if we have alternatives (multiple matches)
+        if (hasAlternatives) {
+          // Show product selection modal with ALL alternatives
+          setProductAlternatives(result.data.alternatives);
+          setShowProductSelection(true);
+          return;
+        }
+
+        // FOURTH: We have a primary match
+        if (hasPrimaryMatch) {
+          const productData = result.data.primaryMatch;
+          setRecognitionResult(productData);
+
+          // Get sizes if product has sizes
+          if (productData.hasSizes && productData.productId) {
+            const sizes = await AIScannerService.getProductSizes(
+              productData.productId,
+              token
+            );
+            setAvailableSizes(sizes);
+            if (sizes.length > 0) {
+              setSelectedSize(sizes[0].value);
             }
-          })).concat([
-            { 
-              text: "Cancel", 
-              style: "cancel" 
-            }
-          ])
-        );
+          }
+
+          setStep("result");
+
+          Alert.alert(
+            "✅ Product Found!",
+            `Successfully matched with: ${productData.name}\n\n` +
+              `Price: ₦${productData.sellingPrice?.toLocaleString()}\n` +
+              `Stock: ${productData.currentStock} ${productData.unit}`,
+            [{ text: "OK" }]
+          );
+        }
       } else {
         Alert.alert(
-          "Product Recognized",
-          `The AI recognized: ${result.data.searchTerms
-            ?.slice(0, 3)
-            .join(", ")}\n\n` +
-            `Confidence: ${Math.round(
-              (result.data.confidence || 0) * 100
-            )}%\n` +
-            `No exact match found in inventory.`,
+          "Scan Failed",
+          "Could not recognize product. Try manual selection.",
+          [
+            { text: "Try Again", onPress: resetScanner },
+            { text: "Manual Select", onPress: () => setStep("manual") },
+          ]
+        );
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to scan");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Add this function to handle product selection
+  const handleProductSelected = async (selectedProduct: any) => {
+    try {
+      // Fetch full product details
+      const response = await axios.get(
+        `${API_URL}/products/${selectedProduct.productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.success) {
+        const fullProduct = response.data.data;
+
+        // Create recognition result with the selected product
+        const productData = {
+          ...selectedProduct,
+          ...fullProduct,
+          productId: fullProduct.id,
+          confidence: selectedProduct.confidence,
+        };
+
+        setRecognitionResult(productData);
+        setShowProductSelection(false);
+        setStep("result");
+
+        // Get sizes if needed
+        if (fullProduct.hasSizes) {
+          const sizes = await AIScannerService.getProductSizes(
+            fullProduct.id,
+            token
+          );
+          setAvailableSizes(sizes);
+          if (sizes.length > 0) {
+            setSelectedSize(sizes[0].value);
+          }
+        }
+
+        Alert.alert(
+          "Product Selected",
+          `${fullProduct.name} has been selected\n\n` +
+            `Price: ₦${fullProduct.sellingPrice?.toLocaleString()}\n` +
+            `Stock: ${fullProduct.currentStock} ${fullProduct.unit}`,
           [{ text: "OK" }]
         );
       }
-    } else {
-      Alert.alert(
-        "Scan Failed",
-        result.data?.message ||
-          "Could not recognize product. Try manual selection.",
-        [
-          { text: "Try Again", onPress: resetScanner },
-          { text: "Manual Select", onPress: () => setStep("manual") },
-        ]
-      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch product details");
+      setShowProductSelection(false);
     }
-  } catch (error: any) {
-    Alert.alert("Error", error.message || "Failed to scan");
-  } finally {
-    setIsScanning(false);
-  }
-};
+  };
 
-// Add this new function to handle alternative selection
-const handleSelectAlternative = async (productId: string) => {
-  try {
-    // Fetch product details for the selected alternative
-    const response = await axios.get(`${API_URL}/products/${productId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    if (response.data.success) {
-      const product = response.data.data;
-      setRecognitionResult({
-        ...product,
-        productId: product.id,
-        confidence: 0.8, // Default confidence for manual selection
+  // Add this new function to handle alternative selection
+  const handleSelectAlternative = async (productId: string) => {
+    try {
+      // Fetch product details for the selected alternative
+      const response = await axios.get(`${API_URL}/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      // Get sizes if needed
-      if (product.hasSizes) {
-        const sizes = await AIScannerService.getProductSizes(product.id, token);
-        setAvailableSizes(sizes);
-        if (sizes.length > 0) {
-          setSelectedSize(sizes[0].value);
+
+      if (response.data.success) {
+        const product = response.data.data;
+        setRecognitionResult({
+          ...product,
+          productId: product.id,
+          confidence: 0.8, // Default confidence for manual selection
+        });
+
+        // Get sizes if needed
+        if (product.hasSizes) {
+          const sizes = await AIScannerService.getProductSizes(
+            product.id,
+            token
+          );
+          setAvailableSizes(sizes);
+          if (sizes.length > 0) {
+            setSelectedSize(sizes[0].value);
+          }
         }
+
+        Alert.alert(
+          "Product Selected",
+          `${product.name} selected for adding to cart`,
+          [{ text: "OK" }]
+        );
       }
-      
-      Alert.alert(
-        "Product Selected",
-        `${product.name} selected for adding to cart`,
-        [{ text: "OK" }]
-      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch product details");
     }
-  } catch (error) {
-    Alert.alert("Error", "Failed to fetch product details");
-  }
-};
+  };
 
   const handleManualSearch = async (query: string) => {
     try {
@@ -602,6 +727,18 @@ const handleSelectAlternative = async (productId: string) => {
           </View>
         )}
       </View>
+      <ProductSelectionModal
+        visible={showProductSelection}
+        onClose={() => setShowProductSelection(false)}
+        alternatives={productAlternatives}
+        searchTerms={recognitionSearchTerms}
+        onProductSelected={handleProductSelected}
+        message={
+          productAlternatives.length > 0
+            ? `Found ${productAlternatives.length} possible matches:`
+            : "Select a product:"
+        }
+      />
     </Modal>
   );
 }
