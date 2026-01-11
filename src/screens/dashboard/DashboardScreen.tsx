@@ -330,6 +330,48 @@ export default function DashboardScreen({ navigation }: any) {
     </View>
   );
 
+  // Check user role
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const isSalesAgent = user?.role === "SALES_AGENT";
+  const isSupervisor = user?.role === "SUPERVISOR";
+
+  // Role-based navigation handlers
+  const handleInventoryNavigation = () => {
+    if (isSuperAdmin || isSupervisor) {
+      navigation.navigate("Inventory");
+    }
+  };
+
+  const handleReportsNavigation = () => {
+    if (isSuperAdmin || isSupervisor) {
+      navigation.navigate("Reports");
+    }
+  };
+
+  const handleCamerasNavigation = () => {
+    if (isSuperAdmin) {
+      navigation.navigate("Cameras");
+    }
+  };
+
+  const handleInventoryChecksNavigation = () => {
+    if (isSuperAdmin || isSupervisor) {
+      navigation.navigate("InventoryCheck");
+    }
+  };
+
+  const handleProductsNavigation = () => {
+    if (isSuperAdmin || isSupervisor) {
+      navigation.navigate("Products");
+    }
+  };
+
+  const handleStaffNavigation = () => {
+    if (isSuperAdmin) {
+      navigation.navigate("Staff");
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView
@@ -391,21 +433,23 @@ export default function DashboardScreen({ navigation }: any) {
             subtitle={`${formatCurrency(stats.todaySales)} revenue`}
             onPress={() => navigation.navigate("Sales")}
           />
-          <StatCard
-            title="Total Revenue"
-            value={formatCurrency(stats.totalRevenue)}
-            icon="cash-outline"
-            color={theme.colors.success}
-            subtitle="This year"
-            onPress={() => navigation.navigate("Reports")}
-          />
+          {(isSuperAdmin || isSupervisor) && (
+            <StatCard
+              title="Total Revenue"
+              value={formatCurrency(stats.totalRevenue)}
+              icon="cash-outline"
+              color={theme.colors.success}
+              subtitle="This year"
+              onPress={() => isSuperAdmin && navigation.navigate("Reports")}
+            />
+          )}
           <StatCard
             title="Total Products"
             value={stats.totalProducts}
             icon="cube-outline"
             color={theme.colors.info}
             subtitle={`${stats.lowStockCount} low stock`}
-            onPress={() => navigation.navigate("Products")}
+            onPress={handleProductsNavigation}
           />
           <StatCard
             title="Alerts"
@@ -425,32 +469,30 @@ export default function DashboardScreen({ navigation }: any) {
           />
         </View>
 
-        {/* Inventory Status */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            Inventory Status
-          </Text>
-          <View style={styles.inventoryStatus}>
-            <StatCard
-              title="Low Stock"
-              value={stats.lowStockCount}
-              icon="warning-outline"
-              color={theme.colors.warning}
-              onPress={() =>
-                navigation.navigate("Inventory", { filter: "low-stock" })
-              }
-            />
-            <StatCard
-              title="Out of Stock"
-              value={stats.outOfStockCount}
-              icon="close-circle-outline"
-              color={theme.colors.error}
-              onPress={() =>
-                navigation.navigate("Inventory", { filter: "out-of-stock" })
-              }
-            />
+        {/* Inventory Status - Only for Admin/Supervisor */}
+        {(isSuperAdmin || isSupervisor) && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Inventory Status
+            </Text>
+            <View style={styles.inventoryStatus}>
+              <StatCard
+                title="Low Stock"
+                value={stats.lowStockCount}
+                icon="warning-outline"
+                color={theme.colors.warning}
+                onPress={() => handleInventoryNavigation()}
+              />
+              <StatCard
+                title="Out of Stock"
+                value={stats.outOfStockCount}
+                icon="close-circle-outline"
+                color={theme.colors.error}
+                onPress={() => handleInventoryNavigation()}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Quick Actions */}
         <View style={styles.section}>
@@ -464,55 +506,83 @@ export default function DashboardScreen({ navigation }: any) {
               color={theme.colors.primary}
               onPress={() => navigation.navigate("NewSale")}
             />
-            <QuickAction
-              title="Inventory"
-              icon="clipboard-outline"
-              color={theme.colors.success}
-              onPress={() => navigation.navigate("Inventory")}
-            />
-            <QuickAction
-              title="Add Product"
-              icon="add-outline"
-              color={theme.colors.info}
-              onPress={() => navigation.navigate("AddProduct")}
-            />
-            <QuickAction
-              title="Reports"
-              icon="document-text-outline"
-              color={theme.colors.warning}
-              onPress={() => navigation.navigate("Reports")}
-            />
+            
+            {(isSuperAdmin || isSupervisor) && (
+              <>
+                <QuickAction
+                  title="Inventory"
+                  icon="clipboard-outline"
+                  color={theme.colors.success}
+                  onPress={handleInventoryNavigation}
+                />
+                <QuickAction
+                  title="Add Product"
+                  icon="add-outline"
+                  color={theme.colors.info}
+                  onPress={() => navigation.navigate("AddProduct")}
+                />
+              </>
+            )}
+
+            {(isSuperAdmin || isSupervisor) && (
+              <QuickAction
+                title="Reports"
+                icon="document-text-outline"
+                color={theme.colors.warning}
+                onPress={handleReportsNavigation}
+              />
+            )}
+
+            {/* Additional actions for Sales Agent */}
+            {isSalesAgent && (
+              <>
+                <QuickAction
+                  title="My Sales"
+                  icon="list-outline"
+                  color={theme.colors.info}
+                  onPress={() => navigation.navigate("Sales")}
+                />
+                <QuickAction
+                  title="View Products"
+                  icon="cube-outline"
+                  color={theme.colors.success}
+                  onPress={() => navigation.navigate("Products")}
+                />
+              </>
+            )}
           </View>
         </View>
 
-        {/* Security & System Status */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            System Status
-          </Text>
-          <View style={styles.systemStatus}>
-            <StatCard
-              title="Active Cameras"
-              value={stats.activeDevices}
-              icon="camera-outline"
-              color={
-                stats.activeDevices > 0
-                  ? theme.colors.success
-                  : theme.colors.error
-              }
-              subtitle={stats.activeDevices > 0 ? "Online" : "Offline"}
-              onPress={() => navigation.navigate("Cameras")}
-            />
-            <StatCard
-              title="Pending Checks"
-              value={stats.pendingChecks}
-              icon="time-outline"
-              color={theme.colors.warning}
-              subtitle="Requires attention"
-              onPress={() => navigation.navigate("InventoryChecks")}
-            />
+        {/* Security & System Status - Only for Admin */}
+        {isSuperAdmin && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              System Status
+            </Text>
+            <View style={styles.systemStatus}>
+              <StatCard
+                title="Active Cameras"
+                value={stats.activeDevices}
+                icon="camera-outline"
+                color={
+                  stats.activeDevices > 0
+                    ? theme.colors.success
+                    : theme.colors.error
+                }
+                subtitle={stats.activeDevices > 0 ? "Online" : "Offline"}
+                onPress={handleCamerasNavigation}
+              />
+              <StatCard
+                title="Pending Checks"
+                value={stats.pendingChecks}
+                icon="time-outline"
+                color={theme.colors.warning}
+                subtitle="Requires attention"
+                onPress={handleInventoryChecksNavigation}
+              />
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Recent Activity */}
         <View style={styles.section}>

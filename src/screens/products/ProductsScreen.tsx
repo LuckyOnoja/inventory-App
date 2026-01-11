@@ -18,6 +18,7 @@ import FilterModal from '../../components/products/FilterModal';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import config from '../../config';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Add this import
 
 const API_URL = config.API_URL;
 
@@ -186,7 +187,7 @@ export default function ProductsScreen({ navigation }: any) {
         Products ({filteredProducts.length})
       </Text>
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
         onPress={handleAddProduct}
       >
         <Ionicons name="add" size={24} color={theme.colors.white} />
@@ -195,7 +196,10 @@ export default function ProductsScreen({ navigation }: any) {
   );
 
   const renderSearchBar = () => (
-    <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.searchContainer, { 
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border 
+    }]}>
       <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
       <TextInput
         style={[styles.searchInput, { color: theme.colors.text }]}
@@ -268,14 +272,14 @@ export default function ProductsScreen({ navigation }: any) {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
       {renderSearchBar()}
 
@@ -304,7 +308,7 @@ export default function ProductsScreen({ navigation }: any) {
         categories={getCategories()}
         onFilterChange={handleFilterChange}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -322,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 20, // Reduced padding since SafeAreaView handles top inset
     paddingBottom: 16,
   },
   headerTitle: {
@@ -333,7 +337,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366F1',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -346,7 +349,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
   },
   searchInput: {
     flex: 1,

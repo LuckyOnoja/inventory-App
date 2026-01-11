@@ -113,12 +113,6 @@ export default function ProfileScreen({ navigation }: any) {
               Manage your account and settings
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.settingsButton, { backgroundColor: theme.colors.surface }]}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Ionicons name="settings-outline" size={20} color={theme.colors.text} />
-          </TouchableOpacity>
         </View>
 
         {/* Profile Card */}
@@ -255,7 +249,7 @@ export default function ProfileScreen({ navigation }: any) {
         </View>
 
         {/* Menu Items */}
-        <View style={styles.section}>
+        {/*<View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             Account & Settings
           </Text>
@@ -281,7 +275,7 @@ export default function ProfileScreen({ navigation }: any) {
               </React.Fragment>
             ))}
           </View>
-        </View>
+        </View>*/}
 
         {/* Logout Button */}
         <TouchableOpacity
