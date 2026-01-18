@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "inventory-app",
-    "slug": "inventory-app",
+    "name": "ToryAi",
+    "slug": "toryai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,15 +13,27 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.luckylk.toryai",
+      "buildNumber": "1.0.0",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow access to photos",
+        "NSCameraUsageDescription": "Allow access to camera"
+      }
     },
     "android": {
+      "package": "com.luckylk.toryai",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,6 +51,12 @@
           "photosPermission": "Allow Inventory Guard to access your photos"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "20b38f3d-c7d3-4bcf-94d9-972d8816316a"
+      }
+    },
+    "owner": "lucky_lk"
   }
 }
