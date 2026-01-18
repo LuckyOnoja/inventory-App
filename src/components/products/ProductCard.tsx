@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { GlassCard } from '../ui/GlassCard';
 
 interface Product {
   id: string;
@@ -42,6 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         color: theme.colors.error,
         label: 'Out of Stock',
         icon: 'close-circle-outline' as const,
+        variant: 'error' as const,
       };
     }
     if (product.currentStock <= product.minStock) {
@@ -49,12 +51,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
         color: theme.colors.warning,
         label: 'Low Stock',
         icon: 'alert-circle-outline' as const,
+        variant: 'warning' as const,
       };
     }
     return {
       color: theme.colors.success,
       label: 'In Stock',
       icon: 'checkmark-circle-outline' as const,
+      variant: 'default' as const,
     };
   };
 
@@ -91,92 +95,98 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const CardContent = () => (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: theme.colors.surface }]}
+      activeOpacity={0.9}
       onPress={onPress}
-      activeOpacity={0.7}
     >
-      {/* Stock Status Indicator */}
-      <View style={[styles.statusIndicator, { backgroundColor: stockStatus.color + '20' }]}>
-        <Ionicons name={stockStatus.icon} size={16} color={stockStatus.color} />
-      </View>
+      <GlassCard
+        variant={stockStatus.variant}
+        style={styles.card}
+      >
+        <View style={styles.container}>
+          {/* Stock Status Indicator */}
+          <View style={[styles.statusIndicator, { backgroundColor: stockStatus.color + '20' }]}>
+            <Ionicons name={stockStatus.icon} size={16} color={stockStatus.color} />
+          </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Product Info Row */}
-        <View style={styles.productInfoRow}>
-          <View style={styles.productNameContainer}>
-            <Text style={[styles.productName, { color: theme.colors.text }]}>
-              {product.name}
-            </Text>
-            {product.sku && (
-              <Text style={[styles.skuText, { color: theme.colors.textTertiary }]}>
-                SKU: {product.sku}
-              </Text>
-            )}
-          </View>
-          <View style={[styles.stockBadge, { backgroundColor: stockStatus.color + '20' }]}>
-            <Text style={[styles.stockText, { color: stockStatus.color }]}>
-              {product.currentStock} {product.unit}
-            </Text>
-          </View>
-        </View>
-
-        {/* Category & Details */}
-        <View style={styles.detailsRow}>
-          <View style={styles.categoryContainer}>
-            <Ionicons name="pricetag-outline" size={12} color={theme.colors.textTertiary} />
-            <Text style={[styles.categoryText, { color: theme.colors.textTertiary }]}>
-              {product.category}
-            </Text>
-          </View>
-          <View style={styles.priceContainer}>
-            <Text style={[styles.priceText, { color: theme.colors.text }]}>
-              ₦{product.sellingPrice.toLocaleString()}
-            </Text>
-            <Text style={[styles.marginText, { 
-              color: profitMargin >= 0 ? theme.colors.success : theme.colors.error 
-            }]}>
-              {profitMargin >= 0 ? '+' : ''}{profitMargin}%
-            </Text>
-          </View>
-        </View>
-
-        {/* Stock Level & Min Stock */}
-        <View style={styles.stockInfoRow}>
-          <View style={styles.stockLevelContainer}>
-            <View style={styles.stockLevelBar}>
-              <View 
-                style={[
-                  styles.stockLevelFill,
-                  { 
-                    width: `${Math.min((product.currentStock / (product.minStock * 3)) * 100, 100)}%`,
-                    backgroundColor: stockStatus.color,
-                  }
-                ]} 
-              />
+          {/* Main Content */}
+          <View style={styles.content}>
+            {/* Product Info Row */}
+            <View style={styles.productInfoRow}>
+              <View style={styles.productNameContainer}>
+                <Text style={[styles.productName, { color: theme.colors.text }]}>
+                  {product.name}
+                </Text>
+                {product.sku && (
+                  <Text style={[styles.skuText, { color: theme.colors.textTertiary }]}>
+                    SKU: {product.sku}
+                  </Text>
+                )}
+              </View>
+              <View style={[styles.stockBadge, { backgroundColor: stockStatus.color + '20' }]}>
+                <Text style={[styles.stockText, { color: stockStatus.color }]}>
+                  {product.currentStock} {product.unit}
+                </Text>
+              </View>
             </View>
-            <Text style={[styles.minStockText, { color: theme.colors.textTertiary }]}>
-              Min: {product.minStock}
-            </Text>
-          </View>
-          <View style={styles.costContainer}>
-            <Text style={[styles.costLabel, { color: theme.colors.textTertiary }]}>
-              Cost:
-            </Text>
-            <Text style={[styles.costText, { color: theme.colors.textSecondary }]}>
-              ₦{product.costPrice.toLocaleString()}
-            </Text>
-          </View>
-        </View>
-      </View>
 
-      {/* Chevron */}
-      <Ionicons 
-        name="chevron-forward" 
-        size={20} 
-        color={theme.colors.textTertiary} 
-        style={styles.chevron}
-      />
+            {/* Category & Details */}
+            <View style={styles.detailsRow}>
+              <View style={styles.categoryContainer}>
+                <Ionicons name="pricetag-outline" size={12} color={theme.colors.textTertiary} />
+                <Text style={[styles.categoryText, { color: theme.colors.textTertiary }]}>
+                  {product.category}
+                </Text>
+              </View>
+              <View style={styles.priceContainer}>
+                <Text style={[styles.priceText, { color: theme.colors.text }]}>
+                  ₦{product.sellingPrice.toLocaleString()}
+                </Text>
+                <Text style={[styles.marginText, {
+                  color: profitMargin >= 0 ? theme.colors.success : theme.colors.error
+                }]}>
+                  {profitMargin >= 0 ? '+' : ''}{profitMargin}%
+                </Text>
+              </View>
+            </View>
+
+            {/* Stock Level & Min Stock */}
+            <View style={styles.stockInfoRow}>
+              <View style={styles.stockLevelContainer}>
+                <View style={styles.stockLevelBar}>
+                  <View
+                    style={[
+                      styles.stockLevelFill,
+                      {
+                        width: `${Math.min((product.currentStock / (product.minStock * 3)) * 100, 100)}%`,
+                        backgroundColor: stockStatus.color,
+                      }
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.minStockText, { color: theme.colors.textTertiary }]}>
+                  Min: {product.minStock}
+                </Text>
+              </View>
+              <View style={styles.costContainer}>
+                <Text style={[styles.costLabel, { color: theme.colors.textTertiary }]}>
+                  Cost:
+                </Text>
+                <Text style={[styles.costText, { color: theme.colors.textSecondary }]}>
+                  ₦{product.costPrice.toLocaleString()}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Chevron */}
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={theme.colors.textTertiary}
+            style={styles.chevron}
+          />
+        </View>
+      </GlassCard>
     </TouchableOpacity>
   );
 
@@ -188,13 +198,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  card: {
+    padding: 0, // Reset default padding since we manage it in container
+    marginVertical: 6,
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   statusIndicator: {
     width: 32,
@@ -305,13 +316,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 8,
+    marginBottom: 6, // Match card margin
+    marginTop: 6,
   },
   actionButton: {
-    width: 56,
+    width: 50,
+    height: '90%', // Slightly smaller to fit bounds
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
-    borderRadius: 12,
+    borderRadius: 16,
   },
 });
 

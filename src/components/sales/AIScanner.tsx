@@ -13,6 +13,8 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
+import { GlassView } from "../../components/ui/GlassView";
+import { GlassButton } from "../../components/ui/GlassButton";
 import AIScannerService from "../../services/aiScanner.service";
 import ProductSelectionModal from "./ProductSelectionModal";
 import axios from "axios";
@@ -113,8 +115,8 @@ export default function AIScanner({
             `The AI recognized this as: ${result.data.searchTerms
               ?.slice(0, 3)
               .join(", ")}\n\n` +
-              "This product is not currently in your inventory.\n\n" +
-              "Options:",
+            "This product is not currently in your inventory.\n\n" +
+            "Options:",
             [
               {
                 text: "Add as New Product",
@@ -201,8 +203,8 @@ export default function AIScanner({
           Alert.alert(
             "✅ Product Found!",
             `Successfully matched with: ${productData.name}\n\n` +
-              `Price: ₦${productData.sellingPrice?.toLocaleString()}\n` +
-              `Stock: ${productData.currentStock} ${productData.unit}`,
+            `Price: ₦${productData.sellingPrice?.toLocaleString()}\n` +
+            `Stock: ${productData.currentStock} ${productData.unit}`,
             [{ text: "OK" }]
           );
         }
@@ -264,8 +266,8 @@ export default function AIScanner({
         Alert.alert(
           "Product Selected",
           `${fullProduct.name} has been selected\n\n` +
-            `Price: ₦${fullProduct.sellingPrice?.toLocaleString()}\n` +
-            `Stock: ${fullProduct.currentStock} ${fullProduct.unit}`,
+          `Price: ₦${fullProduct.sellingPrice?.toLocaleString()}\n` +
+          `Stock: ${fullProduct.currentStock} ${fullProduct.unit}`,
           [{ text: "OK" }]
         );
       }
@@ -441,8 +443,8 @@ export default function AIScanner({
             {step === "camera"
               ? "Scan Product"
               : step === "result"
-              ? "Product Details"
-              : "Manual Select"}
+                ? "Product Details"
+                : "Manual Select"}
           </Text>
           <View style={{ width: 28 }} />
         </View>
@@ -522,12 +524,7 @@ export default function AIScanner({
               </View>
             )}
 
-            <View
-              style={[
-                styles.resultCard,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            >
+            <GlassView intensity={20} style={styles.resultCard}>
               <View style={styles.resultHeader}>
                 <Text
                   style={[styles.productName, { color: theme.colors.text }]}
@@ -537,13 +534,13 @@ export default function AIScanner({
                 <View
                   style={[
                     styles.confidenceBadge,
-                    { backgroundColor: theme.colors.primary },
+                    { backgroundColor: theme.colors.primary + '20' },
                   ]}
                 >
                   <Text
                     style={[
                       styles.confidenceText,
-                      { color: theme.colors.white },
+                      { color: theme.colors.primary },
                     ]}
                   >
                     {Math.round((recognitionResult.confidence || 0) * 100)}%
@@ -599,71 +596,52 @@ export default function AIScanner({
                     {availableSizes.map((size) => (
                       <TouchableOpacity
                         key={size.value}
-                        style={[
-                          styles.sizeButton,
-                          {
-                            backgroundColor:
-                              selectedSize === size.value
-                                ? theme.colors.primary
-                                : theme.colors.surfaceLight,
-                            borderColor: theme.colors.border,
-                          },
-                        ]}
                         onPress={() => setSelectedSize(size.value)}
+                        style={{ minWidth: '30%' }}
                       >
-                        <Text
+                        <GlassView
+                          intensity={selectedSize === size.value ? 40 : 10}
                           style={[
-                            styles.sizeButtonText,
-                            {
-                              color:
-                                selectedSize === size.value
-                                  ? theme.colors.white
-                                  : theme.colors.text,
-                            },
+                            styles.sizeButton,
+                            selectedSize === size.value && { borderColor: theme.colors.primary }
                           ]}
                         >
-                          {size.label}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.sizeButtonText,
+                              {
+                                color:
+                                  selectedSize === size.value
+                                    ? theme.colors.primary
+                                    : theme.colors.text,
+                              },
+                            ]}
+                          >
+                            {size.label}
+                          </Text>
+                        </GlassView>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
               )}
 
-              <TouchableOpacity
-                style={[
-                  styles.confirmButton,
-                  { backgroundColor: theme.colors.primary },
-                ]}
+              <GlassButton
+                title="Add to Cart"
                 onPress={handleConfirm}
-              >
-                <Ionicons
-                  name="cart-outline"
-                  size={20}
-                  color={theme.colors.white}
-                />
-                <Text
-                  style={[
-                    styles.confirmButtonText,
-                    { color: theme.colors.white },
-                  ]}
-                >
-                  Add to Cart
-                </Text>
-              </TouchableOpacity>
-            </View>
+                icon="cart-outline"
+                variant="primary"
+                style={styles.confirmButton}
+              />
+            </GlassView>
 
-            <TouchableOpacity
-              style={[styles.backButton, { borderColor: theme.colors.border }]}
+            <GlassButton
+              title="Scan Another"
               onPress={handleRetry}
-            >
-              <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
-              <Text
-                style={[styles.backButtonText, { color: theme.colors.text }]}
-              >
-                Scan Another
-              </Text>
-            </TouchableOpacity>
+              icon="arrow-back"
+              variant="secondary"
+              style={styles.backButton}
+            />
           </ScrollView>
         )}
 
@@ -684,12 +662,7 @@ export default function AIScanner({
               </Text>
             </TouchableOpacity>
 
-            <View
-              style={[
-                styles.manualSearch,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            >
+            <GlassView intensity={20} style={styles.manualSearch}>
               <Text style={[styles.manualTitle, { color: theme.colors.text }]}>
                 Search Products
               </Text>
@@ -703,27 +676,17 @@ export default function AIScanner({
               </Text>
 
               {/* In a real app, you'd add a TextInput here for search */}
-              <TouchableOpacity
-                style={[
-                  styles.searchButton,
-                  { backgroundColor: theme.colors.primary },
-                ]}
+              <GlassButton
+                title="Use Mock Product (Demo)"
                 onPress={() => {
                   // For demo, use a mock product
                   const mockProduct = AIScannerService.getMockProduct();
                   handleManualSelect(mockProduct);
                 }}
-              >
-                <Text
-                  style={[
-                    styles.searchButtonText,
-                    { color: theme.colors.white },
-                  ]}
-                >
-                  Use Mock Product (Demo)
-                </Text>
-              </TouchableOpacity>
-            </View>
+                variant="primary"
+                style={styles.searchButton}
+              />
+            </GlassView>
           </View>
         )}
       </View>
@@ -915,6 +878,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
+    overflow: 'hidden',
   },
   resultHeader: {
     flexDirection: "row",
@@ -962,22 +926,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   sizeButtonText: {
     fontSize: 14,
     fontWeight: "500",
   },
   confirmButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 10,
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
+    width: '100%',
   },
   backButton: {
     flexDirection: "row",
@@ -985,7 +944,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 15,
     borderRadius: 12,
-    borderWidth: 1,
     gap: 8,
   },
   backButtonText: {

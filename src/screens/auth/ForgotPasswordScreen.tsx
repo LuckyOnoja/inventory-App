@@ -9,11 +9,12 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 
 export default function ForgotPasswordScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
@@ -50,7 +51,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -62,7 +63,7 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: theme.colors.surfaceLight + '80' }]}
               onPress={() => navigation.goBack()}
             >
               <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -75,10 +76,12 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           </View>
 
           {!resetSent ? (
-            <>
+            <GlassView style={styles.contentCard} intensity={20}>
               {/* Instructions */}
               <View style={styles.instructionsContainer}>
-                <Ionicons name="key-outline" size={48} color={theme.colors.primary} />
+                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '20' }]}>
+                  <Ionicons name="key-outline" size={40} color={theme.colors.primary} />
+                </View>
                 <Text style={[styles.instructionsTitle, { color: theme.colors.text }]}>
                   Forgot Your Password?
                 </Text>
@@ -93,14 +96,14 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                   <Text style={[styles.label, { color: theme.colors.text }]}>
                     Email Address
                   </Text>
-                  <View style={[styles.inputContainer, { 
-                    backgroundColor: theme.colors.surface,
+                  <View style={[styles.inputContainer, {
+                    backgroundColor: theme.colors.surfaceLight + '40',
                     borderColor: theme.colors.border,
                   }]}>
-                    <Ionicons 
-                      name="mail-outline" 
-                      size={20} 
-                      color={theme.colors.textSecondary} 
+                    <Ionicons
+                      name="mail-outline"
+                      size={20}
+                      color={theme.colors.textSecondary}
                       style={styles.inputIcon}
                     />
                     <TextInput
@@ -117,30 +120,19 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                 </View>
 
                 {/* Reset Button */}
-                <TouchableOpacity
-                  style={[styles.resetButton, { 
-                    backgroundColor: theme.colors.primary,
-                    opacity: loading ? 0.7 : 1,
-                  }]}
+                <GlassButton
+                  title="Send Reset Link"
                   onPress={handleResetPassword}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={theme.colors.white} />
-                  ) : (
-                    <>
-                      <Ionicons name="send-outline" size={20} color={theme.colors.white} />
-                      <Text style={[styles.resetButtonText, { color: theme.colors.white }]}>
-                        Send Reset Link
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                  loading={loading}
+                  icon="send-outline"
+                  size="large"
+                  variant="primary"
+                />
               </View>
-            </>
+            </GlassView>
           ) : (
             /* Success Message */
-            <View style={styles.successContainer}>
+            <GlassView style={styles.successCard} intensity={25}>
               <View style={[styles.successIcon, { backgroundColor: theme.colors.success + '20' }]}>
                 <Ionicons name="checkmark-circle" size={64} color={theme.colors.success} />
               </View>
@@ -157,19 +149,14 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                 If you don't see the email, check your spam folder or try again.
               </Text>
 
-              <TouchableOpacity
-                style={[styles.backToLoginButton, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                }]}
+              <GlassButton
+                title="Back to Login"
                 onPress={() => navigation.navigate('Login')}
-              >
-                <Ionicons name="arrow-back-outline" size={20} color={theme.colors.text} />
-                <Text style={[styles.backToLoginText, { color: theme.colors.text }]}>
-                  Back to Login
-                </Text>
-              </TouchableOpacity>
-            </View>
+                icon="arrow-back-outline"
+                variant="secondary"
+                size="large"
+              />
+            </GlassView>
           )}
 
           {/* Help Text */}
@@ -181,20 +168,17 @@ export default function ForgotPasswordScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 20,
   },
   header: {
@@ -203,26 +187,38 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   backButton: {
-    padding: 8,
+    padding: 10,
+    borderRadius: 12,
   },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
+    marginRight: 44, // Balance back button
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  contentCard: {
+    padding: 24,
+    borderRadius: 24,
   },
   instructionsContainer: {
     alignItems: 'center',
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   instructionsTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: 'center',
   },
   instructionsText: {
@@ -238,12 +234,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     height: 56,
@@ -254,35 +251,23 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
+    height: '100%',
   },
-  resetButton: {
-    flexDirection: 'row',
+  successCard: {
+    padding: 32,
+    borderRadius: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-    marginTop: 8,
-  },
-  resetButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  successContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 20,
   },
   successIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   successTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 12,
     textAlign: 'center',
@@ -304,31 +289,16 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 20,
   },
-  backToLoginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderWidth: 1,
-    gap: 8,
-  },
-  backToLoginText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   helpContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    marginTop: 40,
+    marginTop: 20,
     gap: 8,
   },
   helpText: {
     fontSize: 12,
     textAlign: 'center',
-    flex: 1,
   },
 });

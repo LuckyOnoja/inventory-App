@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 import axios from 'axios';
 import config from '../../config';
 
@@ -73,7 +75,7 @@ export default function EditProductScreen({ route, navigation }: any) {
       setLoading(true);
       const response = await axios.get(`${API_URL}/products/${productId}`);
       const product = response.data.data;
-      
+
       setFormData({
         name: product.name,
         sku: product.sku || '',
@@ -163,7 +165,7 @@ export default function EditProductScreen({ route, navigation }: any) {
       };
 
       await axios.put(`${API_URL}/products/${productId}`, productData);
-      
+
       Alert.alert(
         'Success',
         'Product updated successfully',
@@ -215,7 +217,7 @@ export default function EditProductScreen({ route, navigation }: any) {
   const toggleActiveStatus = () => {
     Alert.alert(
       formData.active ? 'Deactivate Product' : 'Activate Product',
-      formData.active 
+      formData.active
         ? 'Deactivated products will not appear in sales. Are you sure?'
         : 'Activate this product?',
       [
@@ -250,16 +252,18 @@ export default function EditProductScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   const profitData = calculateProfit();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -271,7 +275,7 @@ export default function EditProductScreen({ route, navigation }: any) {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: theme.colors.surfaceLight + '80' }]}
               onPress={() => navigation.goBack()}
             >
               <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -282,16 +286,16 @@ export default function EditProductScreen({ route, navigation }: any) {
             <TouchableOpacity onPress={toggleActiveStatus}>
               <View style={[
                 styles.statusBadge,
-                { 
-                  backgroundColor: formData.active 
-                    ? theme.colors.success + '20' 
+                {
+                  backgroundColor: formData.active
+                    ? theme.colors.success + '20'
                     : theme.colors.error + '20',
                 }
               ]}>
-                <Ionicons 
-                  name={formData.active ? 'checkmark-circle' : 'close-circle'} 
-                  size={16} 
-                  color={formData.active ? theme.colors.success : theme.colors.error} 
+                <Ionicons
+                  name={formData.active ? 'checkmark-circle' : 'close-circle'}
+                  size={16}
+                  color={formData.active ? theme.colors.success : theme.colors.error}
                 />
                 <Text style={[
                   styles.statusText,
@@ -306,11 +310,11 @@ export default function EditProductScreen({ route, navigation }: any) {
           {/* Form */}
           <View style={styles.form}>
             {/* Basic Information */}
-            <View style={styles.section}>
+            <GlassView style={styles.section} intensity={25}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                 Basic Information
               </Text>
-              
+
               {/* Product Name */}
               <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: theme.colors.text }]}>
@@ -319,8 +323,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: theme.colors.surface,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
                       borderColor: errors.name ? theme.colors.error : theme.colors.border,
                       color: theme.colors.text,
                     }
@@ -345,8 +349,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                 <TextInput
                   style={[
                     styles.input,
-                    { 
-                      backgroundColor: theme.colors.surface,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
                       borderColor: theme.colors.border,
                       color: theme.colors.text,
                     }
@@ -367,14 +371,15 @@ export default function EditProductScreen({ route, navigation }: any) {
                   {categories.map((category) => (
                     <TouchableOpacity
                       key={category}
+                      activeOpacity={0.7}
                       style={[
                         styles.categoryButton,
-                        { 
-                          backgroundColor: formData.category === category 
-                            ? theme.colors.primary + '20' 
-                            : theme.colors.surfaceLight,
-                          borderColor: formData.category === category 
-                            ? theme.colors.primary 
+                        {
+                          backgroundColor: formData.category === category
+                            ? theme.colors.primary + '30'
+                            : theme.colors.surfaceLight + '20',
+                          borderColor: formData.category === category
+                            ? theme.colors.primary
                             : theme.colors.border,
                         }
                       ]}
@@ -382,10 +387,10 @@ export default function EditProductScreen({ route, navigation }: any) {
                     >
                       <Text style={[
                         styles.categoryButtonText,
-                        { 
-                          color: formData.category === category 
-                            ? theme.colors.primary 
-                            : theme.colors.text 
+                        {
+                          color: formData.category === category
+                            ? theme.colors.primary
+                            : theme.colors.text
                         }
                       ]}>
                         {category}
@@ -409,14 +414,15 @@ export default function EditProductScreen({ route, navigation }: any) {
                   {units.map((unit) => (
                     <TouchableOpacity
                       key={unit}
+                      activeOpacity={0.7}
                       style={[
                         styles.unitButton,
-                        { 
-                          backgroundColor: formData.unit === unit 
-                            ? theme.colors.primary + '20' 
-                            : theme.colors.surfaceLight,
-                          borderColor: formData.unit === unit 
-                            ? theme.colors.primary 
+                        {
+                          backgroundColor: formData.unit === unit
+                            ? theme.colors.primary + '30'
+                            : theme.colors.surfaceLight + '20',
+                          borderColor: formData.unit === unit
+                            ? theme.colors.primary
                             : theme.colors.border,
                         }
                       ]}
@@ -424,10 +430,10 @@ export default function EditProductScreen({ route, navigation }: any) {
                     >
                       <Text style={[
                         styles.unitButtonText,
-                        { 
-                          color: formData.unit === unit 
-                            ? theme.colors.primary 
-                            : theme.colors.text 
+                        {
+                          color: formData.unit === unit
+                            ? theme.colors.primary
+                            : theme.colors.text
                         }
                       ]}>
                         {unit}
@@ -441,14 +447,14 @@ export default function EditProductScreen({ route, navigation }: any) {
                   </Text>
                 )}
               </View>
-            </View>
+            </GlassView>
 
             {/* Pricing */}
-            <View style={styles.section}>
+            <GlassView style={styles.section} intensity={25}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                 Pricing
               </Text>
-              
+
               <View style={styles.row}>
                 {/* Cost Price */}
                 <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -457,8 +463,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                   </Text>
                   <View style={[
                     styles.inputContainer,
-                    { 
-                      backgroundColor: theme.colors.surface,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
                       borderColor: errors.costPrice ? theme.colors.error : theme.colors.border,
                     }
                   ]}>
@@ -488,8 +494,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                   </Text>
                   <View style={[
                     styles.inputContainer,
-                    { 
-                      backgroundColor: theme.colors.surface,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
                       borderColor: errors.sellingPrice ? theme.colors.error : theme.colors.border,
                     }
                   ]}>
@@ -519,10 +525,10 @@ export default function EditProductScreen({ route, navigation }: any) {
                   styles.profitContainer,
                   { backgroundColor: profitData.margin >= 0 ? theme.colors.success + '20' : theme.colors.error + '20' }
                 ]}>
-                  <Ionicons 
-                    name={profitData.margin >= 0 ? 'trending-up' : 'trending-down'} 
-                    size={20} 
-                    color={profitData.margin >= 0 ? theme.colors.success : theme.colors.error} 
+                  <Ionicons
+                    name={profitData.margin >= 0 ? 'trending-up' : 'trending-down'}
+                    size={20}
+                    color={profitData.margin >= 0 ? theme.colors.success : theme.colors.error}
                   />
                   <View style={styles.profitInfo}>
                     <Text style={[
@@ -540,14 +546,14 @@ export default function EditProductScreen({ route, navigation }: any) {
                   </View>
                 </View>
               )}
-            </View>
+            </GlassView>
 
             {/* Stock Information */}
-            <View style={styles.section}>
+            <GlassView style={styles.section} intensity={25}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                 Stock Information
               </Text>
-              
+
               <View style={styles.row}>
                 {/* Current Stock */}
                 <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -557,8 +563,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                   <TextInput
                     style={[
                       styles.input,
-                      { 
-                        backgroundColor: theme.colors.surface,
+                      {
+                        backgroundColor: theme.colors.surfaceLight + '40',
                         borderColor: errors.currentStock ? theme.colors.error : theme.colors.border,
                         color: theme.colors.text,
                       }
@@ -584,8 +590,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                   <TextInput
                     style={[
                       styles.input,
-                      { 
-                        backgroundColor: theme.colors.surface,
+                      {
+                        backgroundColor: theme.colors.surfaceLight + '40',
                         borderColor: errors.minStock ? theme.colors.error : theme.colors.border,
                         color: theme.colors.text,
                       }
@@ -603,14 +609,14 @@ export default function EditProductScreen({ route, navigation }: any) {
                   )}
                 </View>
               </View>
-            </View>
+            </GlassView>
 
             {/* Description */}
-            <View style={styles.section}>
+            <GlassView style={styles.section} intensity={25}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                 Additional Information
               </Text>
-              
+
               <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: theme.colors.text }]}>
                   Description
@@ -618,8 +624,8 @@ export default function EditProductScreen({ route, navigation }: any) {
                 <TextInput
                   style={[
                     styles.textArea,
-                    { 
-                      backgroundColor: theme.colors.surface,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
                       borderColor: theme.colors.border,
                       color: theme.colors.text,
                     }
@@ -633,83 +639,55 @@ export default function EditProductScreen({ route, navigation }: any) {
                   textAlignVertical="top"
                 />
               </View>
-            </View>
+            </GlassView>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.deleteButton, { 
-                backgroundColor: theme.colors.error + '20',
-                borderColor: theme.colors.error,
-              }]}
+            <GlassButton
+              title="Delete"
               onPress={handleDelete}
+              variant="danger"
+              icon="trash-outline"
               disabled={saving}
-            >
-              <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
-              <Text style={[styles.deleteButtonText, { color: theme.colors.error }]}>
-                Delete
-              </Text>
-            </TouchableOpacity>
-            
+            />
+
             <View style={styles.saveButtons}>
-              <TouchableOpacity
-                style={[styles.cancelButton, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                }]}
+              <GlassButton
+                title="Cancel"
                 onPress={() => navigation.goBack()}
+                variant="secondary"
+                style={{ flex: 1 }}
                 disabled={saving}
-              >
-                <Text style={[styles.cancelButtonText, { color: theme.colors.text }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  { 
-                    backgroundColor: theme.colors.primary,
-                    opacity: saving ? 0.7 : 1,
-                  }
-                ]}
+              />
+
+              <GlassButton
+                title="Save"
                 onPress={handleSave}
-                disabled={saving}
-              >
-                {saving ? (
-                  <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                  <>
-                    <Ionicons name="save-outline" size={20} color={theme.colors.white} />
-                    <Text style={[styles.saveButtonText, { color: theme.colors.white }]}>
-                      Save Changes
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                loading={saving}
+                icon="save-outline"
+                variant="primary"
+                style={{ flex: 1, marginLeft: 12 }}
+              />
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -720,7 +698,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   backButton: {
-    padding: 8,
+    padding: 10,
+    borderRadius: 12,
   },
   title: {
     fontSize: 20,
@@ -743,24 +722,27 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
+    padding: 20,
+    borderRadius: 24,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 8,
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     height: 56,
@@ -769,7 +751,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     height: 56,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
   },
@@ -782,10 +764,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     paddingHorizontal: 0,
     height: '100%',
+    backgroundColor: 'transparent',
   },
   errorText: {
     fontSize: 12,
     marginTop: 4,
+    marginLeft: 4,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -795,12 +779,12 @@ const styles = StyleSheet.create({
   categoryButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
   },
   unitGrid: {
     flexDirection: 'row',
@@ -810,12 +794,12 @@ const styles = StyleSheet.create({
   unitButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   unitButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',
@@ -823,8 +807,8 @@ const styles = StyleSheet.create({
   profitContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
+    padding: 16,
+    borderRadius: 16,
     marginTop: 12,
     gap: 12,
   },
@@ -841,57 +825,20 @@ const styles = StyleSheet.create({
   },
   textArea: {
     fontSize: 16,
-    height: 100,
-    borderRadius: 12,
+    height: 120,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     textAlignVertical: 'top',
   },
   actionButtons: {
     paddingHorizontal: 20,
-    marginTop: 24,
-    gap: 16,
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  deleteButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: 8,
+    gap: 12,
   },
   saveButtons: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  saveButton: {
-    flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    gap: 0, // Handled by marginLeft in button style
   },
 });

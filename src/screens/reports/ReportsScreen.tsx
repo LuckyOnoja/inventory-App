@@ -12,7 +12,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenWrapper } from "../../components/ui/ScreenWrapper";
+import { GlassView } from "../../components/ui/GlassView";
+import { GlassButton } from "../../components/ui/GlassButton";
 import { LineChart, BarChart, PieChart } from "react-native-chart-kit";
 import axios from "axios";
 import moment from "moment";
@@ -264,55 +266,30 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
           Business insights and performance metrics
         </Text>
       </View>
-      <TouchableOpacity
-        style={[styles.exportButton, { backgroundColor: theme.colors.surface }]}
+      <GlassButton
+        size="small"
+        variant="secondary"
         onPress={() => {
           /* Export functionality */
         }}
-      >
-        <Ionicons
-          name="download-outline"
-          size={20}
-          color={theme.colors.primary}
-        />
-      </TouchableOpacity>
+        icon="download-outline"
+        title="Export"
+        style={{ width: "auto" }}
+      />
     </View>
   );
 
   const renderPeriodSelector = () => (
     <View style={styles.periodSelector}>
       {(["day", "week", "month"] as PeriodType[]).map((period) => (
-        <TouchableOpacity
+        <GlassButton
           key={period}
-          style={[
-            styles.periodButton,
-            {
-              backgroundColor:
-                selectedPeriod === period
-                  ? `${theme.colors.primary}20`
-                  : "transparent",
-              borderColor:
-                selectedPeriod === period
-                  ? theme.colors.primary
-                  : theme.colors.border,
-            },
-          ]}
+          size="small"
+          variant={selectedPeriod === period ? "primary" : "ghost"}
           onPress={() => setSelectedPeriod(period)}
-        >
-          <Text
-            style={[
-              styles.periodText,
-              {
-                color:
-                  selectedPeriod === period
-                    ? theme.colors.primary
-                    : theme.colors.text,
-              },
-            ]}
-          >
-            {period.charAt(0).toUpperCase() + period.slice(1)}
-          </Text>
-        </TouchableOpacity>
+          title={period.charAt(0).toUpperCase() + period.slice(1)}
+          style={{ flex: 1, marginHorizontal: 4 }}
+        />
       ))}
     </View>
   );
@@ -351,44 +328,15 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
           icon: "warning-outline" as const,
         },
       ].map((tab) => (
-        <TouchableOpacity
+        <GlassButton
           key={tab.key}
-          style={[
-            styles.tabButton,
-            {
-              backgroundColor:
-                activeTab === tab.key
-                  ? `${theme.colors.primary}20`
-                  : theme.colors.surface,
-              borderColor:
-                activeTab === tab.key
-                  ? theme.colors.primary
-                  : theme.colors.border,
-            },
-          ]}
+          size="small"
+          variant={activeTab === tab.key ? "primary" : "ghost"}
           onPress={() => setActiveTab(tab.key)}
-        >
-          <Ionicons
-            name={tab.icon}
-            size={16}
-            color={
-              activeTab === tab.key ? theme.colors.primary : theme.colors.text
-            }
-          />
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color:
-                  activeTab === tab.key
-                    ? theme.colors.primary
-                    : theme.colors.text,
-              },
-            ]}
-          >
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
+          icon={tab.icon}
+          title={tab.label}
+          style={{ marginRight: 8, width: "auto" }}
+        />
       ))}
     </ScrollView>
   );
@@ -400,15 +348,15 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       selectedPeriod === "day"
         ? reportData.sales.daily
         : selectedPeriod === "week"
-        ? reportData.sales.weekly
-        : reportData.sales.monthly;
+          ? reportData.sales.weekly
+          : reportData.sales.monthly;
 
     const labels = data.map((item) =>
       selectedPeriod === "day"
         ? (item as DailySales).date
         : selectedPeriod === "week"
-        ? (item as WeeklySales).week
-        : (item as MonthlySales).month
+          ? (item as WeeklySales).week
+          : (item as MonthlySales).month
     );
 
     const amounts = data.map(
@@ -435,12 +383,12 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
       selectedPeriod === "day"
         ? (bestDay as DailySales).date
         : selectedPeriod === "week"
-        ? (bestDay as WeeklySales).week
-        : (bestDay as MonthlySales).month;
+          ? (bestDay as WeeklySales).week
+          : (bestDay as MonthlySales).month;
 
     return (
       <View style={styles.tabContent}>
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Sales Trend
@@ -452,10 +400,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               ]}
             >
               {selectedPeriod === "day"
-                ? "Daily"
+                ? "Daily" // fixed comment
                 : selectedPeriod === "week"
-                ? "Weekly"
-                : "Monthly"}{" "}
+                  ? "Weekly"
+                  : "Monthly"}{" "}
               performance
             </Text>
           </View>
@@ -465,12 +413,14 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             width={screenWidth - 80}
             height={220}
             chartConfig={{
-              backgroundColor: theme.colors.surface,
-              backgroundGradientFrom: theme.colors.surface,
-              backgroundGradientTo: theme.colors.surface,
+              backgroundColor: "transparent",
+              backgroundGradientFrom: "transparent",
+              backgroundGradientTo: "transparent",
+              fillShadowGradientFrom: theme.colors.primary,
+              fillShadowGradientTo: theme.colors.primary,
               decimalPlaces: 0,
-              color: () => theme.colors.primary,
-              labelColor: () => theme.colors.text,
+              color: (opacity = 1) => `rgba(${theme.mode === 'dark' ? '255, 255, 255' : '0, 0, 0'}, ${opacity})`,
+              labelColor: (opacity = 1) => theme.colors.text,
               style: {
                 borderRadius: 16,
               },
@@ -486,12 +436,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               borderRadius: 16,
             }}
           />
-        </View>
+        </GlassView>
 
         <View style={styles.statsGrid}>
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -520,11 +468,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 +12.5%
               </Text>
             </View>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -553,11 +499,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 +8.3%
               </Text>
             </View>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -574,11 +518,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 ...amounts.map((amount) => amount * 1000)
               ).toLocaleString()}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -599,7 +541,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 vs last period
               </Text>
             </View>
-          </View>
+          </GlassView>
         </View>
       </View>
     );
@@ -611,9 +553,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     return (
       <View style={styles.tabContent}>
         <View style={styles.statsGrid}>
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -630,11 +570,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             >
               across {reportData.inventory.categories.length} categories
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -648,11 +586,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             >
               need restocking
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -669,11 +605,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             >
               total stock value
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -691,10 +625,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             >
               by value
             </Text>
-          </View>
+          </GlassView>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Low Stock Items
@@ -752,9 +686,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Top Selling Products
@@ -792,7 +726,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
       </View>
     );
   };
@@ -802,7 +736,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
 
     return (
       <View style={styles.tabContent}>
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Staff Performance
@@ -856,9 +790,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Weekly Attendance
@@ -881,12 +815,12 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             yAxisLabel=""
             yAxisSuffix="%"
             chartConfig={{
-              backgroundColor: theme.colors.surface,
-              backgroundGradientFrom: theme.colors.surface,
-              backgroundGradientTo: theme.colors.surface,
+              backgroundColor: "transparent",
+              backgroundGradientFrom: "transparent",
+              backgroundGradientTo: "transparent",
               decimalPlaces: 0,
-              color: () => theme.colors.primary,
-              labelColor: () => theme.colors.text,
+              color: (opacity = 1) => `rgba(${theme.mode === 'dark' ? '255, 255, 255' : '63, 63, 70'}, ${opacity})`, // Using primary-like or text color
+              labelColor: (opacity = 1) => theme.colors.text,
               style: {
                 borderRadius: 16,
               },
@@ -896,7 +830,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               borderRadius: 16,
             }}
           />
-        </View>
+        </GlassView>
       </View>
     );
   };
@@ -918,9 +852,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
     return (
       <View style={styles.tabContent}>
         <View style={styles.statsGrid}>
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -932,11 +864,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 0
               )}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -945,11 +875,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.success }]}>
               {onlineCount}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -958,11 +886,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.error }]}>
               {issuesCount}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -971,10 +897,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.warning }]}>
               {totalAlerts}
             </Text>
-          </View>
+          </GlassView>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Camera Status
@@ -989,26 +915,26 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 item.status === "Online"
                   ? theme.colors.success
                   : item.status === "Offline"
-                  ? theme.colors.error
-                  : item.status === "Tampered"
-                  ? theme.colors.warning
-                  : theme.colors.info || "#3498db", // fallback color
+                    ? theme.colors.error
+                    : item.status === "Tampered"
+                      ? theme.colors.warning
+                      : theme.colors.info || "#3498db", // fallback color
               legendFontColor: theme.colors.text,
               legendFontSize: 12,
             }))}
             width={screenWidth - 80}
             height={200}
             chartConfig={{
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+              color: (opacity = 1) => `rgba(${theme.mode === 'dark' ? '255, 255, 255' : '63, 63, 70'}, ${opacity})`,
             }}
             accessor="population"
             backgroundColor="transparent"
             paddingLeft="15"
             absolute
           />
-        </View>
+        </GlassView>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Recent Alerts
@@ -1023,7 +949,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                   {
                     backgroundColor:
                       alert.type.includes("Offline") ||
-                      alert.type.includes("Tampering")
+                        alert.type.includes("Tampering")
                         ? `${theme.colors.error}20`
                         : `${theme.colors.warning}20`,
                   },
@@ -1038,7 +964,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                   size={16}
                   color={
                     alert.type.includes("Offline") ||
-                    alert.type.includes("Tampering")
+                      alert.type.includes("Tampering")
                       ? theme.colors.error
                       : theme.colors.warning
                   }
@@ -1061,7 +987,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
       </View>
     );
   };
@@ -1079,7 +1005,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
 
     return (
       <View style={styles.tabContent}>
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Product Discrepancies
@@ -1139,9 +1065,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <GlassView style={styles.card} intensity={25}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
               Staff Discrepancies
@@ -1197,12 +1123,10 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
               </View>
             </View>
           ))}
-        </View>
+        </GlassView>
 
         <View style={styles.statsGrid}>
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -1211,11 +1135,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.error }]}>
               ₦{totalLoss.toLocaleString()}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -1224,11 +1146,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.text }]}>
               {itemsMissing}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -1237,11 +1157,9 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
             <Text style={[styles.statValue, { color: theme.colors.text }]}>
               {reportData.discrepancies.byStaff.length}
             </Text>
-          </View>
+          </GlassView>
 
-          <View
-            style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
-          >
+          <GlassView style={styles.statCard} intensity={20}>
             <Text
               style={[styles.statLabel, { color: theme.colors.textSecondary }]}
             >
@@ -1253,7 +1171,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
                 maximumFractionDigits: 0,
               })}
             </Text>
-          </View>
+          </GlassView>
         </View>
       </View>
     );
@@ -1290,9 +1208,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <ScreenWrapper>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -1322,7 +1238,7 @@ export default function ReportsScreen({ navigation }: ReportsScreenProps) {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

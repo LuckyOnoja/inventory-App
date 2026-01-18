@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 import SaleCard from '../../components/sales/SaleCard';
 import SalesFilterModal from '../../components/sales/SalesFilterModal';
 import axios from 'axios';
@@ -110,7 +112,7 @@ export default function SalesScreen({ navigation }: any) {
 
     // Apply payment method filter
     if (filters.paymentMethod !== 'all') {
-      filtered = filtered.filter(sale => 
+      filtered = filtered.filter(sale =>
         sale.paymentMethod === filters.paymentMethod
       );
     }
@@ -123,7 +125,7 @@ export default function SalesScreen({ navigation }: any) {
     // Apply sorting
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (filters.sortBy) {
         case 'recent':
           comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -169,7 +171,7 @@ export default function SalesScreen({ navigation }: any) {
         </Text>
       </View>
       <TouchableOpacity
-        style={styles.newSaleButton}
+        style={[styles.newSaleButton, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('NewSale')}
       >
         <Ionicons name="add" size={24} color={theme.colors.white} />
@@ -178,7 +180,7 @@ export default function SalesScreen({ navigation }: any) {
   );
 
   const renderSearchBar = () => (
-    <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
+    <GlassView style={styles.searchContainer} intensity={20}>
       <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
       <TextInput
         style={[styles.searchInput, { color: theme.colors.text }]}
@@ -199,7 +201,7 @@ export default function SalesScreen({ navigation }: any) {
           </View>
         )}
       </TouchableOpacity>
-    </View>
+    </GlassView>
   );
 
   const renderEmptyState = () => (
@@ -209,21 +211,20 @@ export default function SalesScreen({ navigation }: any) {
         No Sales Found
       </Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {searchQuery || getActiveFilterCount() > 0 
+        {searchQuery || getActiveFilterCount() > 0
           ? 'Try adjusting your search or filters'
           : 'Make your first sale to get started'
         }
       </Text>
       {!searchQuery && getActiveFilterCount() === 0 && (
-        <TouchableOpacity
-          style={[styles.emptyButton, { backgroundColor: theme.colors.primary }]}
+        <GlassButton
+          title="New Sale"
           onPress={() => navigation.navigate('NewSale')}
-        >
-          <Ionicons name="add" size={20} color={theme.colors.white} />
-          <Text style={[styles.emptyButtonText, { color: theme.colors.white }]}>
-            New Sale
-          </Text>
-        </TouchableOpacity>
+          icon="add"
+          size="medium"
+          variant="primary"
+          style={styles.emptyButton}
+        />
       )}
     </View>
   );
@@ -237,14 +238,16 @@ export default function SalesScreen({ navigation }: any) {
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       {renderHeader()}
       {renderSearchBar()}
 
@@ -272,14 +275,11 @@ export default function SalesScreen({ navigation }: any) {
         filters={filters}
         onFilterChange={handleFilterChange}
       />
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    marginTop: 10,
+    marginBottom: 16,
   },
   headerLeft: {
     flex: 1,
@@ -308,27 +308,30 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#6366F1',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    height: 50,
+    borderRadius: 25,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 12,
     marginRight: 12,
+    height: '100%',
   },
   filterButton: {
     position: 'relative',
@@ -352,6 +355,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 80,
+    paddingTop: 8,
   },
   separator: {
     height: 12,
@@ -376,16 +380,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-  },
-  emptyButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    marginTop: 12,
+    minWidth: 160,
   },
 });

@@ -7,7 +7,7 @@ const CURRENT_ENVIRONMENT: 'development' | 'staging' | 'production' = 'developme
 const DEVELOPMENT = {
   API_URL: 'http://172.20.10.2:5000/api',
   SOCKET_URL: 'http://172.20.10.2:5000',
-  APP_NAME: 'Inventory Guard (Dev)',
+  APP_NAME: 'ToryAi (Dev)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'debug' as const,
 };
@@ -16,7 +16,7 @@ const DEVELOPMENT = {
 const STAGING = {
   API_URL: 'https://staging.inventory-guard.com/api',
   SOCKET_URL: 'https://staging.inventory-guard.com',
-  APP_NAME: 'Inventory Guard (Staging)',
+  APP_NAME: 'ToryAi (Staging)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'info' as const,
 };
@@ -25,7 +25,7 @@ const STAGING = {
 const PRODUCTION = {
   API_URL: 'https://inventory-guard.com/api',
   SOCKET_URL: 'https://inventory-guard.com',
-  APP_NAME: 'Inventory Guard',
+  APP_NAME: 'ToryAi',
   DEBUG_MODE: false,
   LOG_LEVEL: 'error' as const,
 };
@@ -53,10 +53,10 @@ const Config = getConfig();
 export default {
   ...Config,
   ENVIRONMENT: CURRENT_ENVIRONMENT,
-  
+
   // Helper to get full URL
   getFullUrl: (path: string) => `${Config.API_URL}${path.startsWith('/') ? path : `/${path}`}`,
-  
+
   // Helper to log environment info
   logEnvironment: () => {
     console.log(`Environment: ${CURRENT_ENVIRONMENT}`);

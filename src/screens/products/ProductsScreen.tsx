@@ -18,7 +18,8 @@ import FilterModal from '../../components/products/FilterModal';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import config from '../../config';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Add this import
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
 
 const API_URL = config.API_URL;
 
@@ -99,7 +100,7 @@ export default function ProductsScreen({ navigation }: any) {
 
     // Apply category filter
     if (filters.category !== 'all') {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         product.category === filters.category
       );
     }
@@ -107,7 +108,7 @@ export default function ProductsScreen({ navigation }: any) {
     // Apply stock status filter
     switch (filters.stockStatus) {
       case 'low':
-        filtered = filtered.filter(product => 
+        filtered = filtered.filter(product =>
           product.currentStock <= product.minStock && product.currentStock > 0
         );
         break;
@@ -122,7 +123,7 @@ export default function ProductsScreen({ navigation }: any) {
     // Apply sorting
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (filters.sortBy) {
         case 'name':
           comparison = a.name.localeCompare(b.name);
@@ -184,7 +185,7 @@ export default function ProductsScreen({ navigation }: any) {
   const renderHeader = () => (
     <View style={styles.header}>
       <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-        Products ({filteredProducts.length})
+        Products <Text style={{ fontSize: 16, color: theme.colors.textSecondary }}>({filteredProducts.length})</Text>
       </Text>
       <TouchableOpacity
         style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
@@ -196,10 +197,7 @@ export default function ProductsScreen({ navigation }: any) {
   );
 
   const renderSearchBar = () => (
-    <View style={[styles.searchContainer, { 
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border 
-    }]}>
+    <GlassView style={styles.searchContainer} intensity={20}>
       <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
       <TextInput
         style={[styles.searchInput, { color: theme.colors.text }]}
@@ -219,7 +217,7 @@ export default function ProductsScreen({ navigation }: any) {
           </View>
         )}
       </TouchableOpacity>
-    </View>
+    </GlassView>
   );
 
   const renderEmptyState = () => (
@@ -229,7 +227,7 @@ export default function ProductsScreen({ navigation }: any) {
         No Products Found
       </Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {searchQuery || getActiveFilterCount() > 0 
+        {searchQuery || getActiveFilterCount() > 0
           ? 'Try adjusting your search or filters'
           : 'Add your first product to get started'
         }
@@ -272,14 +270,16 @@ export default function ProductsScreen({ navigation }: any) {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       {renderHeader()}
       {renderSearchBar()}
 
@@ -308,14 +308,11 @@ export default function ProductsScreen({ navigation }: any) {
         categories={getCategories()}
         onFilterChange={handleFilterChange}
       />
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -326,8 +323,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20, // Reduced padding since SafeAreaView handles top inset
-    paddingBottom: 16,
+    marginTop: 10,
+    marginBottom: 16,
   },
   headerTitle: {
     fontSize: 28,
@@ -339,22 +336,27 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
+    height: 50,
+    borderRadius: 25,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 12,
     marginRight: 12,
+    height: '100%',
   },
   filterButton: {
     position: 'relative',
@@ -378,6 +380,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 80,
+    paddingTop: 8,
   },
   separator: {
     height: 12,

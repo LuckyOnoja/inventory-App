@@ -16,7 +16,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 import axios from 'axios';
 import moment from 'moment';
 import config from '../../config';
@@ -99,7 +101,7 @@ export default function NotificationsScreen({ navigation }: any) {
       }
 
       const response = await axios.get(`${API_URL}/notifications?${params}`);
-      
+
       if (response.data.success) {
         const data = response.data.data;
         setNotifications(data);
@@ -147,22 +149,22 @@ export default function NotificationsScreen({ navigation }: any) {
 
   const applyFilter = () => {
     let filtered = [...notifications];
-    
+
     if (filter === 'unread') {
       filtered = filtered.filter(notification => !notification.read);
     } else if (filter !== 'all') {
       filtered = filtered.filter(notification => notification.type === filter);
     }
-    
+
     setFilteredNotifications(filtered);
   };
 
   const markAsRead = async (notificationId: string) => {
     try {
       const response = await axios.put(`${API_URL}/notifications/${notificationId}/read`);
-      
+
       if (response.data.success) {
-        setNotifications(prev => prev.map(notif => 
+        setNotifications(prev => prev.map(notif =>
           notif.id === notificationId ? { ...notif, read: true } : notif
         ));
         fetchUnreadCount();
@@ -176,7 +178,7 @@ export default function NotificationsScreen({ navigation }: any) {
   const markAllAsRead = async () => {
     try {
       const response = await axios.put(`${API_URL}/notifications/read-all`);
-      
+
       if (response.data.success) {
         setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
         fetchUnreadCount();
@@ -203,7 +205,7 @@ export default function NotificationsScreen({ navigation }: any) {
           onPress: async () => {
             try {
               const response = await axios.delete(`${API_URL}/notifications/${notificationId}`);
-              
+
               if (response.data.success) {
                 setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
                 fetchUnreadCount();
@@ -336,7 +338,7 @@ export default function NotificationsScreen({ navigation }: any) {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    
+
     // Parse data if available
     let notificationData = null;
     if (notification.data) {
@@ -346,7 +348,7 @@ export default function NotificationsScreen({ navigation }: any) {
         console.error('Failed to parse notification data:', error);
       }
     }
-    
+
     // Navigate based on notification type and data
     switch (notification.type) {
       case 'device_offline':
@@ -388,94 +390,49 @@ export default function NotificationsScreen({ navigation }: any) {
           {stats.unread} unread • {stats.total} total
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.markAllButton}
+      <GlassButton
+        size="small"
+        variant="ghost"
         onPress={markAllAsRead}
         disabled={stats.unread === 0}
-      >
-        <Text style={[styles.markAllText, { 
-          color: stats.unread === 0 
-            ? theme.colors.textTertiary 
-            : theme.colors.primary 
-        }]}>
-          Mark all read
-        </Text>
-      </TouchableOpacity>
+        title="Mark all read"
+        style={{ width: "auto" }}
+      />
     </View>
   );
 
   const renderFilterButtons = () => (
     <View style={styles.filterSection}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filterScroll}
         contentContainerStyle={styles.filterContent}
       >
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { 
-              backgroundColor: filter === 'all' 
-                ? theme.colors.primary + '20' 
-                : theme.colors.surface,
-              borderColor: filter === 'all' 
-                ? theme.colors.primary 
-                : theme.colors.border,
-            }
-          ]}
+        <GlassButton
+          size="small"
+          variant={filter === 'all' ? 'primary' : 'secondary'}
           onPress={() => setFilter('all')}
-        >
-          <Text style={[
-            styles.filterText,
-            { color: filter === 'all' ? theme.colors.primary : theme.colors.text }
-          ]}>
-            All
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { 
-              backgroundColor: filter === 'unread' 
-                ? theme.colors.primary + '20' 
-                : theme.colors.surface,
-              borderColor: filter === 'unread' 
-                ? theme.colors.primary 
-                : theme.colors.border,
-            }
-          ]}
-          onPress={() => setFilter('unread')}
-        >
-          <Text style={[
-            styles.filterText,
-            { color: filter === 'unread' ? theme.colors.primary : theme.colors.text }
-          ]}>
-            Unread
-          </Text>
-          {stats.unread > 0 && (
-            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
-              <Text style={styles.filterBadgeText}>
-                {stats.unread}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          title="All"
+          style={{ width: "auto", marginRight: 8 }}
+        />
 
-        <TouchableOpacity
-          style={styles.moreFiltersButton}
+        <GlassButton
+          size="small"
+          variant={filter === 'unread' ? 'primary' : 'secondary'}
+          onPress={() => setFilter('unread')}
+          title={`Unread ${stats.unread > 0 ? `(${stats.unread})` : ''}`}
+          style={{ width: "auto", marginRight: 8 }}
+        />
+
+        <GlassButton
+          size="small"
+          variant="secondary"
           onPress={() => setShowFilterModal(true)}
-        >
-          <Ionicons 
-            name="options-outline" 
-            size={16} 
-            color={theme.colors.text} 
-          />
-          <Text style={[styles.moreFiltersText, { color: theme.colors.text }]}>
-            More
-          </Text>
-        </TouchableOpacity>
+          icon="options-outline"
+          title="More"
+          style={{ width: "auto" }}
+        />
       </ScrollView>
     </View>
   );
@@ -483,7 +440,7 @@ export default function NotificationsScreen({ navigation }: any) {
   const renderFilterModal = () => {
     const typeFilters = stats.byType.map(stat => stat.type);
     const uniqueTypes = Array.from(new Set(['sale', 'inventory_check', 'low_stock', 'device_offline', ...typeFilters]));
-    
+
     return (
       <Modal
         visible={showFilterModal}
@@ -508,15 +465,15 @@ export default function NotificationsScreen({ navigation }: any) {
                   {uniqueTypes.map((type) => {
                     const typeCount = stats.byType.find(t => t.type === type)?.count || 0;
                     const isSelected = filter === type;
-                    
+
                     return (
                       <TouchableOpacity
                         key={type}
                         style={[
                           styles.typeItem,
-                          { 
-                            backgroundColor: isSelected 
-                              ? theme.colors.primary + '20' 
+                          {
+                            backgroundColor: isSelected
+                              ? theme.colors.primary + '20'
                               : 'transparent',
                             borderBottomColor: theme.colors.border,
                           }
@@ -528,10 +485,10 @@ export default function NotificationsScreen({ navigation }: any) {
                       >
                         <View style={styles.typeItemContent}>
                           <View style={[styles.typeIcon, { backgroundColor: getTypeColor(type) + '20' }]}>
-                            <Ionicons 
-                              name={getTypeIcon(type) as any} 
-                              size={16} 
-                              color={getTypeColor(type)} 
+                            <Ionicons
+                              name={getTypeIcon(type) as any}
+                              size={16}
+                              color={getTypeColor(type)}
                             />
                           </View>
                           <View style={styles.typeTexts}>
@@ -579,70 +536,74 @@ export default function NotificationsScreen({ navigation }: any) {
     const typeColor = getTypeColor(item.type);
     const priority = getPriority(item.type);
     const priorityColor = getPriorityColor(priority);
-    
+
     return (
       <TouchableOpacity
-        style={[
-          styles.notificationCard, 
-          { 
-            backgroundColor: theme.colors.surface,
-            borderLeftColor: typeColor,
-            borderLeftWidth: item.read ? 2 : 4,
-            opacity: item.read ? 0.9 : 1,
-          }
-        ]}
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}
+        style={{ marginBottom: 12 }}
       >
-        <View style={styles.notificationHeader}>
-          <View style={styles.typeIconContainer}>
-            <View style={[styles.typeIcon, { backgroundColor: typeColor + '20' }]}>
-              <Ionicons name={getTypeIcon(item.type)} size={18} color={typeColor} />
+        <GlassView
+          style={[
+            styles.notificationCard,
+            {
+              borderLeftColor: typeColor,
+              borderLeftWidth: item.read ? 2 : 4,
+              opacity: item.read ? 0.9 : 1,
+            }
+          ]}
+          intensity={15}
+        >
+          <View style={styles.notificationHeader}>
+            <View style={styles.typeIconContainer}>
+              <View style={[styles.typeIcon, { backgroundColor: typeColor + '20' }]}>
+                <Ionicons name={getTypeIcon(item.type)} size={18} color={typeColor} />
+              </View>
             </View>
-          </View>
-          
-          <View style={styles.notificationContent}>
-            <View style={styles.notificationTitleRow}>
-              <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>
-                {item.title}
+
+            <View style={styles.notificationContent}>
+              <View style={styles.notificationTitleRow}>
+                <Text style={[styles.notificationTitle, { color: theme.colors.text }]}>
+                  {item.title}
+                </Text>
+                <View style={[styles.priorityBadge, { backgroundColor: priorityColor + '20' }]}>
+                  <Text style={[styles.priorityText, { color: priorityColor }]}>
+                    {priority}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={[styles.notificationMessage, { color: theme.colors.textSecondary }]}>
+                {item.message}
               </Text>
-              <View style={[styles.priorityBadge, { backgroundColor: priorityColor + '20' }]}>
-                <Text style={[styles.priorityText, { color: priorityColor }]}>
-                  {priority}
-                </Text>
+
+              <View style={styles.notificationFooter}>
+                <View style={styles.typeBadge}>
+                  <Text style={[styles.typeText, { color: typeColor }]}>
+                    {getTypeLabel(item.type)}
+                  </Text>
+                </View>
+
+                <View style={styles.footerRight}>
+                  <Text style={[styles.timestamp, { color: theme.colors.textTertiary }]}>
+                    {moment(item.createdAt).fromNow()}
+                  </Text>
+
+                  {!item.read && (
+                    <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
+                  )}
+                </View>
               </View>
             </View>
-            
-            <Text style={[styles.notificationMessage, { color: theme.colors.textSecondary }]}>
-              {item.message}
-            </Text>
-            
-            <View style={styles.notificationFooter}>
-              <View style={styles.typeBadge}>
-                <Text style={[styles.typeText, { color: typeColor }]}>
-                  {getTypeLabel(item.type)}
-                </Text>
-              </View>
-              
-              <View style={styles.footerRight}>
-                <Text style={[styles.timestamp, { color: theme.colors.textTertiary }]}>
-                  {moment(item.createdAt).fromNow()}
-                </Text>
-                
-                {!item.read && (
-                  <View style={[styles.unreadDot, { backgroundColor: theme.colors.primary }]} />
-                )}
-              </View>
-            </View>
+
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => deleteNotification(item.id)}
+            >
+              <Ionicons name="close" size={18} color={theme.colors.textTertiary} />
+            </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => deleteNotification(item.id)}
-          >
-            <Ionicons name="close" size={18} color={theme.colors.textTertiary} />
-          </TouchableOpacity>
-        </View>
+        </GlassView>
       </TouchableOpacity>
     );
   };
@@ -651,58 +612,57 @@ export default function NotificationsScreen({ navigation }: any) {
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-off-outline" size={64} color={theme.colors.textTertiary} />
       <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-        {filter !== 'all' 
+        {filter !== 'all'
           ? 'No Notifications Found'
           : 'No Notifications Yet'
         }
       </Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {filter !== 'all' 
+        {filter !== 'all'
           ? `No ${filter === 'unread' ? 'unread' : getTypeLabel(filter)} notifications found`
           : 'You\'re all caught up! New notifications will appear here.'
         }
       </Text>
       {filter !== 'all' && (
-        <TouchableOpacity
-          style={[styles.emptyButton, { backgroundColor: theme.colors.primary }]}
+        <GlassButton
+          size="medium"
+          variant="primary"
           onPress={() => setFilter('all')}
-        >
-          <Text style={[styles.emptyButtonText, { color: theme.colors.white }]}>
-            Show All Notifications
-          </Text>
-        </TouchableOpacity>
+          title="Show All Notifications"
+          style={{ width: "auto" }}
+        />
       )}
     </View>
   );
 
   const renderLoadMore = () => {
-    if (pagination.page >= pagination.pages) return null;
-    
+    if (pagination.page >= pagination.pages) {
+      return null;
+    }
+
     return (
-      <TouchableOpacity
-        style={[styles.loadMoreButton, { borderColor: theme.colors.border }]}
+      <GlassButton
+        size="medium"
+        variant="secondary"
         onPress={() => fetchNotifications(pagination.page + 1)}
-      >
-        <Text style={[styles.loadMoreText, { color: theme.colors.text }]}>
-          Load More
-        </Text>
-      </TouchableOpacity>
+        title="Load More"
+      />
     );
   };
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+      <ScreenWrapper style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
           Loading notifications...
         </Text>
-      </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       {renderHeader()}
       {renderFilterButtons()}
 
@@ -732,7 +692,7 @@ export default function NotificationsScreen({ navigation }: any) {
       />
 
       {renderFilterModal()}
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

@@ -16,7 +16,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenWrapper } from "../../components/ui/ScreenWrapper";
+import { GlassView } from "../../components/ui/GlassView";
+import { GlassButton } from "../../components/ui/GlassButton";
 import axios from "axios";
 import config from "../../config";
 
@@ -277,49 +279,28 @@ export default function InventoryScreen({ navigation }: any) {
         </Text>
       </View>
       <View style={styles.headerButtons}>
-        <TouchableOpacity
-          style={[
-            styles.inventoryButton,
-            { backgroundColor: theme.colors.info },
-          ]}
+        <GlassButton
+          size="small"
+          variant="secondary"
           onPress={() => navigation.navigate("InventoryHistory")}
-        >
-          <Ionicons name="time-outline" size={18} color={theme.colors.white} />
-          <Text
-            style={[styles.inventoryButtonText, { color: theme.colors.white }]}
-          >
-            History
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.inventoryButton,
-            { backgroundColor: theme.colors.primary },
-          ]}
+          style={{ width: "auto" }}
+          icon="time-outline"
+          title="History"
+        />
+        <GlassButton
+          size="small"
+          variant="primary"
           onPress={() => navigation.navigate("InventoryCheck")}
-        >
-          <Ionicons
-            name="clipboard-outline"
-            size={18}
-            color={theme.colors.white}
-          />
-          <Text
-            style={[styles.inventoryButtonText, { color: theme.colors.white }]}
-          >
-            Check
-          </Text>
-        </TouchableOpacity>
+          style={{ width: "auto" }}
+          icon="clipboard-outline"
+          title="Check"
+        />
       </View>
     </View>
   );
 
   const renderSearchBar = () => (
-    <View
-      style={[
-        styles.searchContainer,
-        { backgroundColor: theme.colors.surface },
-      ]}
-    >
+    <GlassView style={styles.searchContainer} intensity={20}>
       <Ionicons
         name="search-outline"
         size={20}
@@ -349,7 +330,7 @@ export default function InventoryScreen({ navigation }: any) {
           )}
         </View>
       </TouchableOpacity>
-    </View>
+    </GlassView>
   );
 
   const renderFilterModal = () => (
@@ -362,11 +343,9 @@ export default function InventoryScreen({ navigation }: any) {
       <TouchableWithoutFeedback onPress={() => setShowFilterModal(false)}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View
-              style={[
-                styles.modalContent,
-                { backgroundColor: theme.colors.surface },
-              ]}
+            <GlassView
+              style={styles.modalContent}
+              intensity={95}
             >
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
@@ -466,7 +445,7 @@ export default function InventoryScreen({ navigation }: any) {
                         status === "all"
                           ? inventory.length
                           : inventory.filter((item) => item.status === status)
-                              .length;
+                            .length;
 
                       return (
                         <TouchableOpacity
@@ -555,8 +534,8 @@ export default function InventoryScreen({ navigation }: any) {
                           sort.value === "name"
                             ? "text"
                             : sort.value === "stock"
-                            ? "stats-chart"
-                            : "time"
+                              ? "stats-chart"
+                              : "time"
                         }
                         size={16}
                         color={
@@ -620,11 +599,11 @@ export default function InventoryScreen({ navigation }: any) {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </GlassView>
           </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      </TouchableWithoutFeedback >
+    </Modal >
   );
 
   const renderInventoryItem = ({ item }: { item: ProductInventory }) => {
@@ -635,137 +614,121 @@ export default function InventoryScreen({ navigation }: any) {
 
     return (
       <TouchableOpacity
-        style={[styles.itemCard, { backgroundColor: theme.colors.surface }]}
         onPress={() =>
           navigation.navigate("ProductDetail", { productId: item.id })
         }
         activeOpacity={0.7}
       >
-        <View style={styles.itemHeader}>
-          <View style={styles.itemInfo}>
-            <Text style={[styles.productName, { color: theme.colors.text }]}>
-              {item.name}
-            </Text>
-            <View style={styles.productMeta}>
-              {item.sku && (
+        <GlassView style={styles.itemCard} intensity={25}>
+          <View style={styles.itemHeader}>
+            <View style={styles.itemInfo}>
+              <Text style={[styles.productName, { color: theme.colors.text }]}>
+                {item.name}
+              </Text>
+              <View style={styles.productMeta}>
+                {item.sku && (
+                  <Text
+                    style={[
+                      styles.productCode,
+                      { color: theme.colors.textTertiary },
+                    ]}
+                  >
+                    SKU: {item.sku}
+                  </Text>
+                )}
                 <Text
                   style={[
-                    styles.productCode,
+                    styles.productCategory,
                     { color: theme.colors.textTertiary },
                   ]}
                 >
-                  SKU: {item.sku}
+                  • {item.category}
                 </Text>
-              )}
-              <Text
-                style={[
-                  styles.productCategory,
-                  { color: theme.colors.textTertiary },
-                ]}
-              >
-                • {item.category}
+              </View>
+            </View>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusColor + "20" },
+              ]}
+            >
+              <Text style={[styles.statusText, { color: statusColor }]}>
+                {getStatusText(item.status)}
               </Text>
             </View>
           </View>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: statusColor + "20" },
-            ]}
-          >
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {getStatusText(item.status)}
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.stockInfo}>
-          <View style={styles.stockDetails}>
-            <Text
-              style={[styles.stockLabel, { color: theme.colors.textSecondary }]}
-            >
-              Current Stock
-            </Text>
-            <Text style={[styles.stockValue, { color: theme.colors.text }]}>
-              {item.currentStock} {item.unit}
-            </Text>
-          </View>
+          <View style={styles.stockInfo}>
+            <View style={styles.stockDetails}>
+              <Text
+                style={[styles.stockLabel, { color: theme.colors.textSecondary }]}
+              >
+                Current Stock
+              </Text>
+              <Text style={[styles.stockValue, { color: theme.colors.text }]}>
+                {item.currentStock} {item.unit}
+              </Text>
+            </View>
 
-          <View style={styles.stockRange}>
-            <Text
-              style={[styles.rangeLabel, { color: theme.colors.textTertiary }]}
-            >
-              Min: {item.minStock}
-            </Text>
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${stockPercentage}%`,
-                      backgroundColor: statusColor,
-                    },
-                  ]}
-                />
+            <View style={styles.stockRange}>
+              <Text
+                style={[styles.rangeLabel, { color: theme.colors.textTertiary }]}
+              >
+                Min: {item.minStock}
+              </Text>
+              <View style={styles.progressContainer}>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${stockPercentage}%`,
+                        backgroundColor: statusColor,
+                      },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        <View style={styles.itemFooter}>
-          <View style={styles.priceInfo}>
-            <Text
-              style={[styles.costPrice, { color: theme.colors.textSecondary }]}
-            >
-              Cost: ₦{item.costPrice.toLocaleString()}
-            </Text>
-            <Text style={[styles.sellingPrice, { color: theme.colors.text }]}>
-              Sell: ₦{item.sellingPrice.toLocaleString()}
-            </Text>
-          </View>
-
-          <View style={styles.actionButtons}>
-            {(isLowStock || isOutOfStock) && (
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  { backgroundColor: theme.colors.primary + "20" },
-                ]}
-                onPress={() => handleRestock(item.id, item.name)}
+          <View style={styles.itemFooter}>
+            <View style={styles.priceInfo}>
+              <Text
+                style={[styles.costPrice, { color: theme.colors.textSecondary }]}
               >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={14}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  style={[styles.actionText, { color: theme.colors.primary }]}
-                >
-                  Restock
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                { backgroundColor: theme.colors.info + "20" },
-              ]}
-              onPress={() => handleAdjustInventory(item.id)}
-            >
-              <Ionicons
-                name="swap-horizontal-outline"
-                size={14}
-                color={theme.colors.info}
-              />
-              <Text style={[styles.actionText, { color: theme.colors.info }]}>
-                Adjust
+                Cost: ₦{item.costPrice.toLocaleString()}
               </Text>
-            </TouchableOpacity>
+              <Text style={[styles.sellingPrice, { color: theme.colors.text }]}>
+                Sell: ₦{item.sellingPrice.toLocaleString()}
+              </Text>
+            </View>
+
+            <View style={styles.actionButtons}>
+              {(isLowStock || isOutOfStock) && (
+                <GlassButton
+                  size="small"
+                  variant="primary"
+                  onPress={() => handleRestock(item.id, item.name)}
+                  icon="add-circle-outline"
+                  title="Restock"
+                  style={{ flex: 1 }}
+                />
+              )}
+
+              <GlassButton
+                size="small"
+                variant="secondary"
+                onPress={() => handleAdjustInventory(item.id)}
+                icon="swap-horizontal-outline"
+                title="Adjust"
+                style={{ flex: 1 }}
+              />
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+
+        </GlassView>
+      </TouchableOpacity >
     );
   };
 
@@ -789,20 +752,13 @@ export default function InventoryScreen({ navigation }: any) {
       {!searchQuery &&
         filters.category === "all" &&
         filters.status === "all" && (
-          <TouchableOpacity
-            style={[
-              styles.emptyButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
+          <GlassButton
+            size="medium"
+            variant="primary"
             onPress={() => navigation.navigate("AddProduct")}
-          >
-            <Ionicons name="add" size={20} color={theme.colors.white} />
-            <Text
-              style={[styles.emptyButtonText, { color: theme.colors.white }]}
-            >
-              Add First Product
-            </Text>
-          </TouchableOpacity>
+            icon="add"
+            title="Add Product"
+          />
         )}
     </View>
   );
@@ -826,9 +782,7 @@ export default function InventoryScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <ScreenWrapper>
       {renderHeader()}
       {renderSearchBar()}
 
@@ -861,7 +815,7 @@ export default function InventoryScreen({ navigation }: any) {
       >
         <Ionicons name="add" size={24} color={theme.colors.white} />
       </TouchableOpacity>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

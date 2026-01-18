@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import { useTheme } from '../../context/ThemeContext';
+import { GlassCard } from '../ui/GlassCard';
 
 interface Sale {
   id: string;
@@ -23,10 +25,24 @@ interface Sale {
 interface SaleCardProps {
   sale: Sale;
   onPress: () => void;
+  style?: ViewStyle;
 }
 
-const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
+const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress, style }) => {
   const { theme } = useTheme();
+
+  const getVariant = () => {
+    switch (sale.status) {
+      case 'completed':
+        return 'default';
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
   const getStatusColor = () => {
     switch (sale.status) {
@@ -44,13 +60,13 @@ const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
   const getStatusIcon = () => {
     switch (sale.status) {
       case 'completed':
-        return 'checkmark-circle-outline' as const;
+        return 'checkmark-circle' as const;
       case 'pending':
-        return 'time-outline' as const;
+        return 'time' as const;
       case 'cancelled':
-        return 'close-circle-outline' as const;
+        return 'close-circle' as const;
       default:
-        return 'help-circle-outline' as const;
+        return 'help-circle' as const;
     }
   };
 
@@ -70,126 +86,118 @@ const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
   const statusColor = getStatusColor();
   const statusIcon = getStatusIcon();
   const paymentIcon = getPaymentIcon();
+  const variant = getVariant();
 
   return (
-    <TouchableOpacity
-      style={[styles.container, { backgroundColor: theme.colors.surface }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      {/* Status Indicator */}
-      <View style={[styles.statusIndicator, { backgroundColor: statusColor + '20' }]}>
-        <Ionicons name={statusIcon} size={16} color={statusColor} />
-      </View>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={style}>
+      <GlassCard variant={variant} style={styles.card}>
+        <View style={styles.container}>
+          {/* Main Content */}
+          <View style={styles.content}>
+            {/* Header Row */}
+            <View style={styles.headerRow}>
+              <View style={styles.saleNumberContainer}>
+                <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '20' }]}>
+                  <Ionicons name="receipt" size={14} color={theme.colors.primary} />
+                </View>
+                <Text style={[styles.saleNumber, { color: theme.colors.text }]}>
+                  {sale.saleNumber}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+                <Ionicons name={statusIcon} size={12} color={statusColor} style={{ marginRight: 4 }} />
+                <Text style={[styles.statusText, { color: statusColor }]}>
+                  {sale.status}
+                </Text>
+              </View>
+            </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        {/* Header Row */}
-        <View style={styles.headerRow}>
-          <View style={styles.saleNumberContainer}>
-            <Ionicons name="receipt-outline" size={16} color={theme.colors.primary} />
-            <Text style={[styles.saleNumber, { color: theme.colors.primary }]}>
-              {sale.saleNumber}
-            </Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {sale.status.charAt(0).toUpperCase() + sale.status.slice(1)}
-            </Text>
+            {/* Amount Row */}
+            <View style={styles.amountRow}>
+              <Text style={[styles.amount, { color: theme.colors.text }]}>
+                ₦{sale.totalAmount.toLocaleString()}
+              </Text>
+            </View>
+
+            {/* Details Grid */}
+            <View style={styles.detailsGrid}>
+              <View style={styles.detailItem}>
+                <Ionicons name="person-outline" size={14} color={theme.colors.textSecondary} />
+                <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+                  {sale.agentName}
+                </Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.detailItem}>
+                <Ionicons name={paymentIcon} size={14} color={theme.colors.textSecondary} />
+                <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+                  {sale.paymentMethod}
+                </Text>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.detailItem}>
+                <Ionicons name="cube-outline" size={14} color={theme.colors.textSecondary} />
+                <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
+                  {sale.itemsCount} items
+                </Text>
+              </View>
+            </View>
+
+            {/* Footer */}
+            <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+              <Text style={[styles.date, { color: theme.colors.textTertiary }]}>
+                {moment(sale.createdAt).format('MMM D, YYYY • HH:mm')}
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={theme.colors.primary}
+              />
+            </View>
           </View>
         </View>
-
-        {/* Amount Row */}
-        <View style={styles.amountRow}>
-          <Text style={[styles.amount, { color: theme.colors.text }]}>
-            ₦{sale.totalAmount.toLocaleString()}
-          </Text>
-          <View style={styles.itemsBadge}>
-            <Ionicons name="cube-outline" size={12} color={theme.colors.textSecondary} />
-            <Text style={[styles.itemsText, { color: theme.colors.textSecondary }]}>
-              {sale.itemsCount} items
-            </Text>
-          </View>
-        </View>
-
-        {/* Details Row */}
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="person-outline" size={12} color={theme.colors.textSecondary} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
-              {sale.agentName}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name={paymentIcon} size={12} color={theme.colors.textSecondary} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
-              {sale.paymentMethod}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
-            <Text style={[styles.detailText, { color: theme.colors.textSecondary }]}>
-              {moment(sale.createdAt).format('HH:mm')}
-            </Text>
-          </View>
-        </View>
-
-        {/* Date Row */}
-        <Text style={[styles.date, { color: theme.colors.textTertiary }]}>
-          {moment(sale.createdAt).format('MMM D, YYYY')}
-        </Text>
-      </View>
-
-      {/* Chevron */}
-      <Ionicons 
-        name="chevron-forward" 
-        size={20} 
-        color={theme.colors.textTertiary} 
-        style={styles.chevron}
-      />
+      </GlassCard>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'transparent',
+  card: {
+    padding: 0,
   },
-  statusIndicator: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+  container: {
+    padding: 16,
   },
   content: {
-    flex: 1,
+    gap: 12,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   saleNumberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+  },
+  iconBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   saleNumber: {
     fontSize: 14,
     fontWeight: '600',
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   statusText: {
     fontSize: 10,
@@ -197,32 +205,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   amountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 4,
   },
   amount: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
   },
-  itemsBadge: {
+  detailsGrid: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(148, 163, 184, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 4,
-  },
-  itemsText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   detailItem: {
     flexDirection: 'row',
@@ -230,15 +223,25 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   detailText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
+  },
+  divider: {
+    width: 1,
+    height: 12,
+    backgroundColor: 'rgba(150, 150, 150, 0.2)',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
   },
   date: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
-  },
-  chevron: {
-    marginLeft: 8,
   },
 });
 

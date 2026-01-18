@@ -9,12 +9,13 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 
 const businessTypes = [
   'Supermarket/Grocery',
@@ -58,7 +59,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   const validateStep1 = () => {
     const { name, email, phone, password, confirmPassword } = personalInfo;
-    
+
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter your name');
       return false;
@@ -89,7 +90,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   const validateStep2 = () => {
     const { name, type } = businessInfo;
-    
+
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter business name');
       return false;
@@ -143,25 +144,25 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   const renderStep1 = () => (
-    <View style={styles.stepContainer}>
+    <GlassView style={styles.stepCard} intensity={25}>
       <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
         Personal Information
       </Text>
-      
+
       <View style={styles.form}>
         {/* Name */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Full Name *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="person-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="person-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -179,14 +180,14 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Email Address *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="mail-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -206,14 +207,14 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Phone Number *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="call-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="call-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -232,14 +233,14 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Password *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="lock-closed-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -261,14 +262,14 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Confirm Password *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="lock-closed-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -282,29 +283,29 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
         </View>
       </View>
-    </View>
+    </GlassView>
   );
 
   const renderStep2 = () => (
-    <View style={styles.stepContainer}>
+    <GlassView style={styles.stepCard} intensity={25}>
       <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
         Business Information
       </Text>
-      
+
       <View style={styles.form}>
         {/* Business Name */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Business Name *
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="business-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="business-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -326,31 +327,32 @@ export default function RegisterScreen({ navigation }: any) {
             {businessTypes.map((type) => (
               <TouchableOpacity
                 key={type}
+                activeOpacity={0.7}
                 style={[
                   styles.businessTypeButton,
-                  { 
-                    backgroundColor: businessInfo.type === type 
-                      ? theme.colors.primary + '20' 
-                      : theme.colors.surface,
-                    borderColor: businessInfo.type === type 
-                      ? theme.colors.primary 
+                  {
+                    backgroundColor: businessInfo.type === type
+                      ? theme.colors.primary + '30'
+                      : theme.colors.surfaceLight + '20',
+                    borderColor: businessInfo.type === type
+                      ? theme.colors.primary
                       : theme.colors.border,
                   }
                 ]}
                 onPress={() => handleBusinessInfoChange('type', type)}
               >
-                <Ionicons 
+                <Ionicons
                   name={
                     type.includes('Supermarket') ? 'cart-outline' :
-                    type.includes('Pharmacy') ? 'medical-outline' :
-                    type.includes('Clothing') ? 'shirt-outline' :
-                    type.includes('Electronics') ? 'hardware-chip-outline' :
-                    type.includes('Hardware') ? 'hammer-outline' :
-                    type.includes('Restaurant') ? 'restaurant-outline' :
-                    'storefront-outline'
-                  } 
-                  size={20} 
-                  color={businessInfo.type === type ? theme.colors.primary : theme.colors.textSecondary} 
+                      type.includes('Pharmacy') ? 'medical-outline' :
+                        type.includes('Clothing') ? 'shirt-outline' :
+                          type.includes('Electronics') ? 'hardware-chip-outline' :
+                            type.includes('Hardware') ? 'hammer-outline' :
+                              type.includes('Restaurant') ? 'restaurant-outline' :
+                                'storefront-outline'
+                  }
+                  size={20}
+                  color={businessInfo.type === type ? theme.colors.primary : theme.colors.textSecondary}
                 />
                 <Text style={[
                   styles.businessTypeText,
@@ -368,14 +370,14 @@ export default function RegisterScreen({ navigation }: any) {
           <Text style={[styles.label, { color: theme.colors.text }]}>
             Business Address
           </Text>
-          <View style={[styles.inputContainer, { 
-            backgroundColor: theme.colors.surface,
+          <View style={[styles.inputContainer, {
+            backgroundColor: theme.colors.surfaceLight + '40',
             borderColor: theme.colors.border,
           }]}>
-            <Ionicons 
-              name="location-outline" 
-              size={20} 
-              color={theme.colors.textSecondary} 
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={theme.colors.textSecondary}
               style={styles.inputIcon}
             />
             <TextInput
@@ -390,11 +392,11 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
         </View>
       </View>
-    </View>
+    </GlassView>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -406,7 +408,7 @@ export default function RegisterScreen({ navigation }: any) {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
-              style={styles.backButton}
+              style={[styles.backButton, { backgroundColor: theme.colors.surfaceLight + '80' }]}
               onPress={handleBack}
             >
               <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -421,12 +423,12 @@ export default function RegisterScreen({ navigation }: any) {
             </View>
             <View style={styles.stepIndicatorContainer}>
               <View style={[
-                styles.stepIndicator, 
-                { backgroundColor: step >= 1 ? theme.colors.primary : theme.colors.border }
+                styles.stepIndicator,
+                { backgroundColor: step >= 1 ? theme.colors.primary : theme.colors.surfaceLight }
               ]} />
               <View style={[
-                styles.stepIndicator, 
-                { backgroundColor: step >= 2 ? theme.colors.primary : theme.colors.border }
+                styles.stepIndicator,
+                { backgroundColor: step >= 2 ? theme.colors.primary : theme.colors.surfaceLight }
               ]} />
             </View>
           </View>
@@ -437,35 +439,22 @@ export default function RegisterScreen({ navigation }: any) {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             {step === 1 ? (
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+              <GlassButton
+                title="Continue"
                 onPress={handleNext}
-              >
-                <Text style={[styles.nextButtonText, { color: theme.colors.white }]}>
-                  Continue
-                </Text>
-                <Ionicons name="arrow-forward" size={20} color={theme.colors.white} />
-              </TouchableOpacity>
+                icon="arrow-forward"
+                size="large"
+                variant="primary"
+              />
             ) : (
-              <TouchableOpacity
-                style={[styles.submitButton, { 
-                  backgroundColor: theme.colors.primary,
-                  opacity: loading ? 0.7 : 1,
-                }]}
+              <GlassButton
+                title="Create Account"
                 onPress={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle-outline" size={20} color={theme.colors.white} />
-                    <Text style={[styles.submitButtonText, { color: theme.colors.white }]}>
-                      Create Account
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                loading={loading}
+                icon="checkmark-circle-outline"
+                size="large"
+                variant="primary"
+              />
             )}
           </View>
 
@@ -482,30 +471,28 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingVertical: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   backButton: {
-    padding: 8,
+    padding: 10,
+    borderRadius: 12,
   },
   headerCenter: {
     flex: 1,
@@ -521,19 +508,21 @@ const styles = StyleSheet.create({
   },
   stepIndicatorContainer: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 6,
   },
   stepIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  stepContainer: {
-    flex: 1,
+  stepCard: {
+    padding: 24,
+    borderRadius: 24,
+    marginBottom: 24,
   },
   stepTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 24,
   },
   form: {
@@ -544,12 +533,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
     minHeight: 56,
@@ -560,10 +550,13 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
+    height: '100%',
+    paddingVertical: 12,
   },
   helperText: {
     fontSize: 12,
     marginTop: 4,
+    marginLeft: 4,
   },
   businessTypesContainer: {
     flexDirection: 'row',
@@ -575,55 +568,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     gap: 8,
     minWidth: '48%',
   },
   businessTypeText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     flex: 1,
   },
   actionButtons: {
-    marginTop: 32,
     marginBottom: 24,
-  },
-  nextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-  },
-  nextButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 20,
   },
   footerText: {
     fontSize: 14,
   },
   footerLink: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

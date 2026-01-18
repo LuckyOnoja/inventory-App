@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 import axios from 'axios';
 import moment from 'moment';
 import config from '../../config';
@@ -87,7 +89,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
       if (response.data.success) {
         const saleData = response.data.data;
-        
+
         // Calculate subtotal and tax from items
         let subtotal = 0;
         saleData.items.forEach((item: any) => {
@@ -97,7 +99,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
         // Tax is typically 7.5% of subtotal
         const tax = subtotal * 0.075;
-        
+
         // Set the sale data with calculated values
         setSale({
           ...saleData,
@@ -118,7 +120,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
       }
     } catch (error: any) {
       console.error('Failed to fetch sale details:', error);
-      
+
       if (error.response?.status === 404) {
         Alert.alert('Error', 'Sale not found');
       } else if (error.response?.status === 401) {
@@ -197,20 +199,20 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
   const handlePrintReceipt = () => {
     if (!sale) return;
-    
+
     Alert.alert(
       'Print Receipt',
       'Do you want to print the receipt?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Print', 
+        {
+          text: 'Print',
           onPress: async () => {
             try {
               // In a real app, you would integrate with a printing library
               // For now, we'll show a success message
               Alert.alert('Success', 'Receipt sent to printer');
-              
+
               // You could also navigate to a receipt preview screen
               // navigation.navigate('ReceiptPreview', { saleId });
             } catch (error) {
@@ -224,7 +226,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
   const handleCancelSale = async () => {
     if (!sale) return;
-    
+
     if (sale.status === 'CANCELLED') {
       Alert.alert('Info', 'This sale is already cancelled');
       return;
@@ -233,7 +235,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
     // Check if sale is older than 24 hours
     const saleDate = moment(sale.createdAt);
     const hoursDiff = moment().diff(saleDate, 'hours');
-    
+
     if (hoursDiff > 24) {
       Alert.alert(
         'Cannot Cancel Sale',
@@ -248,8 +250,8 @@ export default function SaleDetailScreen({ route, navigation }: any) {
       'Are you sure you want to cancel this sale? This action cannot be undone and will restore product stock.',
       [
         { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel Sale', 
+        {
+          text: 'Yes, Cancel Sale',
           style: 'destructive',
           onPress: () => confirmCancelSale()
         },
@@ -260,7 +262,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
   const confirmCancelSale = async () => {
     try {
       setCanceling(true);
-      
+
       const response = await axios.put(
         `${API_URL}/sales/${saleId}/cancel`,
         {},
@@ -296,14 +298,14 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
   const handleCompleteSale = async () => {
     if (!sale || sale.status !== 'PENDING') return;
-    
+
     Alert.alert(
       'Mark as Complete',
       'Are you sure you want to mark this sale as complete?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Complete', 
+        {
+          text: 'Complete',
           onPress: async () => {
             try {
               // Note: Your backend doesn't have a mark as complete endpoint yet
@@ -325,30 +327,29 @@ export default function SaleDetailScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   if (!sale) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenWrapper>
         <View style={styles.errorContainer}>
           <Ionicons name="receipt-outline" size={64} color={theme.colors.textSecondary} />
           <Text style={[styles.errorText, { color: theme.colors.text }]}>
             Sale not found
           </Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+          <GlassButton
+            title="Retry"
             onPress={fetchSaleDetail}
-          >
-            <Text style={[styles.retryButtonText, { color: theme.colors.white }]}>
-              Retry
-            </Text>
-          </TouchableOpacity>
+            variant="primary"
+          />
         </View>
-      </SafeAreaView>
+      </ScreenWrapper>
     );
   }
 
@@ -356,8 +357,8 @@ export default function SaleDetailScreen({ route, navigation }: any) {
   const displaySubtotal = sale.subtotal || sale.totalAmount - (sale.tax || 0) + totalDiscount;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView 
+    <ScreenWrapper>
+      <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -370,7 +371,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -385,8 +386,8 @@ export default function SaleDetailScreen({ route, navigation }: any) {
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={styles.actionButton}
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.colors.surfaceLight }]}
               onPress={handlePrintReceipt}
             >
               <Ionicons name="print-outline" size={20} color={theme.colors.primary} />
@@ -395,13 +396,19 @@ export default function SaleDetailScreen({ route, navigation }: any) {
         </View>
 
         {/* Status Banner */}
-        <View style={[styles.statusBanner, { backgroundColor: getStatusColor() + '20' }]}>
+        <GlassView
+          intensity={20}
+          style={[
+            styles.statusBanner,
+            { borderLeftColor: getStatusColor(), borderLeftWidth: 4 }
+          ]}
+        >
           <View style={styles.statusRow}>
-            <Ionicons 
-              name={sale.status === 'COMPLETED' ? 'checkmark-circle' : 
-                    sale.status === 'PENDING' ? 'time' : 'close-circle'} 
-              size={20} 
-              color={getStatusColor()} 
+            <Ionicons
+              name={sale.status === 'COMPLETED' ? 'checkmark-circle' :
+                sale.status === 'PENDING' ? 'time' : 'close-circle'}
+              size={20}
+              color={getStatusColor()}
             />
             <Text style={[styles.statusText, { color: getStatusColor() }]}>
               {getStatusDisplayText(sale.status)}
@@ -410,17 +417,17 @@ export default function SaleDetailScreen({ route, navigation }: any) {
           <Text style={[styles.amount, { color: theme.colors.text }]}>
             ₦{sale.totalAmount.toLocaleString()}
           </Text>
-        </View>
+        </GlassView>
 
         {/* Sale Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: theme.colors.surface }]}>
+        <GlassView intensity={10} style={styles.infoCard}>
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Date & Time</Text>
             <Text style={[styles.infoValue, { color: theme.colors.text }]}>
               {moment(sale.createdAt).format('MMM D, YYYY • HH:mm')}
             </Text>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Agent</Text>
             <View style={styles.agentInfo}>
@@ -430,7 +437,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Payment Method</Text>
             <View style={styles.paymentInfo}>
@@ -440,7 +447,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           </View>
-          
+
           {sale.customerName && (
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Customer</Text>
@@ -449,7 +456,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
-          
+
           {sale.notes && (
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Notes</Text>
@@ -458,17 +465,20 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
-        </View>
+        </GlassView>
 
         {/* Items List */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             Items ({sale.items.length})
           </Text>
-          
-          <View style={[styles.itemsCard, { backgroundColor: theme.colors.surface }]}>
+
+          <GlassView intensity={10} style={styles.itemsCard}>
             {sale.items.map((item, index) => (
-              <View key={item.id} style={styles.itemRow}>
+              <View key={item.id} style={[
+                styles.itemRow,
+                index < sale.items.length - 1 && { borderBottomColor: 'rgba(150, 150, 150, 0.1)', borderBottomWidth: 1 }
+              ]}>
                 <View style={styles.itemInfo}>
                   <Text style={[styles.itemName, { color: theme.colors.text }]}>
                     {item.productName}
@@ -497,11 +507,11 @@ export default function SaleDetailScreen({ route, navigation }: any) {
                 </View>
               </View>
             ))}
-          </View>
+          </GlassView>
         </View>
 
         {/* Summary */}
-        <View style={[styles.summaryCard, { backgroundColor: theme.colors.surface }]}>
+        <GlassView intensity={15} style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
               Subtotal
@@ -510,7 +520,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               ₦{displaySubtotal.toLocaleString()}
             </Text>
           </View>
-          
+
           {sale.tax && sale.tax > 0 && (
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
@@ -521,7 +531,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
-          
+
           {totalDiscount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>
@@ -532,69 +542,52 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
-          
-          <View style={styles.divider} />
-          
+
+          <View style={[styles.divider, { backgroundColor: 'rgba(150, 150, 150, 0.2)' }]} />
+
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryTotalLabel, { color: theme.colors.text }]}>
               Total Amount
             </Text>
-            <Text style={[styles.summaryTotalValue, { color: theme.colors.text }]}>
+            <Text style={[styles.summaryTotalValue, { color: theme.colors.primary }]}>
               ₦{sale.totalAmount.toLocaleString()}
             </Text>
           </View>
-        </View>
+        </GlassView>
 
         {/* Actions */}
         {sale.status === 'PENDING' && (
           <View style={styles.actionsContainer}>
-            <TouchableOpacity 
-              style={[styles.completeButton, { backgroundColor: theme.colors.success }]}
+            <GlassButton
+              title="Mark as Complete"
               onPress={handleCompleteSale}
-            >
-              {canceling ? (
-                <ActivityIndicator size="small" color={theme.colors.white} />
-              ) : (
-                <>
-                  <Ionicons name="checkmark" size={20} color={theme.colors.white} />
-                  <Text style={[styles.completeButtonText, { color: theme.colors.white }]}>
-                    Mark as Complete
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+              loading={canceling}
+              icon="checkmark"
+              variant="success"
+              style={{ width: '100%' }}
+            />
           </View>
         )}
-        
+
         {sale.status === 'COMPLETED' && user?.role !== 'SALES_AGENT' && (
           <View style={styles.actionsContainer}>
-            <TouchableOpacity 
-              style={[styles.cancelButton, { borderColor: theme.colors.error }]}
+            <GlassButton
+              title="Cancel Sale"
               onPress={handleCancelSale}
-              disabled={canceling}
-            >
-              {canceling ? (
-                <ActivityIndicator size="small" color={theme.colors.error} />
-              ) : (
-                <>
-                  <Ionicons name="close" size={20} color={theme.colors.error} />
-                  <Text style={[styles.cancelButtonText, { color: theme.colors.error }]}>
-                    Cancel Sale
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+              loading={canceling}
+              icon="close"
+              variant="secondary"
+              style={{ width: '100%', borderColor: theme.colors.error, borderWidth: 1 }}
+              textStyle={{ color: theme.colors.error }}
+            />
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -612,20 +605,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
-  retryButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 16,
   },
   backButton: {
@@ -650,7 +634,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(148, 163, 184, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -659,6 +642,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 16,
+    overflow: 'hidden',
   },
   statusRow: {
     flexDirection: 'row',
@@ -680,8 +664,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
+    overflow: 'hidden',
   },
   infoRow: {
     flexDirection: 'row',
@@ -725,8 +708,6 @@ const styles = StyleSheet.create({
   },
   itemsCard: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
     overflow: 'hidden',
   },
   itemRow: {
@@ -734,8 +715,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.1)',
   },
   itemInfo: {
     flex: 1,
@@ -774,8 +753,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 16,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.1)',
+    overflow: 'hidden',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -800,37 +778,11 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(148, 163, 184, 0.1)',
     marginVertical: 12,
   },
   actionsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 32,
     gap: 12,
-  },
-  completeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  completeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { GlassView } from '../ui/GlassView';
+import { GlassButton } from '../ui/GlassButton';
+import { BlurView } from 'expo-blur';
 
 interface FilterState {
   period: 'today' | 'week' | 'month' | 'all';
@@ -66,7 +70,7 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
   };
 
   const handleReset = () => {
-    const resetFilters = {
+    const resetFilters: FilterState = {
       period: 'today',
       paymentMethod: 'all',
       status: 'all',
@@ -75,6 +79,17 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
     setLocalFilters(resetFilters);
     onFilterChange(resetFilters);
   };
+  // ... (rest of the file content is unchanged until the end)
+  // Ensure you keep the existing code and just add the export at the bottom.
+  // Actually, since I need to append to the end of the file, I will target the end.
+
+  // But wait, replace_file_content replaces a block. To fix the export, I should probably replace the end of the file.
+  // To fix the type error, I need to replace handleReset.
+  // I will do two chunks or just replace the handleReset and then append the export using a separate call or large chunk?
+  // I can do it in one go if I target the handleReset and then target the end of the file? No, "replace_file_content" can only do one contiguous block if I don't use multi_replace.
+  // I should use "multi_replace_file_content" to do both scattered edits.
+  // But wait, the tool definitions say "Use this tool ONLY when you are making MULTIPLE, NON-CONTIGUOUS edits". Yes, that's what I need.
+
 
   const getPeriodIcon = (period: string) => {
     switch (period) {
@@ -119,231 +134,232 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              Filter Sales
-            </Text>
-            <TouchableOpacity onPress={handleReset}>
-              <Text style={[styles.resetText, { color: theme.colors.error }]}>
-                Reset
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            {/* Period Filter */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Time Period
-              </Text>
-              <View style={styles.optionsGrid}>
-                {periodOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.optionButton,
-                      { 
-                        backgroundColor: localFilters.period === option.value 
-                          ? theme.colors.primary + '20' 
-                          : theme.colors.surfaceLight,
-                        borderColor: localFilters.period === option.value 
-                          ? theme.colors.primary 
-                          : theme.colors.border,
-                      }
-                    ]}
-                    onPress={() => setLocalFilters(prev => ({ 
-                      ...prev, 
-                      period: option.value as any 
-                    }))}
-                  >
-                    <Ionicons 
-                      name={getPeriodIcon(option.value)} 
-                      size={16} 
-                      color={localFilters.period === option.value 
-                        ? theme.colors.primary
-                        : theme.colors.text
-                      } 
-                    />
-                    <Text style={[
-                      styles.optionText,
-                      { 
-                        color: localFilters.period === option.value 
-                          ? theme.colors.primary
-                          : theme.colors.text 
-                      }
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <GlassView style={styles.modalContainer} intensity={30}>
+              {/* Header */}
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                  <Ionicons name="close" size={24} color={theme.colors.text} />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+                  Filter Sales
+                </Text>
+                <TouchableOpacity onPress={handleReset}>
+                  <Text style={[styles.resetText, { color: theme.colors.error }]}>
+                    Reset
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
 
-            {/* Payment Method Filter */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Payment Method
-              </Text>
-              <View style={styles.optionsGrid}>
-                {paymentOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.optionButton,
-                      { 
-                        backgroundColor: localFilters.paymentMethod === option.value 
-                          ? theme.colors.primary + '20' 
-                          : theme.colors.surfaceLight,
-                        borderColor: localFilters.paymentMethod === option.value 
-                          ? theme.colors.primary 
-                          : theme.colors.border,
-                      }
-                    ]}
-                    onPress={() => setLocalFilters(prev => ({ 
-                      ...prev, 
-                      paymentMethod: option.value as any 
-                    }))}
-                  >
-                    <Ionicons 
-                      name={getPaymentIcon(option.value)} 
-                      size={16} 
-                      color={localFilters.paymentMethod === option.value 
-                        ? theme.colors.primary
-                        : theme.colors.text
-                      } 
-                    />
-                    <Text style={[
-                      styles.optionText,
-                      { 
-                        color: localFilters.paymentMethod === option.value 
-                          ? theme.colors.primary
-                          : theme.colors.text 
-                      }
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+                {/* Period Filter */}
+                <View style={styles.filterSection}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                    Time Period
+                  </Text>
+                  <View style={styles.optionsGrid}>
+                    {periodOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionButton,
+                          {
+                            backgroundColor: localFilters.period === option.value
+                              ? theme.colors.primary + '20'
+                              : theme.colors.surfaceLight + '40',
+                            borderColor: localFilters.period === option.value
+                              ? theme.colors.primary
+                              : theme.colors.border,
+                          }
+                        ]}
+                        onPress={() => setLocalFilters(prev => ({
+                          ...prev,
+                          period: option.value as any
+                        }))}
+                      >
+                        <Ionicons
+                          name={getPeriodIcon(option.value)}
+                          size={16}
+                          color={localFilters.period === option.value
+                            ? theme.colors.primary
+                            : theme.colors.text
+                          }
+                        />
+                        <Text style={[
+                          styles.optionText,
+                          {
+                            color: localFilters.period === option.value
+                              ? theme.colors.primary
+                              : theme.colors.text
+                          }
+                        ]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Payment Method Filter */}
+                <View style={styles.filterSection}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                    Payment Method
+                  </Text>
+                  <View style={styles.optionsGrid}>
+                    {paymentOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionButton,
+                          {
+                            backgroundColor: localFilters.paymentMethod === option.value
+                              ? theme.colors.primary + '20'
+                              : theme.colors.surfaceLight + '40',
+                            borderColor: localFilters.paymentMethod === option.value
+                              ? theme.colors.primary
+                              : theme.colors.border,
+                          }
+                        ]}
+                        onPress={() => setLocalFilters(prev => ({
+                          ...prev,
+                          paymentMethod: option.value as any
+                        }))}
+                      >
+                        <Ionicons
+                          name={getPaymentIcon(option.value)}
+                          size={16}
+                          color={localFilters.paymentMethod === option.value
+                            ? theme.colors.primary
+                            : theme.colors.text
+                          }
+                        />
+                        <Text style={[
+                          styles.optionText,
+                          {
+                            color: localFilters.paymentMethod === option.value
+                              ? theme.colors.primary
+                              : theme.colors.text
+                          }
+                        ]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Status Filter */}
+                <View style={styles.filterSection}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                    Sale Status
+                  </Text>
+                  <View style={styles.optionsGrid}>
+                    {statusOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionButton,
+                          {
+                            backgroundColor: localFilters.status === option.value
+                              ? getStatusColor(option.value, theme) + '20'
+                              : theme.colors.surfaceLight + '40',
+                            borderColor: localFilters.status === option.value
+                              ? getStatusColor(option.value, theme)
+                              : theme.colors.border,
+                          }
+                        ]}
+                        onPress={() => setLocalFilters(prev => ({
+                          ...prev,
+                          status: option.value as any
+                        }))}
+                      >
+                        <Ionicons
+                          name={getStatusIcon(option.value)}
+                          size={16}
+                          color={localFilters.status === option.value
+                            ? getStatusColor(option.value, theme)
+                            : theme.colors.text
+                          }
+                        />
+                        <Text style={[
+                          styles.optionText,
+                          {
+                            color: localFilters.status === option.value
+                              ? getStatusColor(option.value, theme)
+                              : theme.colors.text
+                          }
+                        ]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Sort Options */}
+                <View style={styles.filterSection}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                    Sort By
+                  </Text>
+                  <View style={styles.optionsGrid}>
+                    {sortOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionButton,
+                          {
+                            backgroundColor: localFilters.sortBy === option.value
+                              ? theme.colors.primary + '20'
+                              : theme.colors.surfaceLight + '40',
+                            borderColor: localFilters.sortBy === option.value
+                              ? theme.colors.primary
+                              : theme.colors.border,
+                          }
+                        ]}
+                        onPress={() => setLocalFilters(prev => ({
+                          ...prev,
+                          sortBy: option.value as any
+                        }))}
+                      >
+                        <Ionicons
+                          name={getSortIcon(option.value)}
+                          size={16}
+                          color={localFilters.sortBy === option.value
+                            ? theme.colors.primary
+                            : theme.colors.text
+                          }
+                        />
+                        <Text style={[
+                          styles.optionText,
+                          {
+                            color: localFilters.sortBy === option.value
+                              ? theme.colors.primary
+                              : theme.colors.text
+                          }
+                        ]}>
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
+
+              {/* Apply Button */}
+              <View style={styles.modalFooter}>
+                <GlassButton
+                  title="Apply Filters"
+                  onPress={handleApply}
+                  icon="checkmark"
+                  variant="primary"
+                />
               </View>
-            </View>
-
-            {/* Status Filter */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Sale Status
-              </Text>
-              <View style={styles.optionsGrid}>
-                {statusOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.optionButton,
-                      { 
-                        backgroundColor: localFilters.status === option.value 
-                          ? getStatusColor(option.value, theme) + '20' 
-                          : theme.colors.surfaceLight,
-                        borderColor: localFilters.status === option.value 
-                          ? getStatusColor(option.value, theme)
-                          : theme.colors.border,
-                      }
-                    ]}
-                    onPress={() => setLocalFilters(prev => ({ 
-                      ...prev, 
-                      status: option.value as any 
-                    }))}
-                  >
-                    <Ionicons 
-                      name={getStatusIcon(option.value)} 
-                      size={16} 
-                      color={localFilters.status === option.value 
-                        ? getStatusColor(option.value, theme)
-                        : theme.colors.text
-                      } 
-                    />
-                    <Text style={[
-                      styles.optionText,
-                      { 
-                        color: localFilters.status === option.value 
-                          ? getStatusColor(option.value, theme)
-                          : theme.colors.text 
-                      }
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Sort Options */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                Sort By
-              </Text>
-              <View style={styles.optionsGrid}>
-                {sortOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[
-                      styles.optionButton,
-                      { 
-                        backgroundColor: localFilters.sortBy === option.value 
-                          ? theme.colors.primary + '20' 
-                          : theme.colors.surfaceLight,
-                        borderColor: localFilters.sortBy === option.value 
-                          ? theme.colors.primary 
-                          : theme.colors.border,
-                      }
-                    ]}
-                    onPress={() => setLocalFilters(prev => ({ 
-                      ...prev, 
-                      sortBy: option.value as any 
-                    }))}
-                  >
-                    <Ionicons 
-                      name={getSortIcon(option.value)} 
-                      size={16} 
-                      color={localFilters.sortBy === option.value 
-                        ? theme.colors.primary
-                        : theme.colors.text
-                      } 
-                    />
-                    <Text style={[
-                      styles.optionText,
-                      { 
-                        color: localFilters.sortBy === option.value 
-                          ? theme.colors.primary
-                          : theme.colors.text 
-                      }
-                    ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </ScrollView>
-
-          {/* Apply Button */}
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.applyButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleApply}
-            >
-              <Ionicons name="checkmark" size={20} color={theme.colors.white} />
-              <Text style={[styles.applyText, { color: theme.colors.white }]}>
-                Apply Filters
-              </Text>
-            </TouchableOpacity>
-          </View>
+            </GlassView>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -376,7 +392,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.1)',
+    borderBottomColor: 'rgba(150, 150, 150, 0.1)',
+  },
+  closeButton: {
+    padding: 4,
   },
   modalTitle: {
     fontSize: 18,
@@ -400,17 +419,17 @@ const styles = StyleSheet.create({
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12,
   },
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     gap: 8,
-    minWidth: '48%',
+    width: '48%',
   },
   optionText: {
     fontSize: 14,
@@ -420,19 +439,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(148, 163, 184, 0.1)',
-  },
-  applyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  applyText: {
-    fontSize: 16,
-    fontWeight: '600',
+    borderTopColor: 'rgba(150, 150, 150, 0.1)',
   },
 });
 

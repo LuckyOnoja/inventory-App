@@ -14,7 +14,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
+import { GlassView } from '../../components/ui/GlassView';
+import { GlassButton } from '../../components/ui/GlassButton';
 import axios from 'axios';
 import moment from 'moment';
 import config from '../../config';
@@ -234,20 +236,19 @@ export default function CameraScreen({ navigation }: any) {
           } issues
         </Text>
       </View>
-      <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+      <GlassButton
+        size="small"
+        variant="primary"
         onPress={() => navigation.navigate('AddCamera')}
-      >
-        <Ionicons name="add" size={20} color={theme.colors.white} />
-        <Text style={[styles.addButtonText, { color: theme.colors.white }]}>
-          Add
-        </Text>
-      </TouchableOpacity>
+        icon="add"
+        title="Add"
+        style={{ width: "auto" }}
+      />
     </View>
   );
 
   const renderFilterToggle = () => (
-    <View style={[styles.filterCard, { backgroundColor: theme.colors.surface }]}>
+    <GlassView style={styles.filterCard} intensity={20}>
       <View style={styles.filterContent}>
         <Ionicons name="warning-outline" size={20} color={theme.colors.warning} />
         <View style={styles.filterText}>
@@ -265,14 +266,14 @@ export default function CameraScreen({ navigation }: any) {
         trackColor={{ false: theme.colors.border, true: theme.colors.warning + '80' }}
         thumbColor={showOfflineOnly ? theme.colors.warning : '#f4f3f4'}
       />
-    </View>
+    </GlassView>
   );
 
   const renderCameraCard = (camera: SecurityCamera) => {
     const statusColor = getStatusColor(camera.status);
-    
+
     return (
-      <View key={camera.id} style={[styles.cameraCard, { backgroundColor: theme.colors.surface }]}>
+      <GlassView key={camera.id} style={styles.cameraCard} intensity={25}>
         <View style={styles.cameraHeader}>
           <View style={styles.cameraInfo}>
             <View style={styles.cameraTitleRow}>
@@ -280,17 +281,17 @@ export default function CameraScreen({ navigation }: any) {
                 {camera.name}
               </Text>
               <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-                <Ionicons 
-                  name={getStatusIcon(camera.status) as any} 
-                  size={12} 
-                  color={statusColor} 
+                <Ionicons
+                  name={getStatusIcon(camera.status) as any}
+                  size={12}
+                  color={statusColor}
                 />
                 <Text style={[styles.statusText, { color: statusColor }]}>
                   {getStatusText(camera.status)}
                 </Text>
               </View>
             </View>
-            
+
             <Text style={[styles.cameraId, { color: theme.colors.textTertiary }]}>
               {camera.cameraId}
             </Text>
@@ -298,7 +299,7 @@ export default function CameraScreen({ navigation }: any) {
               {camera.location}
             </Text>
           </View>
-          
+
           <TouchableOpacity
             style={styles.moreButton}
             onPress={() => {
@@ -343,7 +344,7 @@ export default function CameraScreen({ navigation }: any) {
             </View>
           ) : (
             <View style={[styles.offlineFeed, { backgroundColor: theme.colors.background }]}>
-              <Ionicons  size={48} color={theme.colors.textTertiary} />
+              <Ionicons size={48} color={theme.colors.textTertiary} />
               <Text style={[styles.offlineText, { color: theme.colors.textSecondary }]}>
                 Camera Offline
               </Text>
@@ -360,20 +361,20 @@ export default function CameraScreen({ navigation }: any) {
               </Text>
               <Text style={[
                 styles.detailValue,
-                { 
-                  color: camera.batteryLevel < 20 ? theme.colors.error : 
-                         camera.batteryLevel < 50 ? theme.colors.warning : theme.colors.success 
+                {
+                  color: camera.batteryLevel < 20 ? theme.colors.error :
+                    camera.batteryLevel < 50 ? theme.colors.warning : theme.colors.success
                 }
               ]}>
                 {camera.batteryLevel}%
               </Text>
             </View>
-            
+
             <View style={styles.detailItem}>
-              <Ionicons 
-                name={camera.isSolarPowered ? 'sunny-outline' : 'flash-outline'} 
-                size={16} 
-                color={theme.colors.textSecondary} 
+              <Ionicons
+                name={camera.isSolarPowered ? 'sunny-outline' : 'flash-outline'}
+                size={16}
+                color={theme.colors.textSecondary}
               />
               <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                 Power
@@ -382,7 +383,7 @@ export default function CameraScreen({ navigation }: any) {
                 {camera.isSolarPowered ? 'Solar' : 'Grid'}
               </Text>
             </View>
-            
+
             <View style={styles.detailItem}>
               <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
               <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
@@ -404,35 +405,26 @@ export default function CameraScreen({ navigation }: any) {
           )}
 
           <View style={styles.cameraActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, { borderColor: theme.colors.border }]}
+            <GlassButton
+              size="small"
+              variant="secondary"
               onPress={() => toggleCameraAlerts(camera.id, camera.alertsEnabled)}
-            >
-              <Ionicons 
-                name={camera.alertsEnabled ? 'notifications' : 'notifications-off'} 
-                size={16} 
-                color={camera.alertsEnabled ? theme.colors.success : theme.colors.textTertiary} 
-              />
-              <Text style={[
-                styles.actionText,
-                { color: camera.alertsEnabled ? theme.colors.success : theme.colors.textTertiary }
-              ]}>
-                {camera.alertsEnabled ? 'Alerts On' : 'Alerts Off'}
-              </Text>
-            </TouchableOpacity>
+              icon={camera.alertsEnabled ? 'notifications' : 'notifications-off'}
+              title={camera.alertsEnabled ? 'Alerts On' : 'Alerts Off'}
+              style={{ flex: 1, marginRight: 8 }}
+            />
 
-            <TouchableOpacity
-              style={[styles.actionButton, { borderColor: theme.colors.border }]}
+            <GlassButton
+              size="small"
+              variant="primary"
               onPress={() => navigation.navigate('CameraHistory', { cameraId: camera.id })}
-            >
-              <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
-              <Text style={[styles.actionText, { color: theme.colors.primary }]}>
-                History
-              </Text>
-            </TouchableOpacity>
+              icon="time-outline"
+              title="History"
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
-      </View>
+      </GlassView>
     );
   };
 
@@ -449,15 +441,13 @@ export default function CameraScreen({ navigation }: any) {
         }
       </Text>
       {!showOfflineOnly && (
-        <TouchableOpacity
-          style={[styles.emptyButton, { backgroundColor: theme.colors.primary }]}
+        <GlassButton
+          size="medium"
+          variant="primary"
           onPress={() => navigation.navigate('AddCamera')}
-        >
-          <Ionicons name="add" size={20} color={theme.colors.white} />
-          <Text style={[styles.emptyButtonText, { color: theme.colors.white }]}>
-            Add Camera
-          </Text>
-        </TouchableOpacity>
+          icon="add"
+          title="Add Camera"
+        />
       )}
     </View>
   );
@@ -471,7 +461,7 @@ export default function CameraScreen({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -498,7 +488,7 @@ export default function CameraScreen({ navigation }: any) {
           )}
 
           {/* Quick Stats */}
-          <View style={[styles.statsCard, { backgroundColor: theme.colors.surface }]}>
+          <GlassView style={styles.statsCard} intensity={20}>
             <Text style={[styles.statsTitle, { color: theme.colors.text }]}>
               Camera Status Overview
             </Text>
@@ -511,9 +501,9 @@ export default function CameraScreen({ navigation }: any) {
                   Online
                 </Text>
               </View>
-              
+
               <View style={styles.statDivider} />
-              
+
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: theme.colors.error }]}>
                   {cameras.filter(c => c.status === 'offline').length}
@@ -522,9 +512,9 @@ export default function CameraScreen({ navigation }: any) {
                   Offline
                 </Text>
               </View>
-              
+
               <View style={styles.statDivider} />
-              
+
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: theme.colors.warning }]}>
                   {cameras.filter(c => c.status === 'tampered' || c.status === 'low_battery').length}
@@ -533,9 +523,9 @@ export default function CameraScreen({ navigation }: any) {
                   Issues
                 </Text>
               </View>
-              
+
               <View style={styles.statDivider} />
-              
+
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: theme.colors.text }]}>
                   {cameras.filter(c => c.alertsEnabled).length}/{cameras.length}
@@ -545,10 +535,10 @@ export default function CameraScreen({ navigation }: any) {
                 </Text>
               </View>
             </View>
-          </View>
+          </GlassView>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

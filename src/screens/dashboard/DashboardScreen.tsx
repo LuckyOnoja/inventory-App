@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenWrapper } from "../../components/ui/ScreenWrapper";
+import { GlassCard } from "../../components/ui/GlassCard";
+import { GlassView } from "../../components/ui/GlassView";
 import axios from "axios";
 import config from "../../config";
 
@@ -52,12 +55,12 @@ interface DashboardStats {
 interface RecentActivity {
   id: string;
   type:
-    | "sale"
-    | "device_offline"
-    | "low_stock"
-    | "inventory_check"
-    | "discrepancy"
-    | "notification";
+  | "sale"
+  | "device_offline"
+  | "low_stock"
+  | "inventory_check"
+  | "discrepancy"
+  | "notification";
   title: string;
   message: string;
   time: string;
@@ -112,7 +115,6 @@ export default function DashboardScreen({ navigation }: any) {
         "Failed to fetch dashboard data:",
         error.response?.data || error.message
       );
-      // You might want to show an error message to the user here
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -130,9 +132,8 @@ export default function DashboardScreen({ navigation }: any) {
         id: sale.id,
         type: "sale",
         title: "Sale Completed",
-        message: `Sale ${
-          sale.saleNumber
-        } - ₦${sale.totalAmount.toLocaleString()}`,
+        message: `Sale ${sale.saleNumber
+          } - ₦${sale.totalAmount.toLocaleString()}`,
         time: formatTimeAgo(sale.createdAt),
         icon: "checkmark-circle-outline",
         color: theme.colors.success,
@@ -250,51 +251,52 @@ export default function DashboardScreen({ navigation }: any) {
     prefix = "",
   }: any) => (
     <TouchableOpacity
-      style={[styles.statCard, { backgroundColor: theme.colors.surface }]}
+      style={styles.statCardWrapper}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View
-        style={[styles.statIconContainer, { backgroundColor: color + "20" }]}
+      <GlassCard
+        style={styles.statCard}
+        variant={subtitle.includes("low") || subtitle.includes("Offline") ? "warning" : "default"}
       >
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <View style={styles.statContent}>
-        <Text style={[styles.statValue, { color: theme.colors.text }]}>
-          {prefix}
-          {typeof value === "number" ? value.toLocaleString() : value}
-        </Text>
-        <Text style={[styles.statTitle, { color: theme.colors.textSecondary }]}>
-          {title}
-        </Text>
+        <View style={styles.statHeader}>
+          <View style={[styles.statIconContainer, { backgroundColor: color + "20" }]}>
+            <Ionicons name={icon} size={24} color={color} />
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
+        </View>
+        <View style={styles.statContent}>
+          <Text style={[styles.statValue, { color: theme.colors.text }]}>
+            {prefix}
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </Text>
+          <Text style={[styles.statTitle, { color: theme.colors.textSecondary }]}>
+            {title}
+          </Text>
+        </View>
         {subtitle && (
-          <Text
-            style={[styles.statSubtitle, { color: theme.colors.textTertiary }]}
-          >
+          <Text style={[styles.statSubtitle, { color: theme.colors.textTertiary }]}>
             {subtitle}
           </Text>
         )}
-      </View>
-      <Ionicons
-        name="chevron-forward"
-        size={20}
-        color={theme.colors.textTertiary}
-      />
+      </GlassCard>
     </TouchableOpacity>
   );
 
   const QuickAction = ({ title, icon, color, onPress }: any) => (
     <TouchableOpacity
-      style={[styles.quickAction, { backgroundColor: theme.colors.surface }]}
+      style={styles.quickActionWrapper}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View style={[styles.quickActionIcon, { backgroundColor: color + "20" }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <Text style={[styles.quickActionText, { color: theme.colors.text }]}>
-        {title}
-      </Text>
+      <GlassView style={styles.quickAction} intensity={20}>
+        <View style={[styles.quickActionIcon, { backgroundColor: color + "20" }]}>
+          <Ionicons name={icon} size={28} color={color} />
+        </View>
+        <Text style={[styles.quickActionText, { color: theme.colors.text }]}>
+          {title}
+        </Text>
+      </GlassView>
     </TouchableOpacity>
   );
 
@@ -308,7 +310,7 @@ export default function DashboardScreen({ navigation }: any) {
       >
         <Ionicons
           name={activity.icon as any}
-          size={16}
+          size={18}
           color={activity.color}
         />
       </View>
@@ -316,17 +318,13 @@ export default function DashboardScreen({ navigation }: any) {
         <Text style={[styles.activityTitle, { color: theme.colors.text }]}>
           {activity.title}
         </Text>
-        <Text
-          style={[styles.activityText, { color: theme.colors.textSecondary }]}
-        >
+        <Text style={[styles.activityText, { color: theme.colors.textSecondary }]}>
           {activity.message}
         </Text>
-        <Text
-          style={[styles.activityTime, { color: theme.colors.textTertiary }]}
-        >
-          {activity.time}
-        </Text>
       </View>
+      <Text style={[styles.activityTime, { color: theme.colors.textTertiary }]}>
+        {activity.time}
+      </Text>
     </View>
   );
 
@@ -335,92 +333,72 @@ export default function DashboardScreen({ navigation }: any) {
   const isSalesAgent = user?.role === "SALES_AGENT";
   const isSupervisor = user?.role === "SUPERVISOR";
 
-  // Role-based navigation handlers
   const handleInventoryNavigation = () => {
-    if (isSuperAdmin || isSupervisor) {
-      navigation.navigate("Inventory");
-    }
+    if (isSuperAdmin || isSupervisor) navigation.navigate("Inventory");
   };
 
   const handleReportsNavigation = () => {
-    if (isSuperAdmin || isSupervisor) {
-      navigation.navigate("Reports");
-    }
+    if (isSuperAdmin || isSupervisor) navigation.navigate("Reports");
   };
 
   const handleCamerasNavigation = () => {
-    if (isSuperAdmin) {
-      navigation.navigate("Cameras");
-    }
+    if (isSuperAdmin) navigation.navigate("Cameras");
   };
 
   const handleInventoryChecksNavigation = () => {
-    if (isSuperAdmin || isSupervisor) {
-      navigation.navigate("InventoryCheck");
-    }
+    if (isSuperAdmin || isSupervisor) navigation.navigate("InventoryCheck");
   };
 
   const handleProductsNavigation = () => {
-    if (isSuperAdmin || isSupervisor) {
-      navigation.navigate("Products");
-    }
-  };
-
-  const handleStaffNavigation = () => {
-    if (isSuperAdmin) {
-      navigation.navigate("Staff");
-    }
+    if (isSuperAdmin || isSupervisor) navigation.navigate("Products");
   };
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
-      >
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text
-            style={[styles.loadingText, { color: theme.colors.textSecondary }]}
-          >
-            Loading Dashboard...
-          </Text>
-        </View>
-      </SafeAreaView>
+      <ScreenWrapper style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+          Loading Dashboard...
+        </Text>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <ScreenWrapper>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
           />
         }
       >
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-            Welcome, {user?.name.split(" ")[0]}!
-          </Text>
-          <Text
-            style={[
-              styles.headerSubtitle,
-              { color: theme.colors.textSecondary },
-            ]}
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+              Welcome, {user?.name.split(" ")[0]}!
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+              Today's Overview •{" "}
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.profileButton, { backgroundColor: theme.colors.primary }]}
+            onPress={() => navigation.navigate("Profile")}
           >
-            Today's Overview •{" "}
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </Text>
+            <Text style={styles.profileInitials}>
+              {user?.name.charAt(0)}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Stats Grid */}
@@ -455,44 +433,11 @@ export default function DashboardScreen({ navigation }: any) {
             title="Alerts"
             value={stats.unreadNotifications}
             icon="notifications-outline"
-            color={
-              stats.unreadNotifications > 0
-                ? theme.colors.error
-                : theme.colors.success
-            }
-            subtitle={
-              stats.unreadNotifications > 0
-                ? "Unread notifications"
-                : "All caught up"
-            }
+            color={stats.unreadNotifications > 0 ? theme.colors.error : theme.colors.success}
+            subtitle={stats.unreadNotifications > 0 ? "Unread notifications" : "All caught up"}
             onPress={() => navigation.navigate("Notifications")}
           />
         </View>
-
-        {/* Inventory Status - Only for Admin/Supervisor */}
-        {(isSuperAdmin || isSupervisor) && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Inventory Status
-            </Text>
-            <View style={styles.inventoryStatus}>
-              <StatCard
-                title="Low Stock"
-                value={stats.lowStockCount}
-                icon="warning-outline"
-                color={theme.colors.warning}
-                onPress={() => handleInventoryNavigation()}
-              />
-              <StatCard
-                title="Out of Stock"
-                value={stats.outOfStockCount}
-                icon="close-circle-outline"
-                color={theme.colors.error}
-                onPress={() => handleInventoryNavigation()}
-              />
-            </View>
-          </View>
-        )}
 
         {/* Quick Actions */}
         <View style={styles.section}>
@@ -506,7 +451,6 @@ export default function DashboardScreen({ navigation }: any) {
               color={theme.colors.primary}
               onPress={() => navigation.navigate("NewSale")}
             />
-            
             {(isSuperAdmin || isSupervisor) && (
               <>
                 <QuickAction
@@ -523,7 +467,6 @@ export default function DashboardScreen({ navigation }: any) {
                 />
               </>
             )}
-
             {(isSuperAdmin || isSupervisor) && (
               <QuickAction
                 title="Reports"
@@ -532,8 +475,6 @@ export default function DashboardScreen({ navigation }: any) {
                 onPress={handleReportsNavigation}
               />
             )}
-
-            {/* Additional actions for Sales Agent */}
             {isSalesAgent && (
               <>
                 <QuickAction
@@ -543,7 +484,7 @@ export default function DashboardScreen({ navigation }: any) {
                   onPress={() => navigation.navigate("Sales")}
                 />
                 <QuickAction
-                  title="View Products"
+                  title="Products"
                   icon="cube-outline"
                   color={theme.colors.success}
                   onPress={() => navigation.navigate("Products")}
@@ -553,32 +494,28 @@ export default function DashboardScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Security & System Status - Only for Admin */}
-        {isSuperAdmin && (
+        {/* Inventory Critical Stats */}
+        {(isSuperAdmin || isSupervisor) && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              System Status
+              Inventory Status
             </Text>
-            <View style={styles.systemStatus}>
+            <View style={styles.statsGrid}>
               <StatCard
-                title="Active Cameras"
-                value={stats.activeDevices}
-                icon="camera-outline"
-                color={
-                  stats.activeDevices > 0
-                    ? theme.colors.success
-                    : theme.colors.error
-                }
-                subtitle={stats.activeDevices > 0 ? "Online" : "Offline"}
-                onPress={handleCamerasNavigation}
+                title="Low Stock"
+                value={stats.lowStockCount}
+                icon="warning-outline"
+                color={theme.colors.warning}
+                subtitle="Needs Reorder"
+                onPress={() => handleInventoryNavigation()}
               />
               <StatCard
-                title="Pending Checks"
-                value={stats.pendingChecks}
-                icon="time-outline"
-                color={theme.colors.warning}
-                subtitle="Requires attention"
-                onPress={handleInventoryChecksNavigation}
+                title="Out of Stock"
+                value={stats.outOfStockCount}
+                icon="close-circle-outline"
+                color={theme.colors.error}
+                subtitle="Critical"
+                onPress={() => handleInventoryNavigation()}
               />
             </View>
           </View>
@@ -590,205 +527,149 @@ export default function DashboardScreen({ navigation }: any) {
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               Recent Activity
             </Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Notifications")}
-            >
-              <Text
-                style={[styles.seeAllText, { color: theme.colors.primary }]}
-              >
+            <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
+              <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
                 See All
               </Text>
             </TouchableOpacity>
           </View>
 
-          <View
-            style={[
-              styles.activityCard,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
+          <GlassView style={styles.activityCard} intensity={15}>
             {recentActivities.length > 0 ? (
-              recentActivities.map((activity) => (
-                <ActivityItem key={activity.id} activity={activity} />
+              recentActivities.map((activity, index) => (
+                <View key={activity.id} style={index < recentActivities.length - 1 ? styles.activityDivider : undefined}>
+                  <ActivityItem activity={activity} />
+                </View>
               ))
             ) : (
               <View style={styles.emptyActivity}>
-                <Ionicons
-                  name="time-outline"
-                  size={32}
-                  color={theme.colors.textTertiary}
-                />
-                <Text
-                  style={[
-                    styles.emptyActivityText,
-                    { color: theme.colors.textTertiary },
-                  ]}
-                >
+                <Ionicons name="time-outline" size={32} color={theme.colors.textTertiary} />
+                <Text style={[styles.emptyActivityText, { color: theme.colors.textTertiary }]}>
                   No recent activity
-                </Text>
-                <Text
-                  style={[
-                    styles.emptyActivitySubtext,
-                    { color: theme.colors.textTertiary },
-                  ]}
-                >
-                  Activities will appear here
                 </Text>
               </View>
             )}
-          </View>
+          </GlassView>
         </View>
 
         {/* Business Info */}
         {user?.business && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-              Business Information
-            </Text>
-            <View
-              style={[
-                styles.businessCard,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            >
+            <GlassView style={styles.businessCard} intensity={10}>
               <View style={styles.businessHeader}>
-                <Ionicons
-                  name="business-outline"
-                  size={24}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  style={[styles.businessName, { color: theme.colors.text }]}
-                >
-                  {user.business.name}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.businessType,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                {user.business.type}
-              </Text>
-              {user.business.location && (
-                <View style={styles.businessLocation}>
-                  <Ionicons
-                    name="location-outline"
-                    size={14}
-                    color={theme.colors.textTertiary}
-                  />
-                  <Text
-                    style={[
-                      styles.businessLocationText,
-                      { color: theme.colors.textTertiary },
-                    ]}
-                  >
-                    {user.business.location}
+                <View style={styles.businessInfo}>
+                  <Text style={[styles.businessName, { color: theme.colors.text }]}>
+                    {user.business.name}
+                  </Text>
+                  <Text style={[styles.businessType, { color: theme.colors.textSecondary }]}>
+                    {user.business.type} • {user.business.location}
                   </Text>
                 </View>
-              )}
-              <View style={styles.businessFooter}>
-                <Text
-                  style={[
-                    styles.userRole,
-                    { color: theme.colors.textTertiary },
-                  ]}
-                >
+                <Ionicons name="business" size={32} color={theme.colors.primary} style={{ opacity: 0.8 }} />
+              </View>
+              <View style={[styles.roleBadge, { backgroundColor: theme.colors.primary + '20' }]}>
+                <Text style={[styles.roleText, { color: theme.colors.primary }]}>
                   {user.role.replace("_", " ")}
                 </Text>
-                <Text
-                  style={[
-                    styles.businessId,
-                    { color: theme.colors.textTertiary },
-                  ]}
-                >
-                  ID: {stats.businessId?.slice(0, 8) || "N/A"}
-                </Text>
               </View>
-            </View>
+            </GlassView>
           </View>
         )}
 
         <View style={styles.footer}>
-          <Text
-            style={[styles.footerText, { color: theme.colors.textTertiary }]}
-          >
-            Data updated:{" "}
-            {new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+          <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>
+            ToryAi v1.0 • Web3 Edition
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
   },
+  scrollContent: {
+    paddingBottom: 30,
+  },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 16,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     opacity: 0.8,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  profileInitials: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   statsGrid: {
     paddingHorizontal: 20,
     marginBottom: 16,
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: 'space-between',
     gap: 12,
+  },
+  statCardWrapper: {
+    width: '48%',
+    marginBottom: 4,
   },
   statCard: {
-    flex: 1,
-    minWidth: "48%",
     padding: 16,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    height: 140, // Fixed height for uniformity
+    justifyContent: 'space-between',
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 12,
   },
   statContent: {
     flex: 1,
+    marginTop: 8,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 2,
+    letterSpacing: -0.5,
   },
   statTitle: {
     fontSize: 12,
@@ -797,8 +678,10 @@ const styles = StyleSheet.create({
   },
   statSubtitle: {
     fontSize: 10,
-    marginTop: 2,
-    opacity: 0.6,
+    marginTop: 6,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   section: {
     paddingHorizontal: 20,
@@ -812,74 +695,64 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
+    letterSpacing: -0.5,
+    marginBottom: 12,
   },
   seeAllText: {
     fontSize: 14,
-    fontWeight: "500",
-  },
-  inventoryStatus: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  systemStatus: {
-    flexDirection: "row",
-    gap: 12,
+    fontWeight: "600",
   },
   quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: 'flex-start',
     gap: 12,
   },
+  quickActionWrapper: {
+    width: '48%', // roughly 2 columns
+  },
   quickAction: {
-    flex: 1,
-    minWidth: "48%",
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: "center",
-    gap: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    gap: 12,
+    height: 110,
+    justifyContent: 'center',
   },
   quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
   },
   quickActionText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
   },
   activityCard: {
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    padding: 0,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   activityItem: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 10,
-    gap: 12,
+    alignItems: "center",
+    padding: 16,
+    gap: 16,
+  },
+  activityDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
+    borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 2,
   },
   activityContent: {
     flex: 1,
@@ -887,86 +760,66 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 2,
+    marginBottom: 4,
   },
   activityText: {
-    fontSize: 13,
-    marginBottom: 2,
-    opacity: 0.9,
+    fontSize: 12,
+    opacity: 0.7,
   },
   activityTime: {
     fontSize: 11,
-    opacity: 0.6,
+    opacity: 0.5,
+    fontWeight: '600',
   },
   emptyActivity: {
-    padding: 20,
+    padding: 30,
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
   },
   emptyActivityText: {
-    marginTop: 8,
     fontSize: 14,
     fontWeight: "500",
   },
-  emptyActivitySubtext: {
-    fontSize: 12,
-    marginTop: 4,
-  },
   businessCard: {
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    padding: 20,
+    borderRadius: 24,
   },
   businessHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  businessInfo: {
+    flex: 1,
   },
   businessName: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   businessType: {
-    fontSize: 14,
-    marginBottom: 8,
-    opacity: 0.8,
-  },
-  businessLocation: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 12,
-  },
-  businessLocationText: {
     fontSize: 12,
-  },
-  businessFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  userRole: {
-    fontSize: 12,
-    fontStyle: "italic",
     opacity: 0.7,
   },
-  businessId: {
-    fontSize: 10,
-    opacity: 0.5,
+  roleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: 'uppercase',
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    paddingTop: 10,
+    padding: 20,
     alignItems: "center",
   },
   footerText: {
-    fontSize: 11,
-    opacity: 0.5,
+    fontSize: 10,
+    opacity: 0.4,
   },
 });

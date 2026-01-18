@@ -13,12 +13,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
-  
+
   const [settings, setSettings] = useState({
     pushNotifications: true,
     emailNotifications: true,
@@ -42,8 +42,8 @@ export default function SettingsScreen({ navigation }: any) {
       'This will remove temporary data and free up storage. Continue?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
+        {
+          text: 'Clear',
           style: 'destructive',
           onPress: () => {
             Alert.alert('Success', 'Cache cleared successfully');
@@ -59,13 +59,13 @@ export default function SettingsScreen({ navigation }: any) {
       'Export all your business data as CSV or PDF?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'CSV', 
-          onPress: () => Alert.alert('Export Started', 'Your data export will be available shortly') 
+        {
+          text: 'CSV',
+          onPress: () => Alert.alert('Export Started', 'Your data export will be available shortly')
         },
-        { 
-          text: 'PDF', 
-          onPress: () => Alert.alert('Export Started', 'Your data export will be available shortly') 
+        {
+          text: 'PDF',
+          onPress: () => Alert.alert('Export Started', 'Your data export will be available shortly')
         },
       ]
     );
@@ -81,8 +81,8 @@ export default function SettingsScreen({ navigation }: any) {
       'Enjoying Inventory Pro? Please rate us on the app store!',
       [
         { text: 'Not Now', style: 'cancel' },
-        { 
-          text: 'Rate Now', 
+        {
+          text: 'Rate Now',
           onPress: () => Linking.openURL('https://play.google.com/store/apps/details?id=com.inventorypro')
         },
       ]
@@ -260,7 +260,7 @@ export default function SettingsScreen({ navigation }: any) {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
@@ -303,7 +303,7 @@ export default function SettingsScreen({ navigation }: any) {
             </Text>
           </View>
         </View>
-        
+
         {item.value !== undefined ? (
           <Switch
             value={item.value}
@@ -319,9 +319,9 @@ export default function SettingsScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       {renderHeader()}
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {settingsGroups.map((group, groupIndex) => (
@@ -329,7 +329,7 @@ export default function SettingsScreen({ navigation }: any) {
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                 {group.title}
               </Text>
-              
+
               <View style={[styles.settingsCard, { backgroundColor: theme.colors.surface }]}>
                 {group.items.map((item, itemIndex) => (
                   <React.Fragment key={itemIndex}>
@@ -351,9 +351,9 @@ export default function SettingsScreen({ navigation }: any) {
                 {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Sales Agent'}
               </Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
                 Storage Used
@@ -362,9 +362,9 @@ export default function SettingsScreen({ navigation }: any) {
                 245 MB / 1 GB
               </Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
                 Last Backup
@@ -373,9 +373,9 @@ export default function SettingsScreen({ navigation }: any) {
                 Yesterday, 23:45
               </Text>
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
                 App Version
@@ -396,7 +396,7 @@ export default function SettingsScreen({ navigation }: any) {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

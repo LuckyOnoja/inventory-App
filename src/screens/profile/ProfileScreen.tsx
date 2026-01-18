@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 
 interface MenuItem {
   title: string;
@@ -35,8 +35,8 @@ export default function ProfileScreen({ navigation }: any) {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -101,7 +101,7 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenWrapper>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -125,7 +125,7 @@ export default function ProfileScreen({ navigation }: any) {
               />
               <View style={[styles.statusDot, { backgroundColor: user?.status ? theme.colors.success : theme.colors.error }]} />
             </View>
-            
+
             <View style={styles.profileInfo}>
               <Text style={[styles.profileName, { color: theme.colors.text }]}>
                 {user?.name || 'Business Owner'}
@@ -150,7 +150,7 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             Quick Settings
           </Text>
-          
+
           <View style={[styles.settingsCard, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
@@ -173,9 +173,9 @@ export default function ProfileScreen({ navigation }: any) {
                 thumbColor={notificationsEnabled ? theme.colors.primary : '#f4f3f4'}
               />
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: theme.colors.success + '20' }]}>
@@ -197,9 +197,9 @@ export default function ProfileScreen({ navigation }: any) {
                 thumbColor={biometricEnabled ? theme.colors.success : '#f4f3f4'}
               />
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: theme.colors.info + '20' }]}>
@@ -221,9 +221,9 @@ export default function ProfileScreen({ navigation }: any) {
                 thumbColor={offlineMode ? theme.colors.info : '#f4f3f4'}
               />
             </View>
-            
+
             <View style={styles.divider} />
-            
+
             <View style={styles.settingItem}>
               <View style={styles.settingLeft}>
                 <View style={[styles.settingIcon, { backgroundColor: theme.colors.warning + '20' }]}>
@@ -293,7 +293,7 @@ export default function ProfileScreen({ navigation }: any) {
           Inventory Pro v1.0.0
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

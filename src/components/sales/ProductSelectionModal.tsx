@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
+import { GlassView } from "../../components/ui/GlassView";
+import { GlassButton } from "../../components/ui/GlassButton";
 
 interface ProductAlternative {
   productId: string;
@@ -43,85 +45,40 @@ export default function ProductSelectionModal({
 
   const renderProductItem = ({ item }: { item: ProductAlternative }) => (
     <TouchableOpacity
-      style={[
-        styles.productItem,
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: item.hasStock
-            ? theme.colors.success + "30"
-            : theme.colors.error + "30",
-          borderWidth: 1,
-        },
-      ]}
+      activeOpacity={0.7}
       onPress={() => onProductSelected(item)}
+      style={{ marginBottom: 10 }}
     >
-      <View style={styles.productInfo}>
-        <View style={styles.productHeader}>
-          <Text style={[styles.productName, { color: theme.colors.text }]}>
-            {item.name}
-          </Text>
-          {item.matchScore && (
-            <View
-              style={[
-                styles.scoreBadge,
-                { backgroundColor: theme.colors.primary + "20" },
-              ]}
-            >
-              <Text style={[styles.scoreText, { color: theme.colors.primary }]}>
-                {Math.round(item.matchScore)} pts
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.productDetails}>
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailLabel,
-                { color: theme.colors.textSecondary },
-              ]}
-            >
-              Category:
+      <GlassView
+        intensity={15}
+        style={[
+          styles.productItem,
+          {
+            borderColor: item.hasStock ? theme.colors.success + "50" : theme.colors.error + "50",
+            borderWidth: 1,
+          }
+        ]}
+      >
+        <View style={styles.productInfo}>
+          <View style={styles.productHeader}>
+            <Text style={[styles.productName, { color: theme.colors.text }]}>
+              {item.name}
             </Text>
-            <Text style={[styles.detailValue, { color: theme.colors.text }]}>
-              {item.category || "Uncategorized"}
-            </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Text
-              style={[
-                styles.detailLabel,
-                { color: theme.colors.textSecondary },
-              ]}
-            >
-              Stock:
-            </Text>
-            <View style={styles.stockContainer}>
-              <Ionicons
-                name={item.hasStock ? "checkmark-circle" : "close-circle"}
-                size={16}
-                color={
-                  item.hasStock ? theme.colors.success : theme.colors.error
-                }
-              />
-              <Text
+            {item.matchScore && (
+              <View
                 style={[
-                  styles.stockText,
-                  {
-                    color: item.hasStock
-                      ? theme.colors.success
-                      : theme.colors.error,
-                  },
+                  styles.scoreBadge,
+                  { backgroundColor: theme.colors.primary + "20" },
                 ]}
               >
-                {item.currentStock || 0} {item.unit || "units"}
-              </Text>
-            </View>
+                <Text style={[styles.scoreText, { color: theme.colors.primary }]}>
+                  {Math.round(item.matchScore)} pts
+                </Text>
+              </View>
+            )}
           </View>
 
-          {item.sellingPrice && (
+          <View style={styles.productDetails}>
             <View style={styles.detailRow}>
               <Text
                 style={[
@@ -129,50 +86,98 @@ export default function ProductSelectionModal({
                   { color: theme.colors.textSecondary },
                 ]}
               >
-                Price:
+                Category:
               </Text>
-              <Text style={[styles.priceText, { color: theme.colors.primary }]}>
-                ₦{item.sellingPrice.toLocaleString()}
+              <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                {item.category || "Uncategorized"}
               </Text>
             </View>
-          )}
-        </View>
-      </View>
 
-      {/* Confidence Bar */}
-      <View style={styles.confidenceContainer}>
-        <View style={styles.confidenceLabels}>
-          <Text
-            style={[
-              styles.confidenceLabel,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Match Confidence:
-          </Text>
-          <Text
-            style={[styles.confidencePercent, { color: theme.colors.primary }]}
-          >
-            {Math.round(item.confidence * 100)}%
-          </Text>
+            <View style={styles.detailRow}>
+              <Text
+                style={[
+                  styles.detailLabel,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                Stock:
+              </Text>
+              <View style={styles.stockContainer}>
+                <Ionicons
+                  name={item.hasStock ? "checkmark-circle" : "close-circle"}
+                  size={16}
+                  color={
+                    item.hasStock ? theme.colors.success : theme.colors.error
+                  }
+                />
+                <Text
+                  style={[
+                    styles.stockText,
+                    {
+                      color: item.hasStock
+                        ? theme.colors.success
+                        : theme.colors.error,
+                    },
+                  ]}
+                >
+                  {item.currentStock || 0} {item.unit || "units"}
+                </Text>
+              </View>
+            </View>
+
+            {item.sellingPrice && (
+              <View style={styles.detailRow}>
+                <Text
+                  style={[
+                    styles.detailLabel,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  Price:
+                </Text>
+                <Text style={[styles.priceText, { color: theme.colors.primary }]}>
+                  ₦{item.sellingPrice.toLocaleString()}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View
-          style={[
-            styles.confidenceBarBackground,
-            { backgroundColor: theme.colors.surfaceLight },
-          ]}
-        >
+
+        {/* Confidence Bar */}
+        <View style={styles.confidenceContainerWrapper}>
+          <View style={styles.confidenceLabels}>
+            <Text
+              style={[
+                styles.confidenceLabel,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              Match Confidence:
+            </Text>
+            <Text
+              style={[styles.confidencePercent, { color: theme.colors.primary }]}
+            >
+              {Math.round(item.confidence * 100)}%
+            </Text>
+          </View>
           <View
             style={[
-              styles.confidenceBar,
-              {
-                backgroundColor: theme.colors.primary,
-                width: `${Math.min(item.confidence * 100, 100)}%`,
-              },
+              styles.confidenceBarBackground,
+              { backgroundColor: theme.colors.surfaceLight },
             ]}
-          />
+          >
+            <View
+              style={[
+                styles.confidenceBar,
+                {
+                  backgroundColor: theme.colors.primary,
+                  width: `${Math.min(item.confidence * 100, 100)}%`,
+                },
+              ]}
+            />
+          </View>
         </View>
-      </View>
+      </GlassView>
     </TouchableOpacity>
   );
 
@@ -183,12 +188,10 @@ export default function ProductSelectionModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
-        <View
-          style={[
-            styles.modalContainer,
-            { backgroundColor: theme.colors.background },
-          ]}
+      <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.7)" }]}>
+        <GlassView
+          intensity={40}
+          style={styles.modalContainer}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -233,22 +236,15 @@ export default function ProductSelectionModal({
           />
 
           {/* Footer */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.cancelButton,
-                { borderColor: theme.colors.border },
-              ]}
+          <View style={[styles.footer, { borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}>
+            <GlassButton
+              title="Cancel"
               onPress={onClose}
-            >
-              <Text
-                style={[styles.cancelButtonText, { color: theme.colors.text }]}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
+              variant="secondary"
+              size="medium"
+            />
           </View>
-        </View>
+        </GlassView>
       </View>
     </Modal>
   );
@@ -306,36 +302,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   productItem: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.05)",
+    overflow: 'hidden',
   },
   productInfo: {
     marginBottom: 12,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  productDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  productCategory: {
-    fontSize: 12,
-  },
-  productStock: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
   },
   productHeader: {
     flexDirection: "row",
@@ -343,70 +316,67 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-
+  productName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
   scoreBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
-
   scoreText: {
     fontSize: 10,
     fontWeight: "bold",
   },
-
+  productDetails: {
+    marginBottom: 8,
+  },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 6,
   },
-
   detailLabel: {
     fontSize: 12,
     fontWeight: "500",
   },
-
   detailValue: {
     fontSize: 12,
     fontWeight: "600",
   },
-
   stockContainer: {
     flexDirection: "row",
     alignItems: "center",
-    // React Native StyleSheet doesn't support the CSS `gap` property on Views.
-    // Use spacing on child elements instead.
   },
-
   stockText: {
     fontSize: 12,
     fontWeight: "600",
     marginLeft: 4,
   },
-
   priceText: {
     fontSize: 14,
     fontWeight: "bold",
   },
-
+  confidenceContainerWrapper: {
+    marginTop: 8,
+  },
   confidenceLabels: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 4,
   },
-
   confidenceLabel: {
     fontSize: 11,
     fontWeight: "500",
   },
-
   confidencePercent: {
     fontSize: 11,
     fontWeight: "bold",
   },
-
   confidenceBarBackground: {
     height: 6,
     borderRadius: 3,
@@ -416,32 +386,11 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 3,
   },
-  confidenceContainer: {
-    height: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    borderRadius: 10,
-    overflow: "hidden",
-    position: "relative",
-  },
-  confidenceText: {
-    position: "absolute",
-    width: "100%",
-    textAlign: "center",
-    fontSize: 10,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
   footer: {
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderTopWidth: 1,
     borderTopColor: "rgba(0, 0, 0, 0.1)",
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: "center",
   },
   cancelButtonText: {
     fontSize: 16,

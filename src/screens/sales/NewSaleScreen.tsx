@@ -1,4 +1,3 @@
-// screens/sales/NewSaleScreen.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,7 +17,10 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenWrapper } from "../../components/ui/ScreenWrapper";
+import { GlassView } from "../../components/ui/GlassView";
+import { GlassButton } from "../../components/ui/GlassButton";
+import { GlassCard } from "../../components/ui/GlassCard";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import config from "../../config";
@@ -176,8 +178,8 @@ export default function NewSaleScreen({ navigation, route }: any) {
       Alert.alert(
         "✅ Product Added to Cart",
         `${scannedProduct.name} has been added to your cart.\n\n` +
-          `Price: ₦${scannedProduct.sellingPrice?.toLocaleString()}\n` +
-          `Stock: ${scannedProduct.currentStock} ${scannedProduct.unit}`,
+        `Price: ₦${scannedProduct.sellingPrice?.toLocaleString()}\n` +
+        `Stock: ${scannedProduct.currentStock} ${scannedProduct.unit}`,
         [{ text: "OK" }]
       );
     } else {
@@ -200,8 +202,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
       Alert.alert(
         "Product Added",
-        `${scannedProduct.name} ${
-          scannedProduct.size ? `(${scannedProduct.size})` : ""
+        `${scannedProduct.name} ${scannedProduct.size ? `(${scannedProduct.size})` : ""
         } added to cart`,
         [{ text: "OK" }]
       );
@@ -407,78 +408,78 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <TouchableOpacity
-      style={[styles.productItem, { backgroundColor: theme.colors.surface }]}
       onPress={() => addToCart(item)}
       disabled={item.currentStock === 0}
+      activeOpacity={0.7}
+      style={{ marginRight: 12 }}
     >
-      <View style={styles.productInfo}>
-        <Text style={[styles.productName, { color: theme.colors.text }]}>
-          {item.name}
-        </Text>
-        <View style={styles.productDetails}>
-          <Text
-            style={[
-              styles.productCategory,
-              { color: theme.colors.textTertiary },
-            ]}
-          >
-            {item.category}
+      <GlassCard
+        variant={item.currentStock === 0 ? "error" : "default"}
+        style={styles.productItem}
+      >
+        <View style={styles.productInfo}>
+          <Text style={[styles.productName, { color: theme.colors.text }]} numberOfLines={2}>
+            {item.name}
           </Text>
-          <Text
+          <View style={styles.productDetails}>
+            <Text
+              style={[
+                styles.productCategory,
+                { color: theme.colors.textTertiary },
+              ]}
+            >
+              {item.category}
+            </Text>
+            <Text
+              style={[
+                styles.productStock,
+                {
+                  color:
+                    item.currentStock === 0
+                      ? theme.colors.error
+                      : item.currentStock <= 10
+                        ? theme.colors.warning
+                        : theme.colors.success,
+                },
+              ]}
+            >
+              {item.currentStock} {item.unit} in stock
+            </Text>
+          </View>
+        </View>
+        <View style={styles.productPrice}>
+          <Text style={[styles.priceText, { color: theme.colors.text }]}>
+            ₦{item.sellingPrice.toLocaleString()}
+          </Text>
+          <View
             style={[
-              styles.productStock,
+              styles.addButton,
               {
-                color:
+                backgroundColor:
                   item.currentStock === 0
-                    ? theme.colors.error
-                    : item.currentStock <= 10
-                    ? theme.colors.warning
-                    : theme.colors.success,
+                    ? theme.colors.error + "20"
+                    : theme.colors.primary + "20",
               },
             ]}
           >
-            {item.currentStock} {item.unit} in stock
-          </Text>
-        </View>
-      </View>
-      <View style={styles.productPrice}>
-        <Text style={[styles.priceText, { color: theme.colors.text }]}>
-          ₦{item.sellingPrice.toLocaleString()}
-        </Text>
-        <TouchableOpacity
-          style={[
-            styles.addButton,
-            {
-              backgroundColor:
+            <Ionicons
+              name={item.currentStock === 0 ? "close" : "add"}
+              size={20}
+              color={
                 item.currentStock === 0
-                  ? theme.colors.error + "20"
-                  : theme.colors.primary + "20",
-            },
-          ]}
-          onPress={() => addToCart(item)}
-          disabled={item.currentStock === 0}
-        >
-          <Ionicons
-            name={item.currentStock === 0 ? "close-outline" : "add"}
-            size={20}
-            color={
-              item.currentStock === 0
-                ? theme.colors.error
-                : theme.colors.primary
-            }
-          />
-        </TouchableOpacity>
-      </View>
+                  ? theme.colors.error
+                  : theme.colors.primary
+              }
+            />
+          </View>
+        </View>
+      </GlassCard>
     </TouchableOpacity>
   );
 
   const renderCartItem = ({ item }: { item: CartItem }) => {
-    const cartItemId = `${item.product.id}-${item.size || "no-size"}`;
-
     return (
-      <View
-        style={[styles.cartItem, { backgroundColor: theme.colors.surface }]}
-      >
+      <GlassView style={styles.cartItem} intensity={20}>
         <View style={styles.cartItemHeader}>
           <View style={styles.cartItemTitle}>
             <Text style={[styles.cartItemName, { color: theme.colors.text }]}>
@@ -494,8 +495,9 @@ export default function NewSaleScreen({ navigation, route }: any) {
           </View>
           <TouchableOpacity
             onPress={() => removeFromCart(item.product.id, item.size)}
+            style={styles.closeButton}
           >
-            <Ionicons name="close" size={20} color={theme.colors.error} />
+            <Ionicons name="close" size={18} color={theme.colors.error} />
           </TouchableOpacity>
         </View>
 
@@ -507,12 +509,9 @@ export default function NewSaleScreen({ navigation, route }: any) {
             >
               Qty
             </Text>
-            <View style={styles.quantityContainer}>
+            <View style={[styles.quantityContainer, { backgroundColor: theme.colors.background + '80' }]}>
               <TouchableOpacity
-                style={[
-                  styles.quantityButton,
-                  { backgroundColor: theme.colors.surfaceLight },
-                ]}
+                style={styles.quantityButton}
                 onPress={() =>
                   handleQuantityChange(
                     item.product.id,
@@ -532,10 +531,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 keyboardType="number-pad"
               />
               <TouchableOpacity
-                style={[
-                  styles.quantityButton,
-                  { backgroundColor: theme.colors.surfaceLight },
-                ]}
+                style={styles.quantityButton}
                 onPress={() =>
                   handleQuantityChange(
                     item.product.id,
@@ -560,7 +556,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
             <View
               style={[
                 styles.priceInputContainer,
-                { backgroundColor: theme.colors.surfaceLight },
+                { backgroundColor: theme.colors.background + '80' },
               ]}
             >
               <Text
@@ -589,7 +585,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
             <View
               style={[
                 styles.priceInputContainer,
-                { backgroundColor: theme.colors.surfaceLight },
+                { backgroundColor: theme.colors.background + '80' },
               ]}
             >
               <Text
@@ -610,7 +606,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
         </View>
 
         {/* Line Total */}
-        <View style={styles.cartItemTotal}>
+        <View style={[styles.cartItemTotal, { borderTopColor: theme.colors.border }]}>
           <Text
             style={[styles.totalLabel, { color: theme.colors.textTertiary }]}
           >
@@ -624,7 +620,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
             ).toLocaleString()}
           </Text>
         </View>
-      </View>
+      </GlassView>
     );
   };
 
@@ -632,21 +628,67 @@ export default function NewSaleScreen({ navigation, route }: any) {
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: theme.colors.background },
-        ]}
-      >
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <ScreenWrapper>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          New Sale
+        </Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={[styles.clearButton, { backgroundColor: theme.colors.primary + '20', marginRight: 8 }]}
+            onPress={handleScanPress}
+          >
+            <Ionicons
+              name="scan-outline"
+              size={20}
+              color={theme.colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.clearButton, { backgroundColor: theme.colors.error + '20' }]}
+            onPress={() => {
+              if (cart.length > 0) {
+                Alert.alert(
+                  "Clear Cart",
+                  "Are you sure you want to clear all items from the cart?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Clear",
+                      style: "destructive",
+                      onPress: () => setCart([]),
+                    },
+                  ]
+                );
+              }
+            }}
+            disabled={cart.length === 0}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={20}
+              color={cart.length > 0 ? theme.colors.error : theme.colors.textTertiary}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -656,124 +698,46 @@ export default function NewSaleScreen({ navigation, route }: any) {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              New Sale
-            </Text>
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                style={[
-                  styles.scanButton,
-                  { backgroundColor: theme.colors.primary + "20" },
-                ]}
-                onPress={handleScanPress}
-              >
-                <Ionicons
-                  name="scan-outline"
-                  size={20}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  style={[
-                    styles.scanButtonText,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  AI Scan
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.clearButton,
-                  {
-                    backgroundColor:
-                      cart.length > 0
-                        ? theme.colors.error + "20"
-                        : theme.colors.surfaceLight,
-                  },
-                ]}
-                onPress={() => {
-                  if (cart.length > 0) {
-                    Alert.alert(
-                      "Clear Cart",
-                      "Are you sure you want to clear all items from the cart?",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Clear",
-                          style: "destructive",
-                          onPress: () => setCart([]),
-                        },
-                      ]
-                    );
-                  }
-                }}
-                disabled={cart.length === 0}
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={20}
-                  color={
-                    cart.length > 0
-                      ? theme.colors.error
-                      : theme.colors.textTertiary
-                  }
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+
 
           {/* Scan Banner */}
-          <TouchableOpacity
-            style={[
-              styles.scanBanner,
-              { backgroundColor: theme.colors.primary + "10" },
-            ]}
-            onPress={handleScanPress}
-          >
-            <Ionicons
-              name="scan-outline"
-              size={24}
-              color={theme.colors.primary}
-            />
-            <View style={styles.scanBannerContent}>
-              <Text
-                style={[
-                  styles.scanBannerTitle,
-                  { color: theme.colors.primary },
-                ]}
-              >
-                Quick AI Scan
-              </Text>
-              <Text
-                style={[
-                  styles.scanBannerText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                Use camera to instantly identify products
-              </Text>
-            </View>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={theme.colors.primary}
-            />
+          <TouchableOpacity onPress={handleScanPress}>
+            <GlassView style={styles.scanBanner} intensity={40}>
+              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '20' }]}>
+                <Ionicons
+                  name="scan-outline"
+                  size={24}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <View style={styles.scanBannerContent}>
+                <Text
+                  style={[
+                    styles.scanBannerTitle,
+                    { color: theme.colors.text },
+                  ]}
+                >
+                  Quick AI Scan
+                </Text>
+                <Text
+                  style={[
+                    styles.scanBannerText,
+                    { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  Use camera to instantly identify products
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.colors.textTertiary}
+              />
+            </GlassView>
           </TouchableOpacity>
 
           {/* Search Bar */}
-          <View
-            style={[
-              styles.searchContainer,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
+          <GlassView style={styles.searchContainer} intensity={20}>
             <Ionicons
               name="search-outline"
               size={20}
@@ -787,7 +751,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
               onChangeText={setSearchQuery}
               clearButtonMode="while-editing"
             />
-          </View>
+          </GlassView>
 
           {/* Products List */}
           <View style={styles.productsSection}>
@@ -814,16 +778,16 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 <Text
                   style={[
                     styles.cartTotal,
-                    { color: theme.colors.textSecondary },
+                    { color: theme.colors.primary },
                   ]}
                 >
-                  Total: ₦{totals.total.toLocaleString()}
+                  ₦{totals.total.toLocaleString()}
                 </Text>
               )}
             </View>
 
             {cart.length === 0 ? (
-              <View style={styles.emptyCart}>
+              <GlassView style={styles.emptyCart} intensity={10}>
                 <Ionicons
                   name="cart-outline"
                   size={48}
@@ -845,7 +809,7 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 >
                   Scan, search or browse products to add
                 </Text>
-              </View>
+              </GlassView>
             ) : (
               <FlatList
                 data={cart}
@@ -873,20 +837,15 @@ export default function NewSaleScreen({ navigation, route }: any) {
               <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
                 Customer Name (Optional)
               </Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                    color: theme.colors.text,
-                  },
-                ]}
-                placeholder="Enter customer name"
-                placeholderTextColor={theme.colors.textTertiary}
-                value={customerName}
-                onChangeText={setCustomerName}
-              />
+              <GlassView style={styles.inputContainer} intensity={10}>
+                <TextInput
+                  style={[styles.input, { color: theme.colors.text }]}
+                  placeholder="Enter customer name"
+                  placeholderTextColor={theme.colors.textTertiary}
+                  value={customerName}
+                  onChangeText={setCustomerName}
+                />
+              </GlassView>
             </View>
 
             {/* Payment Method */}
@@ -898,43 +857,42 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 {paymentMethods.map((method) => (
                   <TouchableOpacity
                     key={method.value}
-                    style={[
-                      styles.paymentMethodButton,
-                      {
-                        backgroundColor:
-                          selectedPaymentMethod === method.value
-                            ? theme.colors.primary + "20"
-                            : theme.colors.surfaceLight,
-                        borderColor:
-                          selectedPaymentMethod === method.value
-                            ? theme.colors.primary
-                            : theme.colors.border,
-                      },
-                    ]}
                     onPress={() => setSelectedPaymentMethod(method.value)}
+                    style={{ width: "48%" }}
                   >
-                    <Ionicons
-                      name={method.icon as any}
-                      size={20}
-                      color={
-                        selectedPaymentMethod === method.value
-                          ? theme.colors.primary
-                          : theme.colors.text
-                      }
-                    />
-                    <Text
+                    <GlassView
+                      intensity={selectedPaymentMethod === method.value ? 40 : 10}
                       style={[
-                        styles.paymentMethodText,
-                        {
-                          color:
-                            selectedPaymentMethod === method.value
-                              ? theme.colors.primary
-                              : theme.colors.text,
-                        },
+                        styles.paymentMethodButton,
+                        selectedPaymentMethod === method.value && {
+                          borderColor: theme.colors.primary,
+                          borderWidth: 1,
+                        }
                       ]}
                     >
-                      {method.label}
-                    </Text>
+                      <Ionicons
+                        name={method.icon as any}
+                        size={20}
+                        color={
+                          selectedPaymentMethod === method.value
+                            ? theme.colors.primary
+                            : theme.colors.text
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.paymentMethodText,
+                          {
+                            color:
+                              selectedPaymentMethod === method.value
+                                ? theme.colors.primary
+                                : theme.colors.text,
+                          },
+                        ]}
+                      >
+                        {method.label}
+                      </Text>
+                    </GlassView>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -945,33 +903,23 @@ export default function NewSaleScreen({ navigation, route }: any) {
               <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
                 Notes (Optional)
               </Text>
-              <TextInput
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                    color: theme.colors.text,
-                  },
-                ]}
-                placeholder="Add any notes for this sale..."
-                placeholderTextColor={theme.colors.textTertiary}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+              <GlassView style={styles.inputContainer} intensity={10}>
+                <TextInput
+                  style={[styles.textArea, { color: theme.colors.text }]}
+                  placeholder="Add any notes for this sale..."
+                  placeholderTextColor={theme.colors.textTertiary}
+                  value={notes}
+                  onChangeText={setNotes}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </GlassView>
             </View>
           </View>
 
           {/* Summary */}
-          <View
-            style={[
-              styles.summarySection,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
+          <GlassView style={styles.summarySection} intensity={20}>
             <Text style={[styles.summaryTitle, { color: theme.colors.text }]}>
               Order Summary
             </Text>
@@ -1042,62 +990,26 @@ export default function NewSaleScreen({ navigation, route }: any) {
                 ₦{totals.total.toLocaleString()}
               </Text>
             </View>
-          </View>
+          </GlassView>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[
-                styles.cancelButton,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                },
-              ]}
+            <GlassButton
+              title="Cancel"
               onPress={() => navigation.goBack()}
               disabled={processing}
-            >
-              <Text
-                style={[styles.cancelButtonText, { color: theme.colors.text }]}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.completeButton,
-                {
-                  backgroundColor:
-                    cart.length === 0
-                      ? theme.colors.textTertiary
-                      : theme.colors.primary,
-                  opacity: processing ? 0.7 : 1,
-                },
-              ]}
+              variant="secondary"
+              style={{ flex: 1 }}
+            />
+            <GlassButton
+              title="Complete Sale"
               onPress={handleCompleteSale}
               disabled={cart.length === 0 || processing}
-            >
-              {processing ? (
-                <ActivityIndicator color={theme.colors.white} />
-              ) : (
-                <>
-                  <Ionicons
-                    name="checkmark-circle-outline"
-                    size={20}
-                    color={theme.colors.white}
-                  />
-                  <Text
-                    style={[
-                      styles.completeButtonText,
-                      { color: theme.colors.white },
-                    ]}
-                  >
-                    Complete Sale
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+              loading={processing}
+              icon="checkmark-circle-outline"
+              variant="primary"
+              style={{ flex: 2 }}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1109,14 +1021,11 @@ export default function NewSaleScreen({ navigation, route }: any) {
         onProductScanned={handleProductScanned}
         token={token || ""}
       />
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -1128,20 +1037,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-
-  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 16,
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
   backButton: {
     padding: 8,
@@ -1150,33 +1056,29 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
-  scanButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  scanButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
   clearButton: {
     padding: 8,
     borderRadius: 8,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  // Scan Banner
   scanBanner: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 16,
     padding: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scanBannerContent: {
     flex: 1,
@@ -1191,29 +1093,24 @@ const styles = StyleSheet.create({
   scanBannerText: {
     fontSize: 13,
   },
-
-  // Search
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 20,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
+    height: 50,
+    borderRadius: 25,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 12,
+    height: '100%',
   },
-
-  // Products Section
   productsSection: {
     marginBottom: 24,
-    paddingHorizontal: 20,
+    paddingLeft: 20,
   },
   sectionTitle: {
     fontSize: 16,
@@ -1221,14 +1118,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   productsList: {
-    gap: 12,
+    paddingRight: 20,
   },
   productItem: {
-    width: 200,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
+    width: 180,
+    padding: 12,
   },
   productInfo: {
     marginBottom: 12,
@@ -1237,6 +1131,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 4,
+    height: 40,
   },
   productDetails: {
     gap: 4,
@@ -1252,20 +1147,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 8,
   },
   priceText: {
     fontSize: 16,
     fontWeight: "bold",
   },
   addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
-
-  // Cart Section
   cartSection: {
     marginBottom: 24,
     paddingHorizontal: 20,
@@ -1277,13 +1171,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cartTotal: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   emptyCart: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 40,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   emptyCartText: {
     fontSize: 16,
@@ -1299,14 +1195,13 @@ const styles = StyleSheet.create({
   },
   cartItem: {
     padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   cartItemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 12,
   },
   cartItemTitle: {
@@ -1314,6 +1209,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     marginRight: 12,
+    flexWrap: 'wrap',
   },
   cartItemName: {
     fontSize: 16,
@@ -1324,6 +1220,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginLeft: 8,
   },
+  closeButton: {
+    padding: 4,
+  },
   cartItemDetails: {
     flexDirection: "row",
     gap: 12,
@@ -1333,47 +1232,47 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fieldLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
     marginBottom: 4,
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(148, 163, 184, 0.1)",
     borderRadius: 8,
-    padding: 4,
+    padding: 2,
+    height: 36,
   },
   quantityButton: {
-    width: 32,
+    width: 28,
     height: 32,
-    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
   quantityInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
-    minWidth: 40,
+    height: '100%',
   },
   priceInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
+    paddingHorizontal: 8,
+    height: 36,
   },
   currency: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
-    marginRight: 4,
+    marginRight: 2,
   },
   priceInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
+    height: '100%',
   },
   cartItemTotal: {
     flexDirection: "row",
@@ -1381,7 +1280,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "rgba(148, 163, 184, 0.1)",
   },
   totalLabel: {
     fontSize: 14,
@@ -1394,8 +1292,6 @@ const styles = StyleSheet.create({
   cartSeparator: {
     height: 12,
   },
-
-  // Customer & Payment
   detailsSection: {
     marginBottom: 24,
     paddingHorizontal: 20,
@@ -1408,27 +1304,28 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 8,
   },
+  inputContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   input: {
     fontSize: 16,
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 1,
+    height: 50,
     paddingHorizontal: 16,
   },
   paymentMethods: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 12,
   },
   paymentMethodButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 12,
     gap: 8,
-    minWidth: "48%",
+    overflow: 'hidden',
   },
   paymentMethodText: {
     fontSize: 14,
@@ -1437,21 +1334,16 @@ const styles = StyleSheet.create({
   textArea: {
     fontSize: 16,
     height: 80,
-    borderRadius: 12,
-    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 12,
     textAlignVertical: "top",
   },
-
-  // Summary
   summarySection: {
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   summaryTitle: {
     fontSize: 18,
@@ -1483,35 +1375,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-
-  // Action Buttons
   actionButtons: {
     flexDirection: "row",
     paddingHorizontal: 20,
     gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  completeButton: {
-    flex: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-  },
-  completeButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
+    marginBottom: 20,
   },
 });

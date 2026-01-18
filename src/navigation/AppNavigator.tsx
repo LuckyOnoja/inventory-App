@@ -17,6 +17,8 @@ import {
 } from "react-native";
 import axios from "axios";
 import config from "../config";
+import { GlassTabBarBackground, GlassHeaderBackground } from "../components/ui/GlassNavigation";
+import { GlassView } from "../components/ui/GlassView";
 
 const API_URL = config.API_URL;
 
@@ -108,29 +110,43 @@ function SalesAgentTabs() {
         },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textTertiary,
+        tabBarBackground: () => <GlassTabBarBackground />,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: 1,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 85 : 65,
+          backgroundColor: 'transparent',
+          position: 'absolute',
+          borderTopWidth: 0,
+          bottom: 30,
+          marginHorizontal: 20,
+          borderRadius: 35,
+          height: 70,
+          // Floating Shadow
+          shadowColor: theme.mode === 'dark' ? '#000' : '#000',
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
           elevation: 8,
-          shadowColor: theme.colors.black,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          paddingBottom: 0,
+          paddingTop: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
-          marginTop: 4,
+          marginBottom: 8,
+          marginTop: -4,
         },
         tabBarItemStyle: {
-          paddingVertical: 4,
+          paddingVertical: 8,
+          borderRadius: 35,
+          height: 70,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
+        headerBackground: () => <GlassHeaderBackground />,
         headerStyle: {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: 'transparent',
           shadowColor: "transparent",
           elevation: 0,
         },
@@ -141,34 +157,34 @@ function SalesAgentTabs() {
         },
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardScreen}
-        options={{ 
+        options={{
           headerShown: false,
-          tabBarBadge: undefined 
+          tabBarBadge: undefined
         }}
       />
-      <Tab.Screen 
-        name="Sales" 
+      <Tab.Screen
+        name="Sales"
         component={SalesScreen}
-        options={{ 
+        options={{
           headerShown: false,
-          tabBarBadge: undefined 
+          tabBarBadge: undefined
         }}
       />
-      <Tab.Screen 
-        name="Products" 
+      <Tab.Screen
+        name="Products"
         component={ProductsScreen}
-        options={{ 
+        options={{
           headerShown: false,
-          tabBarBadge: undefined 
+          tabBarBadge: undefined
         }}
       />
-      <Tab.Screen 
-        name="Notifications" 
+      <Tab.Screen
+        name="Notifications"
         component={NotificationsScreen}
-        options={{ 
+        options={{
           headerShown: false,
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarBadgeStyle: {
@@ -181,8 +197,8 @@ function SalesAgentTabs() {
           }
         }}
       />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{ headerShown: false }}
       />
@@ -205,7 +221,7 @@ const SideMenu = ({
   unreadCount: number;
 }) => {
   const { theme } = useTheme();
-  
+
   const menuItems = [
     { name: "Dashboard", icon: "grid-outline", screen: "Dashboard" },
     { name: "Products", icon: "cube-outline", screen: "Products" },
@@ -258,27 +274,24 @@ const SideMenu = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <View style={[styles.sideMenuContainer, { backgroundColor: theme.colors.surface }]}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => {}}
-            style={styles.sideMenuContent}
-          >
-            <ScrollView>
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <GlassView
+          intensity={95}
+          style={[styles.sideMenuContainer, { borderRadius: 0, borderRightWidth: 1, borderRightColor: theme.colors.border }]}
+        >
+          <View style={[styles.sideMenuContent, { paddingTop: Platform.OS === 'ios' ? 50 : 20 }]}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
               {/* User Profile Section */}
-              <View style={[styles.profileSection, { 
-                borderBottomColor: theme.colors.border,
-                backgroundColor: theme.colors.surfaceDark,
-              }]}>
+              <View style={[styles.profileSection, { borderBottomColor: theme.colors.border }]}>
                 <View style={styles.avatarContainer}>
                   <View style={[styles.avatar, { backgroundColor: theme.colors.primary }]}>
                     <Text style={[styles.avatarText, { color: theme.colors.white }]}>
@@ -286,29 +299,33 @@ const SideMenu = ({
                     </Text>
                   </View>
                   <View style={styles.profileInfo}>
-                    <Text style={[styles.userName, { color: theme.colors.text }]}>
+                    <Text style={[styles.userName, { color: theme.colors.text }]} numberOfLines={1}>
                       {user?.name || "User"}
                     </Text>
-                    <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>
+                    <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]} numberOfLines={1}>
                       {user?.email || "email@example.com"}
                     </Text>
-                    <View style={[styles.roleBadge, { backgroundColor: theme.colors.primary + "20" }]}>
+                    <View
+                      style={[styles.roleBadge, { backgroundColor: theme.colors.primary + '20' }]}
+                    >
                       <Text style={[styles.roleText, { color: theme.colors.primary }]}>
                         {user?.role?.replace("_", " ") || "User"}
                       </Text>
                     </View>
                   </View>
                 </View>
-                <View style={[styles.businessInfo, { backgroundColor: theme.colors.surfaceLight }]}>
-                  <Ionicons
-                    name="business-outline"
-                    size={16}
-                    color={theme.colors.textSecondary}
-                  />
-                  <Text style={[styles.businessName, { color: theme.colors.text }]}>
-                    {user?.business?.name || "Business Name"}
-                  </Text>
-                </View>
+                {user?.business && (
+                  <View style={[styles.businessInfo, { backgroundColor: theme.colors.surface }]}>
+                    <Ionicons
+                      name="business-outline"
+                      size={16}
+                      color={theme.colors.textSecondary}
+                    />
+                    <Text style={[styles.businessName, { color: theme.colors.text }]} numberOfLines={1}>
+                      {user.business.name}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Menu Items */}
@@ -316,7 +333,7 @@ const SideMenu = ({
                 {menuItems.map((item) => (
                   <TouchableOpacity
                     key={item.name}
-                    style={[styles.menuItem, { borderBottomColor: theme.colors.borderLight }]}
+                    style={[styles.menuItem, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}
                     onPress={() => navigateTo(item.screen)}
                     activeOpacity={0.7}
                   >
@@ -340,10 +357,12 @@ const SideMenu = ({
               </View>
 
               {/* Logout Button */}
-              <TouchableOpacity 
-                style={[styles.logoutButton, { 
+              <TouchableOpacity
+                style={[styles.logoutButton, {
                   borderTopColor: theme.colors.border,
                   backgroundColor: theme.colors.error + '10',
+                  marginHorizontal: 20,
+                  borderRadius: 12,
                 }]}
                 onPress={handleLogout}
               >
@@ -357,9 +376,9 @@ const SideMenu = ({
                 </Text>
               </TouchableOpacity>
             </ScrollView>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+          </View>
+        </GlassView>
+      </View>
     </Modal>
   );
 };
@@ -385,10 +404,15 @@ const SuperAdminHeader = ({
   };
 
   return (
-    <View style={[headerStyles.container, { 
-      backgroundColor: theme.colors.surface,
+    <View style={[headerStyles.container, {
+      backgroundColor: 'transparent',
       borderBottomColor: theme.colors.border,
     }]}>
+      {/* Absolute background element */}
+      <View style={StyleSheet.absoluteFill}>
+        <GlassHeaderBackground />
+      </View>
+
       <TouchableOpacity onPress={onMenuPress} style={headerStyles.menuButton}>
         <Ionicons name="menu" size={24} color={theme.colors.text} />
       </TouchableOpacity>
@@ -454,32 +478,35 @@ function SuperAdminNavigator() {
               unreadCount={unreadCount}
             />
           ),
+          headerBackground: () => <GlassHeaderBackground />,
+          headerStyle: { backgroundColor: 'transparent' },
+          cardStyle: { backgroundColor: 'transparent' }, // Allow ScreenWrapper bg to show
         })}
       >
-        <SuperAdminStack.Screen 
-          name="Dashboard" 
+        <SuperAdminStack.Screen
+          name="Dashboard"
           component={DashboardScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="Products" 
+        <SuperAdminStack.Screen
+          name="Products"
           component={ProductsScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="Sales" 
+        <SuperAdminStack.Screen
+          name="Sales"
           component={SalesScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="Inventory" 
+        <SuperAdminStack.Screen
+          name="Inventory"
           component={InventoryScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="InventoryCheck" 
+        <SuperAdminStack.Screen
+          name="InventoryCheck"
           component={InventoryCheckScreen}
-          options={{ 
+          options={{
             headerShown: true,
             header: () => (
               <SuperAdminHeader
@@ -491,40 +518,40 @@ function SuperAdminNavigator() {
             )
           }}
         />
-        <SuperAdminStack.Screen 
-          name="Staff" 
+        <SuperAdminStack.Screen
+          name="Staff"
           component={StaffScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="AddStaff" 
+        <SuperAdminStack.Screen
+          name="AddStaff"
           component={AddStaffScreen}
           options={{ headerShown: false }}
         />
-        <SuperAdminStack.Screen 
-          name="EditStaff" 
+        <SuperAdminStack.Screen
+          name="EditStaff"
           component={EditStaffScreen}
           options={{ headerShown: false }}
         />
-        <SuperAdminStack.Screen 
-          name="StaffSales" 
+        <SuperAdminStack.Screen
+          name="StaffSales"
           component={StaffSalesScreen}
           options={{ headerShown: false }}
         />
-        <SuperAdminStack.Screen 
-          name="Cameras" 
+        <SuperAdminStack.Screen
+          name="Cameras"
           component={CameraScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="Reports" 
+        <SuperAdminStack.Screen
+          name="Reports"
           component={ReportsScreen}
           options={{ headerShown: true }}
         />
-        <SuperAdminStack.Screen 
-          name="Notifications" 
+        <SuperAdminStack.Screen
+          name="Notifications"
           component={NotificationsScreen}
-          options={{ 
+          options={{
             headerShown: true,
             header: () => (
               <SuperAdminHeader
@@ -536,8 +563,8 @@ function SuperAdminNavigator() {
             )
           }}
         />
-        <SuperAdminStack.Screen 
-          name="Settings" 
+        <SuperAdminStack.Screen
+          name="Settings"
           component={SettingsScreen}
           options={{ headerShown: true }}
         />
@@ -568,11 +595,11 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        justifyContent: "center", 
-        alignItems: "center", 
-        backgroundColor: theme.colors.background 
+      <View style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: theme.colors.background
       }}>
         <Text style={{ color: theme.colors.text, fontSize: 16 }}>Loading...</Text>
       </View>
@@ -588,8 +615,11 @@ export default function AppNavigator() {
     >
       <Stack.Navigator
         screenOptions={{
+          headerBackground: () => <GlassHeaderBackground />,
           headerStyle: {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: 'transparent',
+            elevation: 0,
+            shadowOpacity: 0,
           },
           headerTintColor: theme.colors.text,
           headerTitleStyle: {
@@ -606,7 +636,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Login"
               component={LoginScreen}
-              options={{ 
+              options={{
                 headerShown: false,
                 animationTypeForReplace: user ? "push" : "pop"
               }}
@@ -627,7 +657,7 @@ export default function AppNavigator() {
           <Stack.Screen
             name="SalesAgentMain"
             component={SalesAgentTabs}
-            options={{ 
+            options={{
               headerShown: false,
               gestureEnabled: false
             }}
@@ -637,7 +667,7 @@ export default function AppNavigator() {
           <Stack.Screen
             name="SuperAdminMain"
             component={SuperAdminNavigator}
-            options={{ 
+            options={{
               headerShown: false,
               gestureEnabled: false
             }}
@@ -649,17 +679,17 @@ export default function AppNavigator() {
           <Stack.Screen
             name="AddProduct"
             component={AddProductScreen}
-            options={{ 
+            options={{
               title: "Add New Product",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -676,17 +706,17 @@ export default function AppNavigator() {
           <Stack.Screen
             name="EditProduct"
             component={EditProductScreen}
-            options={{ 
+            options={{
               title: "Edit Product",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -703,71 +733,31 @@ export default function AppNavigator() {
           <Stack.Screen
             name="NewSale"
             component={NewSaleScreen}
-            options={{ 
-              title: "New Sale",
-              header: ({ navigation }) => {
-                const { theme } = useTheme();
-                return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
-                      onPress={() => navigation.goBack()}
-                    >
-                      <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <Text style={[modalHeaderStyles.title, { color: theme.colors.text }]}>
-                      New Sale
-                    </Text>
-                    <View style={modalHeaderStyles.rightButton} />
-                  </View>
-                );
-              }
+            options={{
+              headerShown: false,
             }}
           />
           <Stack.Screen
             name="SaleDetail"
             component={SaleDetailScreen}
-            options={{ 
-              title: "Sale Details",
-              header: ({ navigation }) => {
-                const { theme } = useTheme();
-                return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
-                      onPress={() => navigation.goBack()}
-                    >
-                      <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <Text style={[modalHeaderStyles.title, { color: theme.colors.text }]}>
-                      Sale Details
-                    </Text>
-                    <View style={modalHeaderStyles.rightButton} />
-                  </View>
-                );
-              }
+            options={{
+              headerShown: false,
             }}
           />
           <Stack.Screen
             name="InventoryCheck"
             component={InventoryCheckScreen}
-            options={{ 
+            options={{
               title: "Inventory Check",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -784,17 +774,17 @@ export default function AppNavigator() {
           <Stack.Screen
             name="AddStaff"
             component={AddStaffScreen}
-            options={{ 
+            options={{
               title: "Add New Staff",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -811,17 +801,17 @@ export default function AppNavigator() {
           <Stack.Screen
             name="EditStaff"
             component={EditStaffScreen}
-            options={{ 
+            options={{
               title: "Edit Staff",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -838,17 +828,17 @@ export default function AppNavigator() {
           <Stack.Screen
             name="StaffSales"
             component={StaffSalesScreen}
-            options={{ 
+            options={{
               title: "Staff Sales",
               header: ({ navigation }) => {
                 const { theme } = useTheme();
                 return (
-                  <View style={[modalHeaderStyles.container, { 
-                    backgroundColor: theme.colors.surface,
-                    borderBottomColor: theme.colors.border,
-                  }]}>
-                    <TouchableOpacity 
-                      style={modalHeaderStyles.backButton} 
+                  <View style={modalHeaderStyles.container}>
+                    <View style={StyleSheet.absoluteFill}>
+                      <GlassHeaderBackground />
+                    </View>
+                    <TouchableOpacity
+                      style={modalHeaderStyles.backButton}
                       onPress={() => navigation.goBack()}
                     >
                       <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -877,6 +867,7 @@ const styles = StyleSheet.create({
   sideMenuContainer: {
     flex: 1,
     width: 280,
+    overflow: 'hidden',
   },
   sideMenuContent: {
     flex: 1,
@@ -970,6 +961,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     marginTop: 10,
+    marginBottom: 40,
   },
   logoutText: {
     fontSize: 16,
@@ -985,40 +977,45 @@ const headerStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 12,
-    borderBottomWidth: 1,
   },
   menuButton: {
     padding: 8,
     marginRight: 12,
+    borderRadius: 8,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 12,
     marginTop: 2,
+    opacity: 0.8,
   },
   notificationButton: {
     padding: 8,
     position: "relative",
+    borderRadius: 8,
   },
   notificationBadge: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    borderRadius: 8,
-    minWidth: 18,
-    height: 18,
+    top: 6,
+    right: 6,
+    borderRadius: 6,
+    minWidth: 16,
+    height: 16,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
+    borderWidth: 1,
+    borderColor: '#FFF',
   },
   notificationBadgeText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "bold",
   },
 });
@@ -1030,11 +1027,11 @@ const modalHeaderStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 12,
-    borderBottomWidth: 1,
   },
   backButton: {
     padding: 8,
     marginRight: 12,
+    borderRadius: 8,
   },
   title: {
     flex: 1,
@@ -1042,6 +1039,7 @@ const modalHeaderStyles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     marginRight: 40,
+    letterSpacing: 0.5,
   },
   rightButton: {
     width: 40,
