@@ -78,7 +78,7 @@ export default function SettingsScreen({ navigation }: any) {
   const handleRateApp = () => {
     Alert.alert(
       'Rate App',
-      'Enjoying Inventory Pro? Please rate us on the app store!',
+      'Enjoying ToryAi? Please rate us on the app store!',
       [
         { text: 'Not Now', style: 'cancel' },
         {
@@ -388,7 +388,7 @@ export default function SettingsScreen({ navigation }: any) {
 
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>
-              © 2024 Inventory Pro. All rights reserved.
+              © 2024 ToryAi. All rights reserved.
             </Text>
             <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>
               Terms • Privacy Policy

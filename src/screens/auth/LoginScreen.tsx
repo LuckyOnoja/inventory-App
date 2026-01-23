@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -64,17 +65,12 @@ export default function LoginScreen({ navigation }: any) {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={[
-              styles.logoContainer,
-              {
-                backgroundColor: theme.colors.surfaceLight,
-                shadowColor: theme.colors.primary,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
-              }
-            ]}>
-              <Ionicons name="shield-checkmark" size={48} color={theme.colors.primary} />
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../../assets/icon.png')}
+                style={{ width: 220, height: 220 }}
+                resizeMode="contain"
+              />
             </View>
             <Text style={[styles.title, { color: theme.colors.text }]}>
               ToryAi
@@ -219,12 +215,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,

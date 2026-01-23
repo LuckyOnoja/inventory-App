@@ -1,28 +1,28 @@
 // Web3 / Cyberpunk inspired theme
 export const gradients = {
-  primary: ['#6366F1', '#8B5CF6'] as const,
-  secondary: ['#10B981', '#3B82F6'] as const,
+  primary: ['#0066FF', '#00CC66'] as const, // Blue to Green
+  secondary: ['#00CC66', '#3B82F6'] as const,
   accent: ['#F472B6', '#9333EA'] as const,
   success: ['#34D399', '#10B981'] as const,
   warning: ['#FBBF24', '#F59E0B'] as const,
   error: ['#F87171', '#EF4444'] as const,
-  dark: ['#1E293B', '#0F172A'] as const,
-  light: ['#F8FAFC', '#E2E8F0'] as const,
+  dark: ['#050B14', '#0A1220'] as const,
+  light: ['#F0F9FF', '#E0F2FE'] as const,
   glass: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)'] as const,
-  glassDark: ['rgba(15, 23, 42, 0.6)', 'rgba(15, 23, 42, 0.4)'] as const,
+  glassDark: ['rgba(5, 11, 20, 0.6)', 'rgba(5, 11, 20, 0.4)'] as const,
 };
 
 export const lightColors = {
-  primary: '#6366F1',
-  primaryDark: '#4F46E5',
-  primaryLight: '#818CF8',
-  secondary: '#10B981',
-  secondaryDark: '#059669',
+  primary: '#0066FF', // Vibrant Blue
+  primaryDark: '#0052CC',
+  primaryLight: '#3385FF',
+  secondary: '#00CC66', // Vibrant Green
+  secondaryDark: '#00A352',
   accent: '#D946EF',
-  background: '#F8FAFC',
+  background: '#F0F9FF', // Very light blue tint
   surface: '#FFFFFF',
-  surfaceLight: '#F1F5F9',
-  surfaceDark: '#E2E8F0',
+  surfaceLight: '#E0F2FE',
+  surfaceDark: '#BAE6FD',
   text: '#0F172A',
   textSecondary: '#475569',
   textTertiary: '#94A3B8',
@@ -34,8 +34,8 @@ export const lightColors = {
   successLight: '#D1FAE5',
   info: '#3B82F6',
   infoLight: '#DBEAFE',
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
+  border: '#E0F2FE',
+  borderLight: '#F0F9FF',
   card: '#FFFFFF',
   white: '#FFFFFF',
   black: '#000000',
@@ -56,16 +56,16 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#818CF8',
-  primaryDark: '#6366F1',
-  primaryLight: '#A5B4FC',
-  secondary: '#34D399',
-  secondaryDark: '#10B981',
+  primary: '#3399FF', // Bright Blue
+  primaryDark: '#0066FF',
+  primaryLight: '#66B2FF',
+  secondary: '#33FF99', // Bright Green
+  secondaryDark: '#00CC66',
   accent: '#E879F9',
-  background: '#0B0F19', // Deep space blue/black
-  surface: '#151E32', // Slightly lighter blue/black
-  surfaceLight: '#1E293B',
-  surfaceDark: '#0F172A',
+  background: '#050B14', // Deep Dark Blue
+  surface: '#0A1424', // Slightly lighter
+  surfaceLight: '#111F36',
+  surfaceDark: '#02060D',
   text: '#F8FAFC',
   textSecondary: '#94A3B8',
   textTertiary: '#64748B',
@@ -77,9 +77,9 @@ export const darkColors = {
   successLight: 'rgba(16, 185, 129, 0.2)',
   info: '#60A5FA',
   infoLight: 'rgba(59, 130, 246, 0.2)',
-  border: '#334155',
-  borderLight: '#475569',
-  card: 'rgba(30, 41, 59, 0.7)', // Glassy
+  border: '#1E293B',
+  borderLight: '#334155',
+  card: 'rgba(10, 20, 36, 0.7)', // Glassy Blue/Black
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',

@@ -7,35 +7,37 @@ import { useTheme } from '../../context/ThemeContext';
 export const GlassTabBarBackground = () => {
     const { theme } = useTheme();
 
+    // Crystal clear glass - barely there tint
     const gradient = theme.mode === 'dark'
-        ? ['rgba(30, 41, 59, 0.8)', 'rgba(15, 23, 42, 0.95)'] // Darker blue-grey for dark mode
-        : ['rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 0.85)']; // Crisp white for light mode
+        ? ['rgba(30, 41, 59, 0.1)', 'rgba(15, 23, 42, 0.15)'] as const
+        : ['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.1)'] as const;
 
     const borderColor = theme.mode === 'dark'
-        ? 'rgba(255, 255, 255, 0.1)'
-        : 'rgba(0, 0, 0, 0.05)'; // Subtle dark border for light mode
+        ? 'rgba(255, 255, 255, 0.05)'
+        : 'rgba(255, 255, 255, 0.2)';
 
     return (
         <View style={[StyleSheet.absoluteFill, { borderRadius: 35, overflow: 'hidden' }]}>
+            <BlurView
+                style={StyleSheet.absoluteFill}
+                tint={theme.mode === 'dark' ? 'dark' : 'light'}
+                intensity={30}
+            />
             <LinearGradient
-                colors={gradient as any}
+                colors={gradient}
                 style={StyleSheet.absoluteFill}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             />
-            <BlurView
-                style={StyleSheet.absoluteFill}
-                tint={theme.mode === 'dark' ? 'dark' : 'light'}
-                intensity={85}
-            />
-            {/* Inner Border */}
+            {/* Delicate Inner Border */}
             <View
                 style={[
                     StyleSheet.absoluteFill,
                     {
                         borderRadius: 35,
                         borderWidth: 1,
-                        borderColor: borderColor
+                        borderColor: borderColor,
+                        opacity: 0.4
                     }
                 ]}
             />
@@ -47,13 +49,13 @@ export const GlassHeaderBackground = () => {
     const { theme } = useTheme();
 
     const gradient = theme.mode === 'dark'
-        ? ['rgba(15, 23, 42, 0.6)', 'rgba(15, 23, 42, 0.8)']
-        : ['rgba(255, 255, 255, 0.85)', 'rgba(255, 255, 255, 0.95)'];
+        ? ['rgba(15, 23, 42, 0.6)', 'rgba(15, 23, 42, 0.8)'] as const
+        : ['rgba(255, 255, 255, 0.85)', 'rgba(255, 255, 255, 0.95)'] as const;
 
     return (
         <View style={StyleSheet.absoluteFill}>
             <LinearGradient
-                colors={gradient as any}
+                colors={gradient}
                 style={StyleSheet.absoluteFill}
             />
             <BlurView
@@ -67,7 +69,6 @@ export const GlassHeaderBackground = () => {
 };
 
 const styles = StyleSheet.create({
-
     borderBottom: {
         position: 'absolute',
         bottom: 0,

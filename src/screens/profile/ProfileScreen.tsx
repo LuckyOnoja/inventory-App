@@ -290,7 +290,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* App Version */}
         <Text style={[styles.versionText, { color: theme.colors.textTertiary }]}>
-          Inventory Pro v1.0.0
+          ToryAi v1.0.0
         </Text>
       </ScrollView>
     </ScreenWrapper>

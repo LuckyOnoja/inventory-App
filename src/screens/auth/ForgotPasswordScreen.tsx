@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -79,8 +80,12 @@ export default function ForgotPasswordScreen({ navigation }: any) {
             <GlassView style={styles.contentCard} intensity={20}>
               {/* Instructions */}
               <View style={styles.instructionsContainer}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '20' }]}>
-                  <Ionicons name="key-outline" size={40} color={theme.colors.primary} />
+                <View style={styles.iconContainer}>
+                  <Image
+                    source={require('../../../assets/icon.png')}
+                    style={{ width: 180, height: 180 }}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={[styles.instructionsTitle, { color: theme.colors.text }]}>
                   Forgot Your Password?
@@ -208,12 +213,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   instructionsTitle: {
     fontSize: 22,
