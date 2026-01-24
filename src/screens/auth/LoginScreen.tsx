@@ -72,9 +72,6 @@ export default function LoginScreen({ navigation }: any) {
                 resizeMode="contain"
               />
             </View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              ToryAi
-            </Text>
             <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
               Secure your business inventory
             </Text>
