@@ -16,18 +16,41 @@ import { useTheme } from "../../context/ThemeContext";
 import { GlassView } from "../../components/ui/GlassView";
 import { GlassButton } from "../../components/ui/GlassButton";
 import AIScannerService from "../../services/aiScanner.service";
-import ProductSelectionModal from "./ProductSelectionModal";
 import axios from "axios";
 import config from "../../config";
 
 const API_URL = config.API_URL;
 
+interface Product {
+  productId: string;
+  name: string;
+  sku?: string;
+  category: string;
+  sellingPrice: number;
+  currentStock: number;
+  unit: string;
+  confidence?: number;
+  hasSizes?: boolean;
+  id?: string;
+  searchTerms?: string[];
+  size?: string;
+  matchScore?: number;
+  isPrimary?: boolean;
+}
+
+interface SizeOption {
+  value: string;
+  label: string;
+}
+
 interface AIScannerProps {
   visible: boolean;
   onClose: () => void;
-  onProductScanned: (product: any) => void;
+  onProductScanned: (product: Product) => void;
   token: string;
 }
+
+type ScanStep = "camera" | "result" | "selection" | "manual";
 
 export default function AIScanner({
   visible,
@@ -39,17 +62,12 @@ export default function AIScanner({
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const [scannedImage, setScannedImage] = useState<string | null>(null);
-  const [recognitionResult, setRecognitionResult] = useState<any>(null);
+  const [recognitionResult, setRecognitionResult] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
-  const [availableSizes, setAvailableSizes] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
-  const [step, setStep] = useState<"camera" | "result" | "manual">("camera");
-  const [showProductSelection, setShowProductSelection] = useState(false);
-  const [productAlternatives, setProductAlternatives] = useState<any[]>([]);
-  const [recognitionSearchTerms, setRecognitionSearchTerms] = useState<
-    string[]
-  >([]);
+  const [availableSizes, setAvailableSizes] = useState<SizeOption[]>([]);
+  const [step, setStep] = useState<ScanStep>("camera");
+  const [productAlternatives, setProductAlternatives] = useState<Product[]>([]);
+  const [recognitionSearchTerms, setRecognitionSearchTerms] = useState<string[]>([]);
 
   const cameraRef = useRef<CameraView>(null);
 
@@ -68,253 +86,6 @@ export default function AIScanner({
     setIsScanning(false);
   };
 
-  const handleTakePicture = async () => {
-    if (!cameraRef.current) return;
-
-    setIsScanning(true);
-    try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
-      });
-
-      setScannedImage(photo.uri);
-
-      // Call AI service
-      const result = await AIScannerService.scanProduct(photo.uri, token);
-
-      if (result.success) {
-        // Store search terms
-        if (result.data.searchTerms) {
-          setRecognitionSearchTerms(result.data.searchTerms);
-        }
-
-        // FIRST: Check if AI recognition was successful
-        if (!result.data.success) {
-          Alert.alert(
-            "Scan Failed",
-            result.data.message || "Could not recognize product.",
-            [
-              { text: "Try Again", onPress: resetScanner },
-              { text: "Manual Search", onPress: () => setStep("manual") },
-            ]
-          );
-          return;
-        }
-
-        // SECOND: Check if we have ANY matches (primary OR alternatives)
-        const hasPrimaryMatch =
-          result.data.primaryMatch && result.data.primaryMatch.productId;
-        const hasAlternatives =
-          result.data.alternatives && result.data.alternatives.length > 0;
-
-        if (!hasPrimaryMatch && !hasAlternatives) {
-          // No match found at all
-          Alert.alert(
-            "Product Not in Inventory",
-            `The AI recognized this as: ${result.data.searchTerms
-              ?.slice(0, 3)
-              .join(", ")}\n\n` +
-            "This product is not currently in your inventory.\n\n" +
-            "Options:",
-            [
-              {
-                text: "Add as New Product",
-                onPress: () => {
-                  // Navigate to add product screen or create temp product
-                  onClose(); // Close scanner
-                  // You can add navigation to product creation screen here
-                  Alert.alert(
-                    "Add New Product",
-                    "Would you like to add this product to your inventory?",
-                    [
-                      {
-                        text: "Yes, Add Product",
-                        onPress: () => {
-                          // You can navigate to product creation with the scanned data
-                          console.log("Add product with data:", {
-                            name: result.data.searchTerms?.[0] || "New Product",
-                            category: "To be categorized",
-                            searchTerms: result.data.searchTerms,
-                          });
-                        },
-                      },
-                      { text: "Cancel", style: "cancel" },
-                    ]
-                  );
-                },
-              },
-              {
-                text: "Add to Cart as Unknown",
-                onPress: () => {
-                  const tempProduct = {
-                    productId: `temp_${Date.now()}`,
-                    name:
-                      result.data.searchTerms?.[0] || "Unidentified Product",
-                    sku: `SCAN_${Date.now()}`,
-                    category: "Scanned",
-                    sellingPrice: 0,
-                    currentStock: 999,
-                    unit: "piece",
-                    confidence: result.data.confidence || 0.5,
-                    searchTerms: result.data.searchTerms,
-                  };
-                  setRecognitionResult(tempProduct);
-                  setStep("result");
-                },
-              },
-              {
-                text: "Cancel",
-                style: "cancel",
-                onPress: resetScanner,
-              },
-            ]
-          );
-          return;
-        }
-
-        // THIRD: Check if we have alternatives (multiple matches)
-        if (hasAlternatives) {
-          // Show product selection modal with ALL alternatives
-          setProductAlternatives(result.data.alternatives);
-          setShowProductSelection(true);
-          return;
-        }
-
-        // FOURTH: We have a primary match
-        if (hasPrimaryMatch) {
-          const productData = result.data.primaryMatch;
-          setRecognitionResult(productData);
-
-          // Get sizes if product has sizes
-          if (productData.hasSizes && productData.productId) {
-            const sizes = await AIScannerService.getProductSizes(
-              productData.productId,
-              token
-            );
-            setAvailableSizes(sizes);
-            if (sizes.length > 0) {
-              setSelectedSize(sizes[0].value);
-            }
-          }
-
-          setStep("result");
-
-          Alert.alert(
-            "✅ Product Found!",
-            `Successfully matched with: ${productData.name}\n\n` +
-            `Price: ₦${productData.sellingPrice?.toLocaleString()}\n` +
-            `Stock: ${productData.currentStock} ${productData.unit}`,
-            [{ text: "OK" }]
-          );
-        }
-      } else {
-        Alert.alert(
-          "Scan Failed",
-          "Could not recognize product. Try manual selection.",
-          [
-            { text: "Try Again", onPress: resetScanner },
-            { text: "Manual Select", onPress: () => setStep("manual") },
-          ]
-        );
-      }
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to scan");
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  // Add this function to handle product selection
-  const handleProductSelected = async (selectedProduct: any) => {
-    try {
-      // Fetch full product details
-      const response = await axios.get(
-        `${API_URL}/products/${selectedProduct.productId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.success) {
-        const fullProduct = response.data.data;
-
-        // Create recognition result with the selected product
-        const productData = {
-          ...selectedProduct,
-          ...fullProduct,
-          productId: fullProduct.id,
-          confidence: selectedProduct.confidence,
-        };
-
-        setRecognitionResult(productData);
-        setShowProductSelection(false);
-        setStep("result");
-
-        // Get sizes if needed
-        if (fullProduct.hasSizes) {
-          const sizes = await AIScannerService.getProductSizes(
-            fullProduct.id,
-            token
-          );
-          setAvailableSizes(sizes);
-          if (sizes.length > 0) {
-            setSelectedSize(sizes[0].value);
-          }
-        }
-
-        Alert.alert(
-          "Product Selected",
-          `${fullProduct.name} has been selected\n\n` +
-          `Price: ₦${fullProduct.sellingPrice?.toLocaleString()}\n` +
-          `Stock: ${fullProduct.currentStock} ${fullProduct.unit}`,
-          [{ text: "OK" }]
-        );
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to fetch product details");
-      setShowProductSelection(false);
-    }
-  };
-
-  // Add this new function to handle alternative selection
-  const handleSelectAlternative = async (productId: string) => {
-    try {
-      // Fetch product details for the selected alternative
-      const response = await axios.get(`${API_URL}/products/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.success) {
-        const product = response.data.data;
-        setRecognitionResult({
-          ...product,
-          productId: product.id,
-          confidence: 0.8, // Default confidence for manual selection
-        });
-
-        // Get sizes if needed
-        if (product.hasSizes) {
-          const sizes = await AIScannerService.getProductSizes(
-            product.id,
-            token
-          );
-          setAvailableSizes(sizes);
-          if (sizes.length > 0) {
-            setSelectedSize(sizes[0].value);
-          }
-        }
-
-        Alert.alert(
-          "Product Selected",
-          `${product.name} selected for adding to cart`,
-          [{ text: "OK" }]
-        );
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to fetch product details");
-    }
-  };
 
   const handleManualSearch = async (query: string) => {
     try {
@@ -360,13 +131,183 @@ export default function AIScanner({
     resetScanner();
   };
 
-  const handleManualSelect = (product: any) => {
+  const handleManualSelect = (product: Product) => {
     setRecognitionResult(product);
     setStep("result");
   };
 
+  const handleTakePicture = async () => {
+    if (!cameraRef.current) return;
+
+    setIsScanning(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (!photo) {
+        setIsScanning(false);
+        return;
+      }
+
+      setScannedImage(photo.uri);
+
+      // Call AI service
+      const result = await AIScannerService.scanProduct(photo.uri, token);
+      console.log("📱 Scan response:", JSON.stringify(result, null, 2));
+
+      if (result.success) {
+        // Store search terms
+        if (result.data.searchTerms) {
+          setRecognitionSearchTerms(result.data.searchTerms);
+        }
+
+        // FIRST: Check if AI recognition was successful
+        if (!result.data.success) {
+          console.log("❌ AI recognition failed");
+          Alert.alert(
+            "Scan Failed",
+            result.data.message || "Could not recognize product.",
+            [
+              { text: "Try Again", onPress: resetScanner },
+              { text: "Manual Search", onPress: () => setStep("manual") },
+            ]
+          );
+          setIsScanning(false);
+          return;
+        }
+
+        // SECOND: Check if we have a primary match
+        const hasPrimaryMatch =
+          result.data.primaryMatch && result.data.primaryMatch.productId;
+
+        console.log("🔍 Match status:", { hasPrimaryMatch });
+        console.log("📦 Primary match:", result.data.primaryMatch);
+
+        if (!hasPrimaryMatch) {
+          // No match found at all
+          console.log("❌ No matches found");
+          Alert.alert(
+            "Product Not in Inventory",
+            `The AI recognized this as: ${result.data.searchTerms
+              ?.slice(0, 3)
+              .join(", ")}\n\n` +
+            "This product is not currently in your inventory.",
+            [
+              {
+                text: "Try Again",
+                onPress: resetScanner,
+              },
+              {
+                text: "Manual Search",
+                onPress: () => setStep("manual"),
+              },
+            ]
+          );
+          setIsScanning(false);
+          return;
+        }
+
+        // INSTANT ADD TO CART - No selection modal!
+        console.log("✅ Primary match found, adding directly to cart...");
+
+        try {
+          // Fetch full product details
+          const response = await axios.get(
+            `${API_URL}/products/${result.data.primaryMatch.productId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (response.data.success) {
+            const fullProduct = response.data.data;
+            console.log("✅ Full product details fetched:", fullProduct);
+
+            // Create product data for cart
+            const productData: Product = {
+              ...result.data.primaryMatch,
+              ...fullProduct,
+              productId: fullProduct.id,
+              confidence: result.data.confidence,
+            };
+
+            // Check if product has sizes
+            if (fullProduct.hasSizes && fullProduct.sizeOptions?.length > 0) {
+              console.log("📏 Product has sizes, showing result screen for size selection");
+              // If product has sizes, show the result screen for size selection
+              setRecognitionResult(productData);
+              setStep("result");
+
+              const sizes = await AIScannerService.getProductSizes(
+                fullProduct.id,
+                token
+              );
+              setAvailableSizes(sizes);
+              if (sizes.length > 0) {
+                setSelectedSize(sizes[0].value);
+              }
+            } else {
+              // No sizes - directly add to cart and close scanner
+              console.log("✅ No sizes needed, adding directly to cart");
+              console.log("🚪 Closing scanner and returning to sale screen...");
+
+              // Add to cart
+              onProductScanned(productData);
+
+              // Close the scanner immediately
+              onClose();
+
+              // Show brief success toast
+              Alert.alert(
+                "✅ Added to Cart",
+                `${fullProduct.name} - ₦${fullProduct.sellingPrice?.toLocaleString()}`,
+                [{ text: "OK" }],
+                { cancelable: true }
+              );
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error fetching product details:", error);
+          Alert.alert("Error", "Failed to add product to cart");
+          setIsScanning(false);
+        }
+      } else {
+        Alert.alert(
+          "Scan Failed",
+          "Could not recognize product. Try manual selection.",
+          [
+            { text: "Try Again", onPress: resetScanner },
+            { text: "Manual Select", onPress: () => setStep("manual") },
+          ]
+        );
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to scan");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   if (!permission) {
-    return null;
+    return (
+      <Modal visible={visible} animationType="fade" presentationStyle="overFullScreen" transparent={true}>
+        <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: "center", alignItems: "center" }]}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={{ marginTop: 20, color: theme.colors.textSecondary }}>Initializing camera...</Text>
+          <TouchableOpacity
+            style={{ marginTop: 40, padding: 10 }}
+            onPress={() => {
+              // Allow closing if it hangs
+              onClose();
+            }}
+          >
+            <Text style={{ color: theme.colors.error }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    );
   }
 
   if (!permission.granted) {
@@ -432,26 +373,38 @@ export default function AIScanner({
       presentationStyle="fullScreen"
     >
       <View
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        style={[styles.container, { backgroundColor: "black" }]}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={28} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {step === "camera"
-              ? "Scan Product"
-              : step === "result"
-                ? "Product Details"
-                : "Manual Select"}
-          </Text>
-          <View style={{ width: 28 }} />
-        </View>
+        {/* BACKGROUND: Camera View (Visible in 'camera' and 'selection' modes) */}
+        {(step === "camera" || step === "selection") && (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
+            <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+          </View>
+        )}
 
-        {step === "camera" && (
-          <View style={styles.cameraContainer}>
-            <CameraView ref={cameraRef} style={styles.camera} facing="back">
+        {/* FOREGROUND: Interfaces */}
+        <View style={[styles.contentContainer, { zIndex: 1 }]}>
+
+          {/* Header - Always visible on top */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.headerButton}>
+              <Ionicons name="close" size={28} color="white" />
+            </TouchableOpacity>
+            <Text style={[styles.title, { color: "white" }]}>
+              {step === "camera"
+                ? "Scan Product"
+                : step === "result"
+                  ? "Product Details"
+                  : step === "selection"
+                    ? "Select Product"
+                    : "Manual Select"}
+            </Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          {/* Camera Controls & Overlay - Only in 'camera' mode */}
+          {step === "camera" && (
+            <View style={styles.cameraInterface}>
               <View style={styles.cameraOverlay}>
                 <View style={styles.scanFrame}>
                   <View style={[styles.corner, styles.topLeft]} />
@@ -463,245 +416,240 @@ export default function AIScanner({
                   Align product within frame
                 </Text>
               </View>
-            </CameraView>
 
-            <View style={styles.controls}>
-              <TouchableOpacity
-                style={[
-                  styles.scanButton,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-                onPress={handleTakePicture}
-                disabled={isScanning}
-              >
-                {isScanning ? (
-                  <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                  <Ionicons
-                    name="camera"
-                    size={32}
-                    color={theme.colors.white}
-                  />
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.manualButton,
-                  { backgroundColor: theme.colors.surface },
-                ]}
-                onPress={() => setStep("manual")}
-              >
-                <Ionicons name="search" size={20} color={theme.colors.text} />
-                <Text
-                  style={[
-                    styles.manualButtonText,
-                    { color: theme.colors.text },
-                  ]}
-                >
-                  Manual Search
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {step === "result" && recognitionResult && (
-          <ScrollView contentContainerStyle={styles.resultContainer}>
-            {scannedImage && (
-              <View style={styles.imagePreview}>
-                <Image source={{ uri: scannedImage }} style={styles.image} />
+              <View style={styles.controls}>
                 <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={handleRetry}
-                >
-                  <Ionicons
-                    name="refresh"
-                    size={20}
-                    color={theme.colors.primary}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <GlassView intensity={20} style={styles.resultCard}>
-              <View style={styles.resultHeader}>
-                <Text
-                  style={[styles.productName, { color: theme.colors.text }]}
-                >
-                  {recognitionResult.name}
-                </Text>
-                <View
                   style={[
-                    styles.confidenceBadge,
-                    { backgroundColor: theme.colors.primary + '20' },
+                    styles.scanButton,
+                    { backgroundColor: theme.colors.primary },
                   ]}
+                  onPress={handleTakePicture}
+                  disabled={isScanning}
                 >
+                  {isScanning ? (
+                    <ActivityIndicator color={theme.colors.white} />
+                  ) : (
+                    <Ionicons
+                      name="camera"
+                      size={32}
+                      color={theme.colors.white}
+                    />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.manualButton,
+                    { backgroundColor: theme.colors.surface },
+                  ]}
+                  onPress={() => setStep("manual")}
+                >
+                  <Ionicons name="search" size={20} color={theme.colors.text} />
                   <Text
                     style={[
-                      styles.confidenceText,
-                      { color: theme.colors.primary },
+                      styles.manualButtonText,
+                      { color: theme.colors.text },
                     ]}
                   >
-                    {Math.round((recognitionResult.confidence || 0) * 100)}%
-                    match
+                    Manual Search
                   </Text>
-                </View>
+                </TouchableOpacity>
               </View>
+            </View>
+          )}
 
-              <View style={styles.productDetails}>
-                <Text
-                  style={[
-                    styles.detailLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  SKU: {recognitionResult.sku || "N/A"}
-                </Text>
-                <Text
-                  style={[
-                    styles.detailLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Category: {recognitionResult.category}
-                </Text>
-                <Text
-                  style={[
-                    styles.detailLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Stock: {recognitionResult.currentStock}{" "}
-                  {recognitionResult.unit}
-                </Text>
-                <Text
-                  style={[
-                    styles.detailLabel,
-                    { color: theme.colors.textSecondary },
-                  ]}
-                >
-                  Price: ₦{recognitionResult.sellingPrice?.toLocaleString()}
-                </Text>
-              </View>
-
-              {availableSizes.length > 0 && (
-                <View style={styles.sizeSection}>
-                  <Text
-                    style={[styles.sizeLabel, { color: theme.colors.text }]}
-                  >
-                    Select Size:
-                  </Text>
-                  <View style={styles.sizeOptions}>
-                    {availableSizes.map((size) => (
-                      <TouchableOpacity
-                        key={size.value}
-                        onPress={() => setSelectedSize(size.value)}
-                        style={{ minWidth: '30%' }}
-                      >
-                        <GlassView
-                          intensity={selectedSize === size.value ? 40 : 10}
-                          style={[
-                            styles.sizeButton,
-                            selectedSize === size.value && { borderColor: theme.colors.primary }
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.sizeButtonText,
-                              {
-                                color:
-                                  selectedSize === size.value
-                                    ? theme.colors.primary
-                                    : theme.colors.text,
-                              },
-                            ]}
-                          >
-                            {size.label}
-                          </Text>
-                        </GlassView>
-                      </TouchableOpacity>
-                    ))}
+          {/* Result View - Opaque background */}
+          {step === "result" && recognitionResult && (
+            <View style={[styles.opaqueContainer, { backgroundColor: theme.colors.background }]}>
+              <ScrollView contentContainerStyle={styles.resultContainer}>
+                {scannedImage && (
+                  <View style={styles.imagePreview}>
+                    <Image source={{ uri: scannedImage }} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.retryButton}
+                      onPress={handleRetry}
+                    >
+                      <Ionicons
+                        name="refresh"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
                   </View>
-                </View>
-              )}
+                )}
 
-              <GlassButton
-                title="Add to Cart"
-                onPress={handleConfirm}
-                icon="cart-outline"
-                variant="primary"
-                style={styles.confirmButton}
-              />
-            </GlassView>
+                <GlassView intensity={20} style={styles.resultCard}>
+                  <View style={styles.resultHeader}>
+                    <Text
+                      style={[styles.productName, { color: theme.colors.text }]}
+                    >
+                      {recognitionResult.name}
+                    </Text>
+                    <View
+                      style={[
+                        styles.confidenceBadge,
+                        { backgroundColor: theme.colors.primary + '20' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.confidenceText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        {Math.round((recognitionResult.confidence || 0) * 100)}%
+                        match
+                      </Text>
+                    </View>
+                  </View>
 
-            <GlassButton
-              title="Scan Another"
-              onPress={handleRetry}
-              icon="arrow-back"
-              variant="secondary"
-              style={styles.backButton}
-            />
-          </ScrollView>
-        )}
+                  <View style={styles.productDetails}>
+                    <Text
+                      style={[
+                        styles.detailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      SKU: {recognitionResult.sku || "N/A"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.detailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      Category: {recognitionResult.category}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.detailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      Stock: {recognitionResult.currentStock}{" "}
+                      {recognitionResult.unit}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.detailLabel,
+                        { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      Price: ₦{recognitionResult.sellingPrice?.toLocaleString()}
+                    </Text>
+                  </View>
 
-        {step === "manual" && (
-          <View style={styles.manualContainer}>
-            <TouchableOpacity
-              style={[
-                styles.backButton,
-                { borderColor: theme.colors.border, margin: 20 },
-              ]}
-              onPress={() => setStep("camera")}
-            >
-              <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
-              <Text
-                style={[styles.backButtonText, { color: theme.colors.text }]}
-              >
-                Back to Camera
-              </Text>
-            </TouchableOpacity>
+                  {availableSizes.length > 0 && (
+                    <View style={styles.sizeSection}>
+                      <Text
+                        style={[styles.sizeLabel, { color: theme.colors.text }]}
+                      >
+                        Select Size:
+                      </Text>
+                      <View style={styles.sizeOptions}>
+                        {availableSizes.map((size) => (
+                          <TouchableOpacity
+                            key={size.value}
+                            onPress={() => setSelectedSize(size.value)}
+                            style={{ minWidth: '30%' }}
+                          >
+                            <GlassView
+                              intensity={selectedSize === size.value ? 40 : 10}
+                              style={[
+                                styles.sizeButton,
+                                selectedSize === size.value && { borderColor: theme.colors.primary }
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.sizeButtonText,
+                                  {
+                                    color:
+                                      selectedSize === size.value
+                                        ? theme.colors.primary
+                                        : theme.colors.text,
+                                  },
+                                ]}
+                              >
+                                {size.label}
+                              </Text>
+                            </GlassView>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
 
-            <GlassView intensity={20} style={styles.manualSearch}>
-              <Text style={[styles.manualTitle, { color: theme.colors.text }]}>
-                Search Products
-              </Text>
-              <Text
-                style={[
-                  styles.manualText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                Enter product name, SKU, or category
-              </Text>
+                  <GlassButton
+                    title="Add to Cart"
+                    onPress={handleConfirm}
+                    icon="cart-outline"
+                    variant="primary"
+                    style={styles.confirmButton}
+                  />
+                </GlassView>
 
-              {/* In a real app, you'd add a TextInput here for search */}
-              <GlassButton
-                title="Use Mock Product (Demo)"
-                onPress={() => {
-                  // For demo, use a mock product
-                  const mockProduct = AIScannerService.getMockProduct();
-                  handleManualSelect(mockProduct);
-                }}
-                variant="primary"
-                style={styles.searchButton}
-              />
-            </GlassView>
-          </View>
-        )}
+                <GlassButton
+                  title="Scan Another"
+                  onPress={handleRetry}
+                  icon="arrow-back"
+                  variant="secondary"
+                  style={styles.backButton}
+                />
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Manual Search - Opaque background */}
+          {step === "manual" && (
+            <View style={[styles.opaqueContainer, { backgroundColor: theme.colors.background }]}>
+              <View style={styles.manualContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.backButton,
+                    { borderColor: theme.colors.border, margin: 20 },
+                  ]}
+                  onPress={() => setStep("camera")}
+                >
+                  <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+                  <Text
+                    style={[styles.backButtonText, { color: theme.colors.text }]}
+                  >
+                    Back to Camera
+                  </Text>
+                </TouchableOpacity>
+
+                <GlassView intensity={20} style={styles.manualSearch}>
+                  <Text style={[styles.manualTitle, { color: theme.colors.text }]}>
+                    Search Products
+                  </Text>
+                  <Text
+                    style={[
+                      styles.manualText,
+                      { color: theme.colors.textSecondary },
+                    ]}
+                  >
+                    Enter product name, SKU, or category
+                  </Text>
+
+                  {/* In a real app, you'd add a TextInput here for search */}
+                  <GlassButton
+                    title="Use Mock Product (Demo)"
+                    onPress={() => {
+                      // For demo, use a mock product
+                      const mockProduct = AIScannerService.getMockProduct();
+                      handleManualSelect(mockProduct);
+                    }}
+                    variant="primary"
+                    style={styles.searchButton}
+                  />
+                </GlassView>
+              </View>
+            </View>
+          )}
+
+        </View>
       </View>
-      <ProductSelectionModal
-        visible={showProductSelection}
-        onClose={() => setShowProductSelection(false)}
-        alternatives={productAlternatives}
-        searchTerms={recognitionSearchTerms}
-        onProductSelected={handleProductSelected}
-        message={
-          productAlternatives.length > 0
-            ? `Found ${productAlternatives.length} possible matches:`
-            : "Select a product:"
-        }
-      />
     </Modal>
   );
 }
@@ -972,8 +920,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
   },
-  searchButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
+  contentContainer: {
+    flex: 1,
   },
+  cameraInterface: {
+    flex: 1,
+  },
+  opaqueContainer: {
+    flex: 1,
+    zIndex: 10,
+  },
+  headerButton: {
+    padding: 8,
+  }
 });
