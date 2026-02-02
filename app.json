@@ -6,30 +6,26 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.luckylk.toryai",
-      "buildNumber": "1.0.0",
       "supportsTablet": true,
+      "bundleIdentifier": "com.luckylk.toryai",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow access to photos",
-        "NSCameraUsageDescription": "Allow access to camera"
+        "NSCameraUsageDescription": "Allow access to camera",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.luckylk.toryai",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
+      "package": "com.luckylk.toryai",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
@@ -54,9 +50,8 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "20b38f3d-c7d3-4bcf-94d9-972d8816316a"
+        "projectId": "fba62a60-4279-4303-b137-d64a16247645"
       }
-    },
-    "owner": "lucky_lk"
+    }
   }
 }

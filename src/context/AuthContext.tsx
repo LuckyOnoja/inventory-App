@@ -12,6 +12,11 @@ import config from "../config";
 
 const API_URL = config.API_URL;
 
+// Set global API Key
+if (config.API_KEY) {
+  axios.defaults.headers.common['x-auth-key'] = config.API_KEY;
+}
+
 interface User {
   id: string;
   email: string;

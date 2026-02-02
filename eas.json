@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 3.0.0"
+    "version": ">= 16.32.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -11,11 +12,10 @@
       "distribution": "internal"
     },
     "production": {
-      "distribution": "store", 
       "autoIncrement": true
     }
   },
- "submit": {
+  "submit": {
     "production": {
       "ios": {
         "appleId": "luckyonoja2020@gmail.com",

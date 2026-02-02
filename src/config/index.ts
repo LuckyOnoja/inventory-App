@@ -1,7 +1,7 @@
 // src/config/index.ts
 
 // ⚙️ MANUALLY SET YOUR ENVIRONMENT HERE
-const CURRENT_ENVIRONMENT: 'development' | 'staging' | 'production' = 'development';
+const CURRENT_ENVIRONMENT: 'development' | 'staging' | 'production' = 'production';
 
 // Development configuration
 const DEVELOPMENT = {
@@ -10,6 +10,7 @@ const DEVELOPMENT = {
   APP_NAME: 'ToryAi (Dev)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'debug' as const,
+  API_KEY: 'inventory-app-super-secret-auth-key-2025',
 };
 
 // Staging configuration
@@ -19,15 +20,17 @@ const STAGING = {
   APP_NAME: 'ToryAi (Staging)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'info' as const,
+  API_KEY: 'inventory-app-super-secret-auth-key-2025',
 };
 
 // Production configuration
 const PRODUCTION = {
-  API_URL: 'https://inventory-guard.com/api',
-  SOCKET_URL: 'https://inventory-guard.com',
+  API_URL: 'https://inventory-app-server-hj36.onrender.com/api',
+  SOCKET_URL: 'https://inventory-app-server-hj36.onrender.com',
   APP_NAME: 'ToryAi',
   DEBUG_MODE: false,
   LOG_LEVEL: 'error' as const,
+  API_KEY: 'inventory-app-super-secret-auth-key-2025',
 };
 
 // Environment configuration mapping
