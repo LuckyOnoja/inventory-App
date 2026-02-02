@@ -10,7 +10,7 @@ const DEVELOPMENT = {
   APP_NAME: 'ToryAi (Dev)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'debug' as const,
-  API_KEY: 'inventory-app-super-secret-auth-key-2025',
+  API_KEY: 'gemakingofitlitoiaehiofubamsasessa11...guzyfduyf',
 };
 
 // Staging configuration
@@ -20,7 +20,7 @@ const STAGING = {
   APP_NAME: 'ToryAi (Staging)',
   DEBUG_MODE: true,
   LOG_LEVEL: 'info' as const,
-  API_KEY: 'inventory-app-super-secret-auth-key-2025',
+  API_KEY: 'gemakingofitlitoiaehiofubamsasessa11...guzyfduyf',
 };
 
 // Production configuration
@@ -30,7 +30,7 @@ const PRODUCTION = {
   APP_NAME: 'ToryAi',
   DEBUG_MODE: false,
   LOG_LEVEL: 'error' as const,
-  API_KEY: 'inventory-app-super-secret-auth-key-2025',
+  API_KEY: 'gemakingofitlitoiaehiofubamsasessa11...guzyfduyf',
 };
 
 // Environment configuration mapping
