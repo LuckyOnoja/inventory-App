@@ -348,7 +348,7 @@ export default function AIScanner({
                 { color: theme.colors.white },
               ]}
             >
-              Grant Permission
+              Continue
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

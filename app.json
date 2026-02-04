@@ -40,12 +40,6 @@
         {
           "cameraPermission": "Allow ToryAi to access your camera to scan products"
         }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow ToryAi to access your photos"
-        }
       ]
     ],
     "extra": {
