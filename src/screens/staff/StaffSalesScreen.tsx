@@ -96,7 +96,7 @@ export default function StaffSalesScreen({ navigation, route }: any) {
   const renderSaleItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={[styles.saleCard, { backgroundColor: theme.colors.surface }]}
-      onPress={() => navigation.navigate('SaleDetails', { saleId: item.id })}
+      onPress={() => navigation.navigate('SaleDetail', { saleId: item.id })}
     >
       <View style={styles.saleHeader}>
         <View>

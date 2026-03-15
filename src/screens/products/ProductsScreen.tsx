@@ -20,6 +20,7 @@ import debounce from 'lodash/debounce';
 import config from '../../config';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
 import { GlassView } from '../../components/ui/GlassView';
+import { GlassCard } from '../../components/ui/GlassCard';
 
 const API_URL = config.API_URL;
 
@@ -135,8 +136,7 @@ export default function ProductsScreen({ navigation }: any) {
           comparison = a.sellingPrice - b.sellingPrice;
           break;
         case 'recent':
-          // Assuming we have createdAt field
-          comparison = 0; // Add actual date comparison when available
+          comparison = 0;
           break;
       }
 
@@ -182,67 +182,91 @@ export default function ProductsScreen({ navigation }: any) {
     return ['all', ...Array.from(categories)];
   };
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-        Products <Text style={{ fontSize: 16, color: theme.colors.textSecondary }}>({filteredProducts.length})</Text>
-      </Text>
-      <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-        onPress={handleAddProduct}
-      >
-        <Ionicons name="add" size={24} color={theme.colors.white} />
-      </TouchableOpacity>
-    </View>
-  );
+  const renderHeader = () => {
+    const lowStock = products.filter(p => p.currentStock <= p.minStock).length;
+    
+    return (
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={[styles.headerGreeting, { color: theme.colors.textTertiary }]}>OPERATIONAL INVENTORY</Text>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Intelligence Hub</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+            onPress={handleAddProduct}
+          >
+            <Ionicons name="add" size={24} color={theme.colors.white} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statusRow}>
+          <GlassView style={styles.statusCard} intensity={15}>
+            <Text style={[styles.statusValue, { color: theme.colors.text }]}>{products.length}</Text>
+            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>SKUs Indexed</Text>
+          </GlassView>
+          <GlassView style={styles.statusCard} intensity={15}>
+            <Text style={[styles.statusValue, { color: lowStock > 0 ? theme.colors.warning : theme.colors.success }]}>{lowStock}</Text>
+            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>Alert States</Text>
+          </GlassView>
+          <GlassView style={styles.statusCard} intensity={15}>
+            <Text style={[styles.statusValue, { color: theme.colors.primary }]}>{filteredProducts.length}</Text>
+            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>Query Results</Text>
+          </GlassView>
+        </View>
+      </View>
+    );
+  };
 
   const renderSearchBar = () => (
-    <GlassView style={styles.searchContainer} intensity={20}>
-      <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
-      <TextInput
-        style={[styles.searchInput, { color: theme.colors.text }]}
-        placeholder="Search products..."
-        placeholderTextColor={theme.colors.textTertiary}
-        onChangeText={handleSearch}
-        clearButtonMode="while-editing"
-      />
-      <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setShowFilterModal(true)}
-      >
-        <Ionicons name="filter-outline" size={20} color={theme.colors.text} />
-        {getActiveFilterCount() > 0 && (
-          <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
-            <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </GlassView>
+    <View style={styles.searchWrapper}>
+      <GlassView style={styles.searchContainer} intensity={25}>
+        <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.colors.text }]}
+          placeholder="Query Catalog..."
+          placeholderTextColor={theme.colors.textTertiary}
+          onChangeText={handleSearch}
+          clearButtonMode="while-editing"
+        />
+        <TouchableOpacity
+          style={[styles.filterButton, { backgroundColor: getActiveFilterCount() > 0 ? theme.colors.primary + '20' : 'transparent' }]}
+          onPress={() => setShowFilterModal(true)}
+        >
+          <Ionicons name="options-outline" size={20} color={getActiveFilterCount() > 0 ? theme.colors.primary : theme.colors.text} />
+          {getActiveFilterCount() > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: theme.colors.primary }]}>
+              <Text style={styles.filterBadgeText}>{getActiveFilterCount()}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </GlassView>
+    </View>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="cube-outline" size={64} color={theme.colors.textTertiary} />
-      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-        No Products Found
-      </Text>
+      <GlassView style={styles.emptyIconContainer} intensity={10}>
+        <Ionicons name="scan-outline" size={48} color={theme.colors.textTertiary} />
+      </GlassView>
+      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Matches Found</Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {searchQuery || getActiveFilterCount() > 0
-          ? 'Try adjusting your search or filters'
-          : 'Add your first product to get started'
-        }
+        Your query returned zero results from the current operational catalog.
       </Text>
-      {!searchQuery && getActiveFilterCount() === 0 && (
-        <TouchableOpacity
-          style={[styles.emptyButton, { backgroundColor: theme.colors.primary }]}
-          onPress={handleAddProduct}
-        >
-          <Ionicons name="add" size={20} color={theme.colors.white} />
-          <Text style={[styles.emptyButtonText, { color: theme.colors.white }]}>
-            Add Product
-          </Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={[styles.emptyButton, { borderColor: theme.colors.primary, borderWidth: 1 }]}
+        onPress={() => {
+          setSearchQuery('');
+          setFilters({
+            category: 'all',
+            stockStatus: 'all',
+            sortBy: 'recent',
+            sortOrder: 'desc',
+          });
+        }}
+      >
+        <Text style={[styles.emptyButtonText, { color: theme.colors.primary }]}>Reset Parameters</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -260,40 +284,39 @@ export default function ProductsScreen({ navigation }: any) {
         navigation.navigate('NewSale', { productId: product.id });
         break;
       case 'restock':
-        // Handle restock
         break;
       case 'adjust':
-        // Handle stock adjustment
         break;
     }
   };
 
   if (loading && !refreshing) {
     return (
-      <ScreenWrapper>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+      <ScreenWrapper style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Parsing Catalog...</Text>
       </ScreenWrapper>
     );
   }
 
   return (
     <ScreenWrapper>
-      {renderHeader()}
-      {renderSearchBar()}
-
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={() => (
+          <>
+            {renderHeader()}
+            {renderSearchBar()}
+          </>
+        )}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
           />
         }
@@ -317,14 +340,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    marginBottom: 20,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  headerGreeting: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 4,
   },
   headerTitle: {
     fontSize: 28,
@@ -338,83 +377,111 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  statusCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  statusValue: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  statusLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  searchWrapper: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 20,
     paddingHorizontal: 16,
-    height: 50,
-    borderRadius: 25,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 12,
-    marginRight: 12,
-    height: '100%',
+    fontWeight: '500',
   },
   filterButton: {
-    position: 'relative',
-    padding: 4,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    borderRadius: 8,
-    width: 16,
-    height: 16,
+    top: 4,
+    right: 4,
+    borderRadius: 6,
+    minWidth: 12,
+    height: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   filterBadgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: 'bold',
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 80,
-    paddingTop: 8,
+    paddingBottom: 40,
   },
   separator: {
-    height: 12,
+    height: 8,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 64,
+    paddingVertical: 80,
     paddingHorizontal: 40,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 16,
+    fontWeight: '800',
     marginBottom: 8,
-    textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
+    opacity: 0.6,
   },
   emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
-    gap: 8,
   },
   emptyButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

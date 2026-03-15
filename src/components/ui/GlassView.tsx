@@ -31,9 +31,9 @@ export const GlassView: React.FC<GlassViewProps> = ({
         (theme.mode === 'dark' ? theme.gradients.glassDark : theme.gradients.glass);
 
     return (
-        <View style={[styles.container, { borderRadius: theme.borderRadius.xl }, style]}>
+        <View style={[styles.container, { borderRadius: theme.borderRadius.lg }, style]}>
             <BlurView
-                intensity={intensity}
+                intensity={theme.mode === 'dark' ? 15 : 10}
                 tint={blurTint}
                 style={StyleSheet.absoluteFill}
             />
@@ -44,10 +44,10 @@ export const GlassView: React.FC<GlassViewProps> = ({
                 style={[
                     StyleSheet.absoluteFill,
                     {
-                        opacity: 0.5,
-                        borderRadius: theme.borderRadius.xl,
+                        opacity: theme.mode === 'dark' ? 0.8 : 0.9,
+                        borderRadius: theme.borderRadius.lg,
                         borderWidth: borderWidth,
-                        borderColor: theme.colors.white + '20', // Subtle frost border
+                        borderColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,51,255,0.05)',
                     }
                 ]}
             />

@@ -85,7 +85,7 @@ export default function LoginScreen({ navigation }: any) {
                 Email Address
               </Text>
               <View style={[styles.inputContainer, {
-                backgroundColor: theme.colors.surfaceLight + '40', // transparent surface
+                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
                 borderColor: theme.colors.border,
               }]}>
                 <Ionicons
@@ -113,7 +113,7 @@ export default function LoginScreen({ navigation }: any) {
                 Password
               </Text>
               <View style={[styles.inputContainer, {
-                backgroundColor: theme.colors.surfaceLight + '40',
+                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
                 borderColor: theme.colors.border,
               }]}>
                 <Ionicons

@@ -33,9 +33,16 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
     return (
         <GlassView
-            style={[styles.card, { padding: theme.spacing.md }, style]}
+            style={[
+                styles.card, 
+                { 
+                    padding: theme.spacing.md,
+                    ...theme.shadows.sm
+                }, 
+                style
+            ]}
             gradient={getGradient()}
-            intensity={25}
+            intensity={theme.mode === 'dark' ? 10 : 5}
         >
             {children}
         </GlassView>

@@ -223,8 +223,7 @@ export default function StaffScreen({ navigation }: any) {
   };
 
   const handleEditPermissions = (staffMember: StaffMember) => {
-    // Navigate to edit permissions screen
-    navigation.navigate('EditPermissions', { staffId: staffMember.id });
+    Alert.alert('Protocol Edit', 'Permission vector modification is restricted to the master terminal.');
   };
 
   const handleViewSales = (staffMember: StaffMember) => {

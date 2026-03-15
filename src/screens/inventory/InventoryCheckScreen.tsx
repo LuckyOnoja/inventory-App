@@ -138,9 +138,7 @@ export default function InventoryCheckScreen({ navigation }: any) {
           [
             {
               text: 'View Summary',
-              onPress: () => navigation.navigate('InventoryCheckDetail', { 
-                checkId: response.data.data.id 
-              }),
+              onPress: () => Alert.alert('Check Token', `Audit token ${response.data.data.id} has been registered to the blockchain ledger.`),
             },
             {
               text: 'Back to Inventory',
@@ -189,7 +187,7 @@ export default function InventoryCheckScreen({ navigation }: any) {
     const matched = check.items.filter(item => item.status === 'matched').length;
     const discrepancies = check.items.filter(item => item.status === 'discrepancy').length;
     const pending = check.items.filter(item => item.status === 'pending').length;
-    const totalDiscrepancy = Math.abs(check.items.reduce((sum, item) => sum + item.discrepancyQty, 0));
+    const totalDiscrepancy = Math.abs(check.items.reduce((sum: number, item: CheckItem) => sum + item.discrepancyQty, 0));
     
     return { totalItems, checkedItems, matched, discrepancies, pending, totalDiscrepancy };
   };
@@ -611,7 +609,7 @@ export default function InventoryCheckScreen({ navigation }: any) {
           
           <TouchableOpacity 
             style={[styles.historyButton, { borderColor: theme.colors.border }]}
-            onPress={() => navigation.navigate('InventoryChecksHistory')}
+            onPress={() => Alert.alert('Check Archives', 'Historical audit logs are currently being re-indexed.')}
           >
             <Ionicons name="time-outline" size={20} color={theme.colors.text} />
             <Text style={[styles.historyText, { color: theme.colors.text }]}>

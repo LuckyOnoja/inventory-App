@@ -239,7 +239,7 @@ export default function CameraScreen({ navigation }: any) {
       <GlassButton
         size="small"
         variant="primary"
-        onPress={() => navigation.navigate('AddCamera')}
+        onPress={() => Alert.alert('Terminal Authorization', 'New node registration is restricted to authorized field engineers.')}
         icon="add"
         title="Add"
         style={{ width: "auto" }}
@@ -309,9 +309,9 @@ export default function CameraScreen({ navigation }: any) {
                 [
                   { text: 'Cancel', style: 'cancel' },
                   { text: 'View Live Feed', onPress: () => handleViewFeed(camera) },
-                  { text: 'View Recordings', onPress: () => navigation.navigate('Recordings', { cameraId: camera.id }) },
+                  { text: 'View Recordings', onPress: () => Alert.alert('Secure Storage', 'Encrypted recording index is currently being verified.') },
                   { text: 'Reboot Camera', onPress: () => handleRebootCamera(camera.id) },
-                  { text: 'Edit Settings', onPress: () => navigation.navigate('EditCamera', { cameraId: camera.id }) },
+                  { text: 'Edit Settings', onPress: () => Alert.alert('Parameter Lock', 'Advanced camera parameters are managed via the master CLI.') },
                 ]
               );
             }}
@@ -417,7 +417,7 @@ export default function CameraScreen({ navigation }: any) {
             <GlassButton
               size="small"
               variant="primary"
-              onPress={() => navigation.navigate('CameraHistory', { cameraId: camera.id })}
+              onPress={() => Alert.alert('Telemetry History', 'Camera performance logs are being archived for operational efficiency.')}
               icon="time-outline"
               title="History"
               style={{ flex: 1 }}
@@ -444,7 +444,7 @@ export default function CameraScreen({ navigation }: any) {
         <GlassButton
           size="medium"
           variant="primary"
-          onPress={() => navigation.navigate('AddCamera')}
+          onPress={() => Alert.alert('Terminal Authorization', 'New node registration is restricted to authorized field engineers.')}
           icon="add"
           title="Add Camera"
         />

@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GlassCard } from '../ui/GlassCard';
+import { GlassView } from '../ui/GlassView';
 
 interface Product {
   id: string;
@@ -41,34 +41,32 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (product.currentStock === 0) {
       return {
         color: theme.colors.error,
-        label: 'Out of Stock',
+        label: 'DEPLETED',
         icon: 'close-circle-outline' as const,
         variant: 'error' as const,
+        bg: theme.colors.error + '10',
       };
     }
     if (product.currentStock <= product.minStock) {
       return {
         color: theme.colors.warning,
-        label: 'Low Stock',
+        label: 'CRITICAL',
         icon: 'alert-circle-outline' as const,
         variant: 'warning' as const,
+        bg: theme.colors.warning + '10',
       };
     }
     return {
       color: theme.colors.success,
-      label: 'In Stock',
+      label: 'NOMINAL',
       icon: 'checkmark-circle-outline' as const,
       variant: 'default' as const,
+      bg: theme.colors.success + '10',
     };
   };
 
-  const getProfitMargin = () => {
-    const margin = ((product.sellingPrice - product.costPrice) / product.costPrice) * 100;
-    return Math.round(margin);
-  };
-
-  const stockStatus = getStockStatus();
-  const profitMargin = getProfitMargin();
+  const status = getStockStatus();
+  const margin = Math.round(((product.sellingPrice - product.costPrice) / product.costPrice) * 100);
 
   const renderRightActions = () => (
     <View style={styles.rightActions}>
@@ -79,12 +77,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <Ionicons name="cart-outline" size={20} color={theme.colors.white} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={[styles.actionButton, { backgroundColor: theme.colors.secondary }]}
-        onPress={() => onQuickAction('restock')}
-      >
-        <Ionicons name="add-circle-outline" size={20} color={theme.colors.white} />
-      </TouchableOpacity>
-      <TouchableOpacity
         style={[styles.actionButton, { backgroundColor: theme.colors.info }]}
         onPress={() => onQuickAction('adjust')}
       >
@@ -93,239 +85,202 @@ const ProductCard: React.FC<ProductCardProps> = ({
     </View>
   );
 
-  const CardContent = () => (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={onPress}
-    >
-      <GlassCard
-        variant={stockStatus.variant}
-        style={styles.card}
-      >
-        <View style={styles.container}>
-          {/* Stock Status Indicator */}
-          <View style={[styles.statusIndicator, { backgroundColor: stockStatus.color + '20' }]}>
-            <Ionicons name={stockStatus.icon} size={16} color={stockStatus.color} />
-          </View>
-
-          {/* Main Content */}
-          <View style={styles.content}>
-            {/* Product Info Row */}
-            <View style={styles.productInfoRow}>
-              <View style={styles.productNameContainer}>
-                <Text style={[styles.productName, { color: theme.colors.text }]}>
-                  {product.name}
-                </Text>
-                {product.sku && (
-                  <Text style={[styles.skuText, { color: theme.colors.textTertiary }]}>
-                    SKU: {product.sku}
-                  </Text>
-                )}
-              </View>
-              <View style={[styles.stockBadge, { backgroundColor: stockStatus.color + '20' }]}>
-                <Text style={[styles.stockText, { color: stockStatus.color }]}>
-                  {product.currentStock} {product.unit}
-                </Text>
-              </View>
-            </View>
-
-            {/* Category & Details */}
-            <View style={styles.detailsRow}>
-              <View style={styles.categoryContainer}>
-                <Ionicons name="pricetag-outline" size={12} color={theme.colors.textTertiary} />
-                <Text style={[styles.categoryText, { color: theme.colors.textTertiary }]}>
-                  {product.category}
-                </Text>
-              </View>
-              <View style={styles.priceContainer}>
-                <Text style={[styles.priceText, { color: theme.colors.text }]}>
-                  ₦{product.sellingPrice.toLocaleString()}
-                </Text>
-                <Text style={[styles.marginText, {
-                  color: profitMargin >= 0 ? theme.colors.success : theme.colors.error
-                }]}>
-                  {profitMargin >= 0 ? '+' : ''}{profitMargin}%
-                </Text>
-              </View>
-            </View>
-
-            {/* Stock Level & Min Stock */}
-            <View style={styles.stockInfoRow}>
-              <View style={styles.stockLevelContainer}>
-                <View style={styles.stockLevelBar}>
-                  <View
-                    style={[
-                      styles.stockLevelFill,
-                      {
-                        width: `${Math.min((product.currentStock / (product.minStock * 3)) * 100, 100)}%`,
-                        backgroundColor: stockStatus.color,
-                      }
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.minStockText, { color: theme.colors.textTertiary }]}>
-                  Min: {product.minStock}
-                </Text>
-              </View>
-              <View style={styles.costContainer}>
-                <Text style={[styles.costLabel, { color: theme.colors.textTertiary }]}>
-                  Cost:
-                </Text>
-                <Text style={[styles.costText, { color: theme.colors.textSecondary }]}>
-                  ₦{product.costPrice.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Chevron */}
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={theme.colors.textTertiary}
-            style={styles.chevron}
-          />
-        </View>
-      </GlassCard>
-    </TouchableOpacity>
-  );
-
   return (
     <Swipeable renderRightActions={renderRightActions}>
-      <CardContent />
+      <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
+        <GlassCard style={styles.card} variant={status.variant}>
+          <View style={styles.header}>
+            <View style={styles.titleArea}>
+              <Text style={[styles.sku, { color: theme.colors.textTertiary }]}>#{product.sku || 'NO-SKU'}</Text>
+              <Text style={[styles.name, { color: theme.colors.text }]} numberOfLines={1}>{product.name}</Text>
+            </View>
+            <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
+              <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+              <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
+            </View>
+          </View>
+
+          <View style={styles.body}>
+            <View style={styles.metricItem}>
+              <Text style={[styles.metricLabel, { color: theme.colors.textTertiary }]}>INVENTORY</Text>
+              <View style={styles.stockRow}>
+                <Text style={[styles.stockValue, { color: theme.colors.text }]}>{product.currentStock}</Text>
+                <Text style={[styles.unitLabel, { color: theme.colors.textSecondary }]}>{product.unit}</Text>
+              </View>
+              <View style={styles.stockBarBg}>
+                <View 
+                  style={[
+                    styles.stockBarFill, 
+                    { 
+                      width: `${Math.min((product.currentStock / Math.max(product.minStock * 4, 10)) * 100, 100)}%`,
+                      backgroundColor: status.color
+                    }
+                  ]} 
+                />
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.metricItem}>
+              <Text style={[styles.metricLabel, { color: theme.colors.textTertiary }]}>PRICING</Text>
+              <Text style={[styles.priceValue, { color: theme.colors.primary }]}>₦{product.sellingPrice.toLocaleString()}</Text>
+              <View style={styles.marginRow}>
+                <Ionicons name={margin >= 0 ? "trending-up" : "trending-down"} size={12} color={margin >= 0 ? theme.colors.success : theme.colors.error} />
+                <Text style={[styles.marginValue, { color: margin >= 0 ? theme.colors.success : theme.colors.error }]}>{Math.abs(margin)}% Margin</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <View style={styles.categoryArea}>
+              <Ionicons name="pricetag-outline" size={10} color={theme.colors.textTertiary} />
+              <Text style={[styles.category, { color: theme.colors.textSecondary }]}>{product.category}</Text>
+            </View>
+            <Text style={[styles.costPrice, { color: theme.colors.textTertiary }]}>Cost: ₦{product.costPrice.toLocaleString()}</Text>
+          </View>
+        </GlassCard>
+      </TouchableOpacity>
     </Swipeable>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    padding: 0, // Reset default padding since we manage it in container
-    marginVertical: 6,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginHorizontal: 20,
+    marginVertical: 4,
     padding: 16,
+    borderRadius: 24,
   },
-  statusIndicator: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  content: {
-    flex: 1,
-  },
-  productInfoRow: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  productNameContainer: {
+  titleArea: {
     flex: 1,
     marginRight: 12,
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: '600',
+  sku: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
     marginBottom: 2,
   },
-  skuText: {
-    fontSize: 11,
+  name: {
+    fontSize: 18,
+    fontWeight: '700',
   },
-  stockBadge: {
+  statusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 8,
+    gap: 6,
   },
-  stockText: {
-    fontSize: 12,
-    fontWeight: '600',
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+  statusLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  categoryText: {
-    fontSize: 12,
-  },
-  priceContainer: {
+  body: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
-  priceText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  marginText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  stockInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stockLevelContainer: {
+  metricItem: {
     flex: 1,
-    marginRight: 12,
   },
-  stockLevelBar: {
+  metricLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  stockRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+    marginBottom: 8,
+  },
+  stockValue: {
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  unitLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  stockBarBg: {
     height: 4,
-    backgroundColor: 'rgba(148, 163, 184, 0.2)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: 4,
   },
-  stockLevelFill: {
+  stockBarFill: {
     height: '100%',
     borderRadius: 2,
   },
-  minStockText: {
-    fontSize: 10,
-    fontWeight: '500',
+  divider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    marginHorizontal: 16,
   },
-  costContainer: {
+  priceValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  marginRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  costLabel: {
-    fontSize: 10,
-    fontWeight: '500',
+  marginValue: {
+    fontSize: 11,
+    fontWeight: '700',
   },
-  costText: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.03)',
+    paddingTop: 12,
+  },
+  categoryArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  category: {
     fontSize: 12,
     fontWeight: '600',
   },
-  chevron: {
-    marginLeft: 8,
+  costPrice: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   rightActions: {
     flexDirection: 'row',
+    paddingRight: 20,
     alignItems: 'center',
-    paddingLeft: 8,
-    marginBottom: 6, // Match card margin
-    marginTop: 6,
+    gap: 8,
   },
   actionButton: {
-    width: 50,
-    height: '90%', // Slightly smaller to fit bounds
+    width: 44,
+    height: 100,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
-    borderRadius: 16,
   },
 });
 

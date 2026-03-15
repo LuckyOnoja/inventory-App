@@ -15,7 +15,7 @@ import { GlassButton } from '../ui/GlassButton';
 import { BlurView } from 'expo-blur';
 
 interface FilterState {
-  period: 'today' | 'week' | 'month' | 'all';
+  period: 'today' | 'week' | 'month' | '3months' | 'all';
   paymentMethod: 'all' | 'cash' | 'card' | 'transfer';
   status: 'all' | 'completed' | 'pending' | 'cancelled';
   sortBy: 'recent' | 'amount' | 'agent';
@@ -37,10 +37,16 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
   const { theme } = useTheme();
   const [localFilters, setLocalFilters] = useState<FilterState>(filters);
 
+  // Sync with prop changes is crucial for deep-linked filters
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+
   const periodOptions = [
     { value: 'today', label: 'Today' },
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
+    { value: 'week', label: 'Last 7 Days' },
+    { value: 'month', label: 'Last 30 Days' },
+    { value: '3months', label: 'Last 90 Days' },
     { value: 'all', label: 'All Time' },
   ];
 

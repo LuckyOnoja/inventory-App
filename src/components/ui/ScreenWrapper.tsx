@@ -20,23 +20,13 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
-            {/* Background radial/gradient blobs for "Web3" look */}
             <View style={StyleSheet.absoluteFill}>
                 <LinearGradient
                     colors={theme.mode === 'dark' ? theme.gradients.dark : theme.gradients.light}
                     style={StyleSheet.absoluteFill}
                     start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    end={{ x: 0, y: 0.3 }} // Subtle top gradient only
                 />
-
-                {/* Top left accent blob */}
-                <View style={[styles.blob, styles.blobTopLeft, { backgroundColor: theme.colors.primary, opacity: 0.15 }]} />
-
-                {/* Bottom right accent blob */}
-                <View style={[styles.blob, styles.blobBottomRight, { backgroundColor: theme.colors.secondary, opacity: 0.1 }]} />
-
-                {/* Mid right accent blob (smaller) */}
-                <View style={[styles.blob, styles.blobMidRight, { backgroundColor: theme.colors.accent, opacity: 0.1 }]} />
             </View>
 
             <SafeAreaView style={[styles.content, style]} edges={['top', 'left', 'right']}>

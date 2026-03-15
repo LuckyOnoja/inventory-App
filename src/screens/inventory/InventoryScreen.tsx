@@ -224,7 +224,29 @@ export default function InventoryScreen({ navigation }: any) {
   };
 
   const handleAdjustInventory = (productId: string) => {
-    navigation.navigate("AdjustInventory", { productId });
+    Alert.prompt(
+      'Adjust Inventory',
+      'Enter new stock level',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Adjust', 
+          onPress: async (amount: string | undefined) => {
+            if (amount) {
+              try {
+                await axios.post(`${API_URL}/inventory/adjust`, { productId, quantity: parseInt(amount) });
+                fetchInventory();
+              } catch (e) {
+                Alert.alert('Error', 'Adjustment failed');
+              }
+            }
+          }
+        }
+      ],
+      'plain-text',
+      '',
+      'number-pad'
+    );
   };
 
   const getStatusColor = (status: string) => {
@@ -282,7 +304,7 @@ export default function InventoryScreen({ navigation }: any) {
         <GlassButton
           size="small"
           variant="secondary"
-          onPress={() => navigation.navigate("InventoryHistory")}
+          onPress={() => Alert.alert('History', 'Inventory transactional history node is being synchronized.')}
           style={{ width: "auto" }}
           icon="time-outline"
           title="History"
@@ -615,7 +637,7 @@ export default function InventoryScreen({ navigation }: any) {
     return (
       <TouchableOpacity
         onPress={() =>
-          navigation.navigate("ProductDetail", { productId: item.id })
+          navigation.navigate("EditProduct", { productId: item.id })
         }
         activeOpacity={0.7}
       >
