@@ -40,6 +40,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -173,6 +174,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      await axios.delete(`${API_URL}/auth/me`);
+      
+      // Clean up after deletion
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+      setToken(null);
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      const errorMessage = error.response?.data?.error || "Failed to delete account. Please try again.";
+      throw new Error(errorMessage);
+    }
+  };
+
   const updateUser = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
@@ -188,6 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     login,
     register,
     logout,
+    deleteAccount,
     updateUser,
   };
 

@@ -33,7 +33,7 @@ export const GlassView: React.FC<GlassViewProps> = ({
     return (
         <View style={[styles.container, { borderRadius: theme.borderRadius.lg }, style]}>
             <BlurView
-                intensity={theme.mode === 'dark' ? 15 : 10}
+                intensity={intensity}
                 tint={blurTint}
                 style={StyleSheet.absoluteFill}
             />
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     content: {
         // Ensure content sits above the absolute positioned backgrounds
         zIndex: 1,
-        flex: 1,
+        width: '100%',
     },
 });

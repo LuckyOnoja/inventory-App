@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +36,11 @@ interface SettingGroup {
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [confirmationName, setConfirmationName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [settings, setSettings] = useState({
     pushNotifications: true,
@@ -93,6 +100,12 @@ export default function SettingsScreen({ navigation }: any) {
           subtitle: 'System security is nominal',
           onPress: () => Alert.alert('Security Protocol', 'Advanced multi-vector authentication is active for this session.'),
         },
+        {
+          icon: 'trash-outline',
+          title: 'Terminate Account',
+          subtitle: 'Irreversible data purge protocol',
+          onPress: () => setIsDeleteModalVisible(true),
+        },
       ],
     },
   ];
@@ -111,6 +124,24 @@ export default function SettingsScreen({ navigation }: any) {
       </View>
     </View>
   );
+
+  const handleDeleteAccount = async () => {
+    const requiredName = user?.role === 'SUPER_ADMIN' ? user?.business?.name : user?.name;
+    
+    if (confirmationName !== requiredName) {
+      Alert.alert('Verification Failed', `Please type "${requiredName}" exactly to confirm deletion.`);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      // AuthContext handles state reset and logout on success
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to delete account');
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <ScreenWrapper>
@@ -203,6 +234,90 @@ export default function SettingsScreen({ navigation }: any) {
           <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>© 2024 • SECURE PROTOCOL ACTIVE</Text>
         </View>
       </ScrollView>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={isDeleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <GlassView 
+            style={[
+              styles.modalContent, 
+              { backgroundColor: theme.mode === 'dark' ? '#000000' : '#FFFFFF' }
+            ]} 
+            intensity={40}
+          >
+            <View style={[styles.warningIconContainer, { backgroundColor: theme.colors.error + '20' }]}>
+              <Ionicons name="warning" size={32} color={theme.colors.error} />
+            </View>
+            
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              {user?.role === 'SUPER_ADMIN' ? 'Terminate Business' : 'Delete Your Account'}
+            </Text>
+            
+            <Text style={[styles.modalDescription, { color: theme.colors.textSecondary }]}>
+              {user?.role === 'SUPER_ADMIN' 
+                ? 'This action is PERMANENT. It will erase the entire business infrastructure, all products, and all sales history. This cannot be undone.'
+                : 'Are you sure? This will delete your personalized access and data. Business records created by you will be preserved but anonymized.'}
+            </Text>
+
+            <View style={styles.confirmationInputContainer}>
+              <Text style={[styles.inputLabel, { color: theme.colors.textTertiary }]}>
+                TYPE <Text style={{ color: theme.colors.text, fontWeight: 'bold' }}>
+                  {user?.role === 'SUPER_ADMIN' ? user?.business?.name : user?.name}
+                </Text> TO CONFIRM
+              </Text>
+              <TextInput
+                style={[
+                  styles.confirmationInput, 
+                  { 
+                    color: theme.colors.text, 
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderColor: theme.colors.border
+                  }
+                ]}
+                value={confirmationName}
+                onChangeText={setConfirmationName}
+                placeholder="Type here..."
+                placeholderTextColor={theme.colors.textTertiary}
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => {
+                  setIsDeleteModalVisible(false);
+                  setConfirmationName('');
+                }}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.colors.textSecondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.modalButton, 
+                  styles.confirmDeleteButton, 
+                  { backgroundColor: theme.colors.error },
+                  confirmationName !== (user?.role === 'SUPER_ADMIN' ? user?.business?.name : user?.name) && { opacity: 0.5 }
+                ]}
+                onPress={handleDeleteAccount}
+                disabled={isDeleting || confirmationName !== (user?.role === 'SUPER_ADMIN' ? user?.business?.name : user?.name)}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmDeleteText}>Delete Forever</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </GlassView>
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 }
@@ -368,5 +483,93 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
     marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 32,
+    padding: 24,
+    alignItems: 'stretch', // Changed from center to stretch
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  warningIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    alignSelf: 'center', // Explicit center
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  confirmationInputContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    textAlign: 'center', // Center label
+  },
+  confirmationInput: {
+    width: '100%',
+    height: 50,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    textAlign: 'center', // Center text 
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+  },
+  cancelButtonText: {
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  confirmDeleteButton: {
+    shadowColor: '#FF0000',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  confirmDeleteText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
