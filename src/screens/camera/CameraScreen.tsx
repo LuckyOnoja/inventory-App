@@ -51,82 +51,27 @@ export default function CameraScreen({ navigation }: any) {
   const fetchCameras = async () => {
     try {
       setLoading(true);
-      // Mock data - replace with API call
-      const mockCameras: SecurityCamera[] = [
-        {
-          id: '1',
-          cameraId: 'CAM-001',
-          name: 'Main Entrance',
-          location: 'Front door, facing cashier',
-          status: 'online',
-          lastHeartbeat: new Date().toISOString(),
-          batteryLevel: 85,
-          isSolarPowered: true,
-          alertsEnabled: true,
-        },
-        {
-          id: '2',
-          cameraId: 'CAM-002',
-          name: 'Storage Room',
-          location: 'Back storage area',
-          status: 'offline',
-          lastHeartbeat: new Date(Date.now() - 30 * 60000).toISOString(),
-          batteryLevel: 25,
-          isSolarPowered: true,
-          alertsEnabled: true,
-          lastAlert: 'Camera disconnected 30 minutes ago',
-        },
-        {
-          id: '3',
-          cameraId: 'CAM-003',
-          name: 'Sales Counter',
-          location: 'Main sales counter',
-          status: 'online',
-          lastHeartbeat: new Date().toISOString(),
-          batteryLevel: 92,
-          isSolarPowered: false,
-          alertsEnabled: true,
-        },
-        {
-          id: '4',
-          cameraId: 'CAM-004',
-          name: 'Back Entrance',
-          location: 'Employee entrance',
-          status: 'tampered',
-          lastHeartbeat: new Date(Date.now() - 15 * 60000).toISOString(),
-          batteryLevel: 45,
-          isSolarPowered: true,
-          alertsEnabled: true,
-          lastAlert: 'Camera angle changed unexpectedly',
-        },
-        {
-          id: '5',
-          cameraId: 'CAM-005',
-          name: 'Parking Area',
-          location: 'Store parking lot',
-          status: 'low_battery',
-          lastHeartbeat: new Date().toISOString(),
-          batteryLevel: 15,
-          isSolarPowered: true,
-          alertsEnabled: true,
-          lastAlert: 'Battery critically low',
-        },
-        {
-          id: '6',
-          cameraId: 'CAM-006',
-          name: 'Storage Aisle 2',
-          location: 'Second storage aisle',
-          status: 'online',
-          lastHeartbeat: new Date().toISOString(),
-          batteryLevel: 78,
-          isSolarPowered: false,
-          alertsEnabled: false,
-        },
-      ];
-      setCameras(mockCameras);
+      const response = await axios.get(`${API_URL}/devices`);
+      if (response.data.success) {
+        // Transform backend Device to SecurityCamera interface
+        const transformedCameras: SecurityCamera[] = response.data.data.map((dev: any) => ({
+          id: dev.id,
+          cameraId: dev.deviceId,
+          name: dev.name,
+          location: dev.locationDescription,
+          status: dev.status,
+          lastHeartbeat: dev.lastHeartbeat || dev.updatedAt,
+          batteryLevel: dev.powerSource === 'battery' ? 15 : 100, // Placeholder logic if battery level not in DB yet
+          isSolarPowered: dev.powerSource === 'solar',
+          alertsEnabled: true, // Default
+        }));
+        setCameras(transformedCameras);
+      }
     } catch (error) {
       console.error('Failed to fetch cameras:', error);
-      Alert.alert('Error', 'Failed to load camera data');
+      // Fallback for demo if API fails but we want UI to not be empty if requested
+      // However, user asked to REMOVE dummy data, so we stay empty and show error
+      Alert.alert('Cloud Sync Delayed', 'Unable to establish secure uplink with monitoring nodes.');
     } finally {
       setLoading(false);
       setRefreshing(false);

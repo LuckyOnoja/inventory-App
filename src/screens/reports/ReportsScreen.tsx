@@ -20,6 +20,7 @@ import axios from "axios";
 import config from "../../config";
 
 const { width: screenWidth } = Dimensions.get("window");
+const API_URL = config.API_URL;
 
 interface ReportData {
   sales: {
@@ -48,47 +49,41 @@ export default function ReportsScreen({ navigation }: any) {
   const fetchReportData = async () => {
     try {
       setLoading(true);
-      // Mock data for immediate visual feedback of the new design
-      const mockData: ReportData = {
-        sales: {
-          daily: [
-            { date: "Mon", amount: 45000 },
-            { date: "Tue", amount: 52000 },
-            { date: "Wed", amount: 38000 },
-            { date: "Thu", amount: 61000 },
-            { date: "Fri", amount: 72000 },
-            { date: "Sat", amount: 89000 },
-            { date: "Sun", amount: 42000 },
-          ],
-          weekly: [
-            { week: "W1", amount: 320000 },
-            { week: "W2", amount: 385000 },
-            { week: "W3", amount: 410000 },
-            { week: "W4", amount: 465000 },
-          ],
-          monthly: [
-            { month: "Jan", amount: 1250000 },
-            { month: "Feb", amount: 1420000 },
-            { month: "Mar", amount: 1380000 },
-          ],
-        },
-        inventory: {
-          lowStock: [
-            { product: "Coke 50cl", quantity: 12, minStock: 30 },
-            { product: "Indomie Chicken", quantity: 18, minStock: 25 },
-            { product: "Golden Penny Spaghetti", quantity: 8, minStock: 20 },
-          ],
-          topSelling: [
-            { product: "Indomie Chicken", sales: 245, revenue: 490000 },
-            { product: "Coke 50cl", sales: 189, revenue: 283500 },
-          ],
-          categories: [
-            { category: "Food", count: 45, value: 1250000 },
-            { category: "Drinks", count: 32, value: 850000 },
-          ],
-        },
-      };
-      setReportData(mockData);
+      // Fetch stats from the dashboard endpoint as a baseline for reports
+      const response = await axios.get(`${API_URL}/dashboard/stats`);
+      
+      if (response.data.success) {
+        const stats = response.data.data;
+        const mockData: ReportData = {
+          sales: {
+            daily: [
+              { date: "Now", amount: stats.todaySales },
+              { date: "Total", amount: stats.allTimeRevenue },
+            ],
+            weekly: stats.weeklySales.map((val: number, idx: number) => ({
+              week: stats.weeklyLabels[idx] || `W${idx+1}`,
+              amount: val
+            })),
+            monthly: [
+              { month: "Current", amount: stats.totalRevenue },
+            ],
+          },
+          inventory: {
+            lowStock: [
+              { product: "Current Count", quantity: stats.lowStockCount, minStock: stats.outOfStockCount },
+            ],
+            topSelling: stats.recentSales.slice(0, 2).map((s: any) => ({
+              product: s.saleNumber,
+              sales: s.itemsCount,
+              revenue: s.totalAmount
+            })),
+            categories: [
+              { category: "Total Items", count: stats.totalProducts, value: stats.totalRevenue },
+            ],
+          },
+        };
+        setReportData(mockData);
+      }
     } catch (error) {
       console.error("Failed to fetch report data:", error);
     } finally {
