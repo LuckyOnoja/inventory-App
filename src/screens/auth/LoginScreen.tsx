@@ -12,6 +12,9 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
@@ -23,8 +26,52 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [canUseBiometrics, setCanUseBiometrics] = useState(false);
   const { login } = useAuth();
   const { theme } = useTheme();
+
+  React.useEffect(() => {
+    checkBiometrics();
+  }, []);
+
+  const checkBiometrics = async () => {
+    try {
+      const isEnabled = await AsyncStorage.getItem('biometric_enabled');
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      const savedCredentials = await SecureStore.getItemAsync('user_credentials');
+
+      if (isEnabled === 'true' && hasHardware && isEnrolled && savedCredentials) {
+        setCanUseBiometrics(true);
+        // Automatically trigger biometrics on mount for better UX
+        handleBiometricLogin();
+      }
+    } catch (error) {
+      console.error('Failed to check biometrics:', error);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Login with Biometrics',
+        fallbackLabel: 'Use Password',
+      });
+
+      if (result.success) {
+        const credentialsStr = await SecureStore.getItemAsync('user_credentials');
+        if (credentialsStr) {
+          const { email: savedEmail, password: savedPassword } = JSON.parse(credentialsStr);
+          setLoading(true);
+          await login(savedEmail, savedPassword);
+        }
+      }
+    } catch (error) {
+      console.error('Biometric login failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -162,6 +209,18 @@ export default function LoginScreen({ navigation }: any) {
               style={styles.loginButton}
             />
 
+            {canUseBiometrics && (
+              <TouchableOpacity
+                onPress={handleBiometricLogin}
+                style={[styles.biometricButton, { borderColor: theme.colors.primary + '40' }]}
+              >
+                <Ionicons name="finger-print-outline" size={24} color={theme.colors.primary} />
+                <Text style={[styles.biometricText, { color: theme.colors.primary }]}>
+                  Login with Biometrics
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {/* Divider */}
             <View style={styles.dividerContainer}>
               <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
@@ -268,6 +327,20 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: 12,
+  },
+  biometricButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: 12,
+    marginTop: 12,
+  },
+  biometricText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   dividerContainer: {
     flexDirection: 'row',

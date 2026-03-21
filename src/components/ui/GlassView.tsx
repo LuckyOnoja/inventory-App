@@ -51,7 +51,10 @@ export const GlassView: React.FC<GlassViewProps> = ({
                     }
                 ]}
             />
-            <View style={styles.content}>
+            <View style={[
+                styles.content, 
+                style && (StyleSheet.flatten(style) as any).flex === 1 && { flex: 1 }
+            ]}>
                 {children}
             </View>
         </View>
@@ -67,6 +70,5 @@ const styles = StyleSheet.create({
         // Ensure content sits above the absolute positioned backgrounds
         zIndex: 1,
         width: '100%',
-        flex: 1,
     },
 });

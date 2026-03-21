@@ -344,7 +344,7 @@ const SideMenu = ({
                     <Text style={[styles.menuItemText, { color: theme.colors.text }]}>
                       {item.name}
                     </Text>
-                    {item.badge && item.badge > 0 && (
+                    {!!item.badge && item.badge > 0 && (
                       <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
                         <Text style={[styles.badgeText, { color: theme.colors.white }]}>
                           {item.badge > 99 ? '99+' : item.badge}
@@ -630,7 +630,6 @@ export default function AppNavigator() {
         }}
       >
         {!user ? (
-          // Auth Screens
           <>
             <Stack.Screen
               name="Login"
@@ -652,7 +651,6 @@ export default function AppNavigator() {
             />
           </>
         ) : user.role === "SALES_AGENT" ? (
-          // Sales Agent Flow
           <Stack.Screen
             name="SalesAgentMain"
             component={SalesAgentTabs}
@@ -662,7 +660,6 @@ export default function AppNavigator() {
             }}
           />
         ) : (
-          // Super Admin & Supervisor Flow
           <Stack.Screen
             name="SuperAdminMain"
             component={SuperAdminNavigator}

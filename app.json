@@ -40,7 +40,8 @@
         {
           "cameraPermission": "Allow ToryAi to access your camera to scan products"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

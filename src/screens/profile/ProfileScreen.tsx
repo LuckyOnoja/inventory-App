@@ -14,6 +14,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
@@ -36,6 +38,66 @@ export default function ProfileScreen({ navigation }: any) {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [confirmationName, setConfirmationName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const biometricPref = await AsyncStorage.getItem('biometric_enabled');
+      setBiometricEnabled(biometricPref === 'true');
+      
+      const offlinePref = await AsyncStorage.getItem('offline_mode');
+      if (offlinePref !== null) setOfflineMode(offlinePref === 'true');
+      
+      const notificationsPref = await AsyncStorage.getItem('notifications_enabled');
+      if (notificationsPref !== null) setNotificationsEnabled(notificationsPref === 'true');
+    } catch (error) {
+      console.error('Failed to load preferences:', error);
+    }
+  };
+
+  const handleToggleBiometrics = async (value: boolean) => {
+    if (value) {
+      // Check if hardware supports it
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (!hasHardware || !isEnrolled) {
+        Alert.alert(
+          'Biometrics Not Available',
+          'Your device does not support biometric authentication or you haven\'t set it up.'
+        );
+        return;
+      }
+
+      // Verify biometrics before enabling
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Confirm biometrics to enable login',
+        fallbackLabel: 'Use Passcode',
+      });
+
+      if (result.success) {
+        setBiometricEnabled(true);
+        await AsyncStorage.setItem('biometric_enabled', 'true');
+        Alert.alert('Success', 'Biometric login enabled successfully.');
+      }
+    } else {
+      setBiometricEnabled(false);
+      await AsyncStorage.setItem('biometric_enabled', 'false');
+    }
+  };
+
+  const handleToggleOffline = async (value: boolean) => {
+    setOfflineMode(value);
+    await AsyncStorage.setItem('offline_mode', value.toString());
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    await AsyncStorage.setItem('notifications_enabled', value.toString());
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -194,7 +256,7 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Switch
                 value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
+                onValueChange={handleToggleNotifications}
                 trackColor={{ false: theme.colors.border, true: theme.colors.primary + '80' }}
                 thumbColor={notificationsEnabled ? theme.colors.primary : '#f4f3f4'}
               />
@@ -218,7 +280,7 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Switch
                 value={biometricEnabled}
-                onValueChange={setBiometricEnabled}
+                onValueChange={handleToggleBiometrics}
                 trackColor={{ false: theme.colors.border, true: theme.colors.success + '80' }}
                 thumbColor={biometricEnabled ? theme.colors.success : '#f4f3f4'}
               />
@@ -242,7 +304,7 @@ export default function ProfileScreen({ navigation }: any) {
               </View>
               <Switch
                 value={offlineMode}
-                onValueChange={setOfflineMode}
+                onValueChange={handleToggleOffline}
                 trackColor={{ false: theme.colors.border, true: theme.colors.info + '80' }}
                 thumbColor={offlineMode ? theme.colors.info : '#f4f3f4'}
               />

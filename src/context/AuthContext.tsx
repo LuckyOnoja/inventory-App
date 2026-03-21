@@ -8,6 +8,7 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import axios from "axios";
+import * as SecureStore from 'expo-secure-store';
 import config from "../config";
 
 const API_URL = config.API_URL;
@@ -113,6 +114,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setUser(userData);
       setToken(authToken);
+
+      // Check if biometrics is enabled and store credentials for next time
+      const isBiometricEnabled = await AsyncStorage.getItem('biometric_enabled');
+      if (isBiometricEnabled === 'true') {
+        await SecureStore.setItemAsync('user_credentials', JSON.stringify({ email, password }));
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       const errorMessage =
@@ -168,6 +175,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setUser(null);
       setToken(null);
+      
+      // Clear all stored data on explicit logout
+      await SecureStore.deleteItemAsync('user_credentials');
+      await AsyncStorage.removeItem('biometric_enabled');
     } catch (error) {
       console.error("Logout error:", error);
       Alert.alert("Error", "Failed to logout");

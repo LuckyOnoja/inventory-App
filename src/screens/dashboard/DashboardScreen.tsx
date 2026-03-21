@@ -260,7 +260,7 @@ export default function DashboardScreen({ navigation }: any) {
           <View style={[styles.modernStatIcon, { backgroundColor: color + "15" }]}>
             <Ionicons name={icon} size={22} color={color} />
           </View>
-          {trend && (
+          {!!trend && (
             <View style={[styles.trendBadge, { backgroundColor: trend > 0 ? theme.colors.success + "15" : theme.colors.error + "15" }]}>
               <Ionicons 
                 name={trend > 0 ? "trending-up" : "trending-down"} 
@@ -277,7 +277,7 @@ export default function DashboardScreen({ navigation }: any) {
           <Text style={[styles.modernStatValue, { color: theme.colors.text }]}>{value}</Text>
           <Text style={[styles.modernStatTitle, { color: theme.colors.textSecondary }]}>{title}</Text>
         </View>
-        {subtitle && (
+        {!!subtitle && (
           <Text style={[styles.modernStatSubtitle, { color: theme.colors.textTertiary }]}>{subtitle}</Text>
         )}
       </GlassCard>
