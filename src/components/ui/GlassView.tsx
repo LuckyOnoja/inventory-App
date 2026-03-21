@@ -67,5 +67,6 @@ const styles = StyleSheet.create({
         // Ensure content sits above the absolute positioned backgrounds
         zIndex: 1,
         width: '100%',
+        flex: 1,
     },
 });

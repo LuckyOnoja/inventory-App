@@ -288,7 +288,7 @@ const SideMenu = ({
           style={[styles.sideMenuContainer, { borderRadius: 0, borderRightWidth: 1, borderRightColor: theme.colors.border }]}
         >
           <View style={[styles.sideMenuContent, { paddingTop: Platform.OS === 'ios' ? 50 : 20 }]}>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
               {/* User Profile Section */}
               <View style={[styles.profileSection, { borderBottomColor: theme.colors.border }]}>
                 <View style={styles.avatarContainer}>
