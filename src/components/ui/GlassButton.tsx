@@ -1,7 +1,15 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+    TouchableOpacity,
+    Text,
+    StyleSheet,
+    ActivityIndicator,
+    ViewStyle,
+    TextStyle,
+    View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 
 interface GlassButtonProps {
@@ -16,6 +24,9 @@ interface GlassButtonProps {
     textStyle?: TextStyle;
 }
 
+/**
+ * GlassButton — redesigned as a clean button with a subtle gradient matching the icon.
+ */
 export const GlassButton: React.FC<GlassButtonProps> = ({
     title,
     onPress,
@@ -29,100 +40,118 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 }) => {
     const { theme } = useTheme();
 
-    const getGradient = () => {
-        if (disabled) return [theme.colors.gray[700], theme.colors.gray[800]];
-
+    const getColors = () => {
+        if (disabled) return [theme.colors.gray[300], theme.colors.gray[300]];
         switch (variant) {
-            case 'primary':
-                return theme.gradients.primary;
-            case 'secondary':
-                return theme.gradients.secondary;
-            case 'success':
-                return theme.gradients.success;
-            case 'warning':
-                return theme.gradients.warning;
-            case 'danger':
-                return theme.gradients.error;
-            case 'ghost':
-                return ['transparent', 'transparent'];
-            default:
-                return theme.gradients.primary;
+            case 'primary':   return theme.gradients.primary;
+            case 'secondary': return theme.gradients.secondary;
+            case 'success':   return theme.gradients.success;
+            case 'warning':   return theme.gradients.warning;
+            case 'danger':    return theme.gradients.error;
+            case 'ghost':     return ['transparent', 'transparent'];
+            default:          return theme.gradients.primary;
         }
+    };
+
+    const getTextColor = () => {
+        if (disabled) return theme.colors.gray[500];
+        if (variant === 'ghost') return theme.colors.primary;
+        return '#FFFFFF';
     };
 
     const getHeight = () => {
         switch (size) {
-            case 'small': return 36;
-            case 'large': return 56;
-            default: return 48;
+            case 'small':  return 36;
+            case 'large':  return 52;
+            default:       return 44;
         }
     };
 
     const getFontSize = () => {
         switch (size) {
-            case 'small': return theme.typography.buttonSmall.fontSize;
-            default: return theme.typography.button.fontSize;
+            case 'small': return 14;
+            default:      return 16;
         }
     };
+
+    const isGhost = variant === 'ghost';
+
+    const renderContent = () => (
+        <>
+            {loading ? (
+                <ActivityIndicator color={isGhost ? theme.colors.primary : '#FFF'} />
+            ) : (
+                <View style={styles.row}>
+                    {icon && (
+                        <Ionicons
+                            name={icon}
+                            size={size === 'small' ? 16 : 20}
+                            color={getTextColor()}
+                            style={{ marginRight: 8 }}
+                        />
+                    )}
+                    <Text
+                        style={[
+                            styles.text,
+                            {
+                                fontSize: getFontSize(),
+                                color: getTextColor(),
+                            },
+                            textStyle,
+                        ]}
+                    >
+                        {title}
+                    </Text>
+                </View>
+            )}
+        </>
+    );
+
+    if (isGhost) {
+        return (
+            <TouchableOpacity
+                onPress={onPress}
+                disabled={disabled || loading}
+                activeOpacity={0.75}
+                style={[
+                    styles.container,
+                    {
+                        height: getHeight(),
+                        backgroundColor: 'transparent',
+                        borderRadius: theme.borderRadius.md,
+                        borderWidth: 1.5,
+                        borderColor: theme.colors.primary,
+                    },
+                    style,
+                ]}
+            >
+                {renderContent()}
+            </TouchableOpacity>
+        );
+    }
 
     return (
         <TouchableOpacity
             onPress={onPress}
             disabled={disabled || loading}
-            activeOpacity={0.8}
+            activeOpacity={0.88}
             style={[
                 styles.container,
                 {
                     height: getHeight(),
-                    borderRadius: theme.borderRadius.lg,
-                    shadowColor: variant === 'ghost' ? 'transparent' : theme.gradients.primary[0],
-                    shadowOpacity: disabled || variant === 'ghost' ? 0 : 0.3,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: 4 },
+                    borderRadius: theme.borderRadius.md,
+                    overflow: 'hidden',
                 },
                 style,
             ]}
         >
             <LinearGradient
-                colors={getGradient() as any}
+                colors={getColors() as unknown as [string, string, ...string[]]}
+                style={StyleSheet.absoluteFill}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[
-                    styles.gradient,
-                    {
-                        borderRadius: theme.borderRadius.lg,
-                        borderWidth: variant === 'ghost' ? 1 : 0,
-                        borderColor: variant === 'ghost' ? theme.colors.border : 'transparent',
-                    }
-                ]}
-            >
-                {loading ? (
-                    <ActivityIndicator color="#FFF" />
-                ) : (
-                    <>
-                        {icon && (
-                            <Ionicons
-                                name={icon}
-                                size={20}
-                                color={variant === 'ghost' ? theme.colors.text : '#FFF'}
-                                style={{ marginRight: 8 }}
-                            />
-                        )}
-                        <Text
-                            style={[
-                                styles.text,
-                                {
-                                    fontSize: getFontSize(),
-                                    color: variant === 'ghost' ? theme.colors.text : '#FFF',
-                                },
-                                textStyle,
-                            ]}
-                        >
-                            {title}
-                        </Text>
-                    </>
-                )}
-            </LinearGradient>
+                end={{ x: 0, y: 1 }}
+            />
+            {renderContent()}
         </TouchableOpacity>
     );
 };
@@ -130,17 +159,17 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginVertical: 8,
-    },
-    gradient: {
-        flex: 1,
-        flexDirection: 'row',
+        marginVertical: 6,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 16,
     },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     text: {
         fontWeight: '600',
-        letterSpacing: 0.5,
     },
 });

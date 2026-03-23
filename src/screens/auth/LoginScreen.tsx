@@ -18,7 +18,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
-import { GlassView } from '../../components/ui/GlassView';
 import { GlassButton } from '../../components/ui/GlassButton';
 
 export default function LoginScreen({ navigation }: any) {
@@ -43,7 +42,6 @@ export default function LoginScreen({ navigation }: any) {
 
       if (isEnabled === 'true' && hasHardware && isEnrolled && savedCredentials) {
         setCanUseBiometrics(true);
-        // Automatically trigger biometrics on mount for better UX
         handleBiometricLogin();
       }
     } catch (error) {
@@ -86,8 +84,7 @@ export default function LoginScreen({ navigation }: any) {
 
     setLoading(true);
     try {
-      await login(email, password);
-      // Navigation handled by AuthContext
+      await login(email.trim().toLowerCase(), password.trim());
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {
@@ -101,7 +98,7 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper variant="gradient">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -110,37 +107,36 @@ export default function LoginScreen({ navigation }: any) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
+          {/* Logo */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoCircle}>
               <Image
                 source={require('../../../assets/icon.png')}
-                style={{ width: 220, height: 220 }}
+                style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-              Secure your business inventory
+            <Text style={[styles.appName, { color: '#FFFFFF' }]}>ToryAi</Text>
+            <Text style={[styles.tagline, { color: 'rgba(255,255,255,0.7)' }]}>
+              Smart Inventory Management
             </Text>
           </View>
 
           {/* Form */}
-          <GlassView style={styles.formContainer} intensity={30}>
-            {/* Email Input */}
+          <View style={[
+            styles.formCard, 
+            { 
+              backgroundColor: theme.colors.surface,
+              ...theme.shadows.md,
+            }
+          ]}>
+            <Text style={[styles.formTitle, { color: theme.colors.text }]}>Sign In</Text>
+
+            {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.colors.text }]}>
-                Email Address
-              </Text>
-              <View style={[styles.inputContainer, {
-                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
-                borderColor: theme.colors.border,
-              }]}>
-                <Ionicons
-                  name="mail-outline"
-                  size={20}
-                  color={theme.colors.textSecondary}
-                  style={styles.inputIcon}
-                />
+              <Text style={[styles.label, { color: theme.colors.text }]}>Email Address</Text>
+              <View style={[styles.inputRow, { backgroundColor: theme.colors.surfaceLight, borderColor: theme.colors.border }]}>
+                <Ionicons name="mail-outline" size={18} color={theme.colors.textTertiary} />
                 <TextInput
                   style={[styles.input, { color: theme.colors.text }]}
                   placeholder="Enter your email"
@@ -154,21 +150,11 @@ export default function LoginScreen({ navigation }: any) {
               </View>
             </View>
 
-            {/* Password Input */}
+            {/* Password */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.colors.text }]}>
-                Password
-              </Text>
-              <View style={[styles.inputContainer, {
-                backgroundColor: theme.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
-                borderColor: theme.colors.border,
-              }]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color={theme.colors.textSecondary}
-                  style={styles.inputIcon}
-                />
+              <Text style={[styles.label, { color: theme.colors.text }]}>Password</Text>
+              <View style={[styles.inputRow, { backgroundColor: theme.colors.surfaceLight, borderColor: theme.colors.border }]}>
+                <Ionicons name="lock-closed-outline" size={18} color={theme.colors.textTertiary} />
                 <TextInput
                   style={[styles.input, { color: theme.colors.text }]}
                   placeholder="Enter your password"
@@ -178,75 +164,62 @@ export default function LoginScreen({ navigation }: any) {
                   secureTextEntry={!showPassword}
                   editable={!loading}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={theme.colors.textSecondary}
+                    size={18}
+                    color={theme.colors.textTertiary}
                   />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
                 onPress={() => navigation.navigate('ForgotPassword')}
-                style={styles.forgotPasswordButton}
+                style={styles.forgotBtn}
               >
-                <Text style={[styles.forgotPasswordText, { color: theme.colors.primary }]}>
-                  Forgot Password?
+                <Text style={[styles.forgotText, { color: theme.colors.primary }]}>
+                  Forgot password?
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Login Button */}
             <GlassButton
-              title="Login"
+              title="Sign In"
               onPress={handleLogin}
               loading={loading}
               icon="log-in-outline"
               size="large"
-              style={styles.loginButton}
             />
 
             {canUseBiometrics && (
               <TouchableOpacity
                 onPress={handleBiometricLogin}
-                style={[styles.biometricButton, { borderColor: theme.colors.primary + '40' }]}
+                style={[styles.biometricBtn, { borderColor: theme.colors.border }]}
               >
-                <Ionicons name="finger-print-outline" size={24} color={theme.colors.primary} />
+                <Ionicons name="finger-print-outline" size={20} color={theme.colors.primary} />
                 <Text style={[styles.biometricText, { color: theme.colors.primary }]}>
-                  Login with Biometrics
+                  Use Biometrics
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
 
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-              <Text style={[styles.dividerText, { color: theme.colors.textTertiary }]}>
-                OR
+          {/* Register link */}
+          <View style={styles.registerRow}>
+            <Text style={[styles.registerText, { color: 'rgba(255,255,255,0.8)' }]}>
+              Don't have an account?
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={[styles.registerLink, { color: '#FFFFFF' }]}>
+                {' '}Sign up
               </Text>
-              <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-            </View>
+            </TouchableOpacity>
+          </View>
 
-            {/* Register Link */}
-            <View style={styles.registerContainer}>
-              <Text style={[styles.registerText, { color: theme.colors.textSecondary }]}>
-                Don't have an account?
-              </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={[styles.registerLink, { color: theme.colors.primary }]}>
-                  Sign up now
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </GlassView>
-
-          {/* Demo Credentials */}
-          <View style={[styles.demoContainer, { backgroundColor: theme.colors.surfaceLight + '80' }]}>
-            <Ionicons name="information-circle-outline" size={16} color={theme.colors.textSecondary} />
-            <Text style={[styles.demoText, { color: theme.colors.textSecondary }]}>
+          {/* Demo hint */}
+          <View style={[styles.demoBox, { backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.2)' }]}>
+            <Ionicons name="information-circle-outline" size={15} color="#FFFFFF" />
+            <Text style={[styles.demoText, { color: 'rgba(255,255,255,0.8)' }]}>
               Demo: admin@example.com / password123
             </Text>
           </View>
@@ -262,105 +235,104 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 32,
     justifyContent: 'center',
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logoContainer: {
-    justifyContent: 'center',
+  logoSection: {
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: Platform.OS === 'ios' ? 20 : 0,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
+  logoCircle: {
+    width: 70,
+    height: 70,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
+  logo: {
+    width: 44,
+    height: 44,
   },
-  formContainer: {
-    padding: 24,
-    borderRadius: 24,
-    gap: 20,
+  appName: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  formCard: {
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    borderRadius: 16,
+    marginBottom: 16,
+    gap: 12,
+    elevation: 4,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   inputGroup: {
-    gap: 8,
+    gap: 6,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginLeft: 4,
   },
-  inputContainer: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputIcon: {
-    marginRight: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    gap: 10,
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     height: '100%',
   },
-  eyeIcon: {
-    padding: 8,
+  eyeBtn: {
+    padding: 4,
   },
-  forgotPasswordButton: {
+  forgotBtn: {
     alignSelf: 'flex-end',
     marginTop: 4,
   },
-  forgotPasswordText: {
-    fontSize: 14,
+  forgotText: {
+    fontSize: 13,
     fontWeight: '600',
   },
-  loginButton: {
-    marginTop: 12,
-  },
-  biometricButton: {
+  biometricBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
-    borderRadius: 28,
+    height: 46,
+    borderRadius: 8,
     borderWidth: 1,
-    gap: 12,
-    marginTop: 12,
+    gap: 8,
+    marginTop: 4,
   },
   biometricText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '600',
   },
-  registerContainer: {
+  registerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
   registerText: {
     fontSize: 14,
@@ -369,17 +341,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  demoContainer: {
+  demoBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
     gap: 8,
-    marginTop: 32,
   },
   demoText: {
     fontSize: 12,
-    textAlign: 'center',
   },
 });

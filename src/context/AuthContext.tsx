@@ -22,7 +22,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: "SUPER_ADMIN" | "SALES_AGENT" | "SUPERVISOR";
+  role: "SUPER_ADMIN" | "SALES_AGENT" | "STAFF";
   business?: {
     id: string;
     name: string;

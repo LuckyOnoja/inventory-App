@@ -54,56 +54,56 @@ export default function SettingsScreen({ navigation }: any) {
 
   const settingsGroups: SettingGroup[] = [
     {
-      title: 'OPERATIONAL ALERTS',
+      title: 'NOTIFICATIONS',
       items: [
         {
           icon: 'notifications-outline',
-          title: 'Push Channels',
-          subtitle: 'Real-time heartbeat updates',
+          title: 'Push Notifications',
+          subtitle: 'Get real-time updates',
           value: settings.pushNotifications,
           onToggle: () => toggleSetting('pushNotifications'),
         },
         {
           icon: 'warning-outline',
-          title: 'Critical Stock',
-          subtitle: 'Low inventory threshold warnings',
+          title: 'Low Stock Alerts',
+          subtitle: 'Notify when stock is low',
           value: settings.lowStockAlerts,
           onToggle: () => toggleSetting('lowStockAlerts'),
         },
       ],
     },
     {
-      title: 'INTERFACE CORE',
+      title: 'APPEARANCE',
       items: [
         {
-          icon: theme.mode === 'dark' ? 'sunny-outline' : 'moon-outline',
-          title: theme.mode === 'dark' ? 'Solar Interface' : 'Lunar Interface',
-          subtitle: 'Toggle core visual frequency',
-          value: theme.mode === 'dark',
+          icon: (theme.mode as string) === 'dark' ? 'sunny-outline' : 'moon-outline',
+          title: (theme.mode as string) === 'dark' ? 'Light Mode' : 'Dark Mode',
+          subtitle: 'Toggle app theme',
+          value: (theme.mode as string) === 'dark',
           onToggle: toggleTheme,
         },
         {
           icon: 'volume-medium-outline',
-          title: 'Haptic Feedback',
-          subtitle: 'Tactile response protocol',
+          title: 'Vibration',
+          subtitle: 'Haptic feedback on actions',
           value: settings.vibration,
           onToggle: () => toggleSetting('vibration'),
         },
       ],
     },
     {
-      title: 'SECURITY & PROTOCOLS',
+      title: 'ACCOUNT',
       items: [
         {
           icon: 'shield-checkmark-outline',
-          title: 'Authorization Protocol',
-          subtitle: 'System security is nominal',
-          onPress: () => Alert.alert('Security Protocol', 'Advanced multi-vector authentication is active for this session.'),
+          title: 'Security',
+          subtitle: 'Your account is secure',
+          onPress: () => Alert.alert('Security', 'Your account is protected with multi-factor authentication.'),
         },
         {
           icon: 'trash-outline',
-          title: 'Terminate Account',
-          subtitle: 'Irreversible data purge protocol',
+          title: 'Delete Account',
+          subtitle: 'Permanently remove your account',
           onPress: () => setIsDeleteModalVisible(true),
         },
       ],
@@ -119,8 +119,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
       </TouchableOpacity>
       <View>
-        <Text style={[styles.headerGreeting, { color: theme.colors.textTertiary }]}>SYSTEM CONFIG</Text>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Settings Core</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Settings</Text>
       </View>
     </View>
   );
@@ -205,33 +204,32 @@ export default function SettingsScreen({ navigation }: any) {
         ))}
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>SYSTEM TELEMETRY</Text>
-          <GlassView style={styles.telemetryCard} intensity={15}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.textSecondary }]}>APP INFO</Text>
+          <View style={[styles.infoCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <View style={styles.telemetryItem}>
               <Text style={[styles.telemetryLabel, { color: theme.colors.textTertiary }]}>LAST SYNC</Text>
               <Text style={[styles.telemetryValue, { color: theme.colors.text }]}>Just Now</Text>
             </View>
-            <View style={styles.telemetryDivider} />
+            <View style={[styles.telemetryDivider, { backgroundColor: theme.colors.border }]} />
             <View style={styles.telemetryItem}>
-              <Text style={[styles.telemetryLabel, { color: theme.colors.textTertiary }]}>CORE VERSION</Text>
-              <Text style={[styles.telemetryValue, { color: theme.colors.text }]}>1.2.0-PRO</Text>
+              <Text style={[styles.telemetryLabel, { color: theme.colors.textTertiary }]}>VERSION</Text>
+              <Text style={[styles.telemetryValue, { color: theme.colors.text }]}>1.2.0</Text>
             </View>
-          </GlassView>
+          </View>
         </View>
 
         <TouchableOpacity 
-          style={styles.logoutButton} 
+          style={[styles.logoutButton, { borderColor: theme.colors.error + '40' }]} 
           onPress={() => {
-            Alert.alert('Terminate Session', 'Are you sure you want to end your current intelligence session?',
-              [{ text: 'Cancel' }, { text: 'Logout', style: 'destructive', onPress: () => { logout(); } }])
+            Alert.alert('Sign Out', 'Are you sure you want to sign out?',
+              [{ text: 'Cancel' }, { text: 'Sign Out', style: 'destructive', onPress: () => { logout(); } }])
           }}
         >
-          <Text style={[styles.logoutText, { color: theme.colors.error }]}>TERMINATE SESSION</Text>
+          <Text style={[styles.logoutText, { color: theme.colors.error }]}>Sign Out</Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>TORYAI INTELLIGENCE OPERATING CORE</Text>
-          <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>© 2024 • SECURE PROTOCOL ACTIVE</Text>
+          <Text style={[styles.footerText, { color: theme.colors.textTertiary }]}>ToryAi v1.2.0 © 2024</Text>
         </View>
       </ScrollView>
 
@@ -243,12 +241,11 @@ export default function SettingsScreen({ navigation }: any) {
         onRequestClose={() => setIsDeleteModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <GlassView 
+          <View 
             style={[
               styles.modalContent, 
-              { backgroundColor: theme.mode === 'dark' ? '#000000' : '#FFFFFF' }
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, borderWidth: 1 }
             ]} 
-            intensity={40}
           >
             <View style={[styles.warningIconContainer, { backgroundColor: theme.colors.error + '20' }]}>
               <Ionicons name="warning" size={32} color={theme.colors.error} />
@@ -315,7 +312,7 @@ export default function SettingsScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
             </View>
-          </GlassView>
+          </View>
         </View>
       </Modal>
     </ScreenWrapper>
@@ -436,9 +433,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   telemetryCard: {
-    flexDirection: 'row',
+    flexDirection: 'row' as const,
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 12,
+  },
+  infoCard: {
+    flexDirection: 'row' as const,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   telemetryItem: {
     flex: 1,

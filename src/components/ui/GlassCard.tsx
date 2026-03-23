@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { GlassView } from './GlassView';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
 interface GlassCardProps {
@@ -9,6 +8,10 @@ interface GlassCardProps {
     variant?: 'default' | 'highlight' | 'warning' | 'error';
 }
 
+/**
+ * GlassCard — redesigned as a simple white card with a subtle shadow.
+ * No glassmorphism, no gradients.
+ */
 export const GlassCard: React.FC<GlassCardProps> = ({
     children,
     style,
@@ -16,42 +19,40 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 }) => {
     const { theme } = useTheme();
 
-    const getGradient = () => {
+    const getVariantStyle = () => {
         switch (variant) {
-            case 'highlight':
-                // Subtle accent gradient
-                return ['rgba(99, 102, 241, 0.15)', 'rgba(139, 92, 246, 0.15)'] as const;
             case 'warning':
-                return ['rgba(245, 158, 11, 0.1)', 'rgba(251, 191, 36, 0.1)'] as const;
+                return { borderColor: theme.colors.warning, borderWidth: 1.5 };
             case 'error':
-                return ['rgba(239, 68, 68, 0.1)', 'rgba(248, 113, 113, 0.1)'] as const;
+                return { borderColor: theme.colors.error, borderWidth: 1.5 };
+            case 'highlight':
+                return { borderColor: theme.colors.primary, borderWidth: 1.5 };
             default:
-                // Default glass
-                return undefined; // uses GlassView default
+                return { borderColor: theme.colors.border, borderWidth: 1 };
         }
     };
 
     return (
-        <GlassView
+        <View
             style={[
-                styles.card, 
-                { 
-                    padding: theme.spacing.md,
-                    ...theme.shadows.sm
-                }, 
-                style
+                styles.card,
+                {
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: theme.borderRadius.lg,
+                    ...theme.shadows.sm,
+                },
+                getVariantStyle(),
+                style,
             ]}
-            gradient={getGradient()}
-            intensity={theme.mode === 'dark' ? 10 : 5}
         >
             {children}
-        </GlassView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     card: {
-        marginVertical: 8,
+        marginVertical: 4,
         width: '100%',
     },
 });

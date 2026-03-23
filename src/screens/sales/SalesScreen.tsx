@@ -181,16 +181,16 @@ export default function SalesScreen({ navigation, route }: any) {
         </View>
 
         <View style={styles.statsRow}>
-          <GlassView style={styles.statCard} intensity={15}>
-            <Text style={[styles.statValue, { color: theme.colors.text }]}>{filteredSales.length}</Text>
-            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>TOTAL OPS</Text>
-          </GlassView>
-          <GlassView style={styles.statCard} intensity={15}>
-            <Text style={[styles.statValue, { color: theme.colors.success }]}>
+          <View style={[styles.statCard, { width: '60%', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm, borderWidth: 1, borderColor: theme.colors.border }]}>
+            <Text style={[styles.statLabel, { color: theme.colors.textTertiary }]}>TOTAL OPERATIONS</Text>
+            <Text style={[styles.statValue, { color: theme.colors.text, fontSize: 24 }]}>{filteredSales.length}</Text>
+          </View>
+          <View style={[styles.statCard, { width: '37%', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm, borderWidth: 1, borderColor: theme.colors.border }]}>
+            <Text style={[styles.statLabel, { color: theme.colors.textTertiary }]}>NET VOLUME</Text>
+            <Text style={[styles.statValue, { color: theme.colors.success, fontSize: 20 }]}>
               {total >= 1000 ? `₦${(total / 1000).toFixed(1)}k` : `₦${total.toLocaleString()}`}
             </Text>
-            <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>NET VOLUME</Text>
-          </GlassView>
+          </View>
         </View>
       </View>
     );
@@ -202,7 +202,7 @@ export default function SalesScreen({ navigation, route }: any) {
         <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Filter Transaction Tokens..."
+          placeholder="Search sales..."
           placeholderTextColor={theme.colors.textTertiary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -228,13 +228,13 @@ export default function SalesScreen({ navigation, route }: any) {
       <GlassView style={styles.emptyIconContainer} intensity={10}>
         <Ionicons name="receipt-outline" size={48} color={theme.colors.textTertiary} />
       </GlassView>
-      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>Nexus Empty</Text>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No sales transactions have been recorded for the selected frequency.</Text>
+      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Sales Found</Text>
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No sales transactions have been recorded for the selected period.</Text>
       <TouchableOpacity
         style={[styles.emptyButton, { borderColor: theme.colors.primary, borderWidth: 1 }]}
         onPress={() => navigation.navigate('NewSale')}
       >
-        <Text style={[styles.emptyButtonText, { color: theme.colors.primary }]}>Initiate Transaction</Text>
+        <Text style={[styles.emptyButtonText, { color: theme.colors.primary }]}>Record New Sale</Text>
       </TouchableOpacity>
     </View>
   );
@@ -243,7 +243,7 @@ export default function SalesScreen({ navigation, route }: any) {
     return (
       <ScreenWrapper style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>SYNCING SALES ARCHIVE...</Text>
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Loading sales...</Text>
       </ScreenWrapper>
     );
   }
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   newSaleButton: {
     width: 44,
@@ -333,19 +333,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   statCard: {
-    flex: 1,
     padding: 16,
-    borderRadius: 16,
+    justifyContent: 'center',
+    height: 100,
   },
   statValue: {
-    fontSize: 20,
     fontWeight: '800',
   },
   statLabel: {
     fontSize: 9,
     fontWeight: '700',
     letterSpacing: 1,
-    marginTop: 2,
+    marginBottom: 4,
   },
   searchWrapper: {
     paddingHorizontal: 20,

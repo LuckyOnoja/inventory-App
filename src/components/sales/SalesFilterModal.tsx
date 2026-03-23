@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassView } from '../ui/GlassView';
 import { GlassButton } from '../ui/GlassButton';
-import { BlurView } from 'expo-blur';
 
 interface FilterState {
   period: 'today' | 'week' | 'month' | '3months' | 'all';
@@ -143,7 +142,7 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <GlassView style={styles.modalContainer} intensity={30}>
+            <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border, borderTopWidth: 1 }]}>
               {/* Header */}
               <View style={styles.modalHeader}>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -362,7 +361,7 @@ const SalesFilterModal: React.FC<SalesFilterModalProps> = ({
                   variant="primary"
                 />
               </View>
-            </GlassView>
+            </View>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>

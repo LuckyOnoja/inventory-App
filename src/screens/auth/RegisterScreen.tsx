@@ -9,12 +9,12 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
-import { GlassView } from '../../components/ui/GlassView';
 import { GlassButton } from '../../components/ui/GlassButton';
 
 const businessTypes = [
@@ -128,8 +128,8 @@ export default function RegisterScreen({ navigation }: any) {
       setLoading(true);
       try {
         await register({
-          email: personalInfo.email,
-          password: personalInfo.password,
+          email: personalInfo.email.trim().toLowerCase(),
+          password: personalInfo.password.trim(),
           name: personalInfo.name,
           phone: personalInfo.phone,
           businessName: businessInfo.name,
@@ -144,7 +144,7 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   const renderStep1 = () => (
-    <GlassView style={styles.stepCard} intensity={25}>
+    <View style={[styles.stepCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
         Personal Information
       </Text>
@@ -283,11 +283,11 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
         </View>
       </View>
-    </GlassView>
+    </View>
   );
 
   const renderStep2 = () => (
-    <GlassView style={styles.stepCard} intensity={25}>
+    <View style={[styles.stepCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
       <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
         Business Information
       </Text>
@@ -392,80 +392,102 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
         </View>
       </View>
-    </GlassView>
+    </View>
   );
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper variant="gradient">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
+          {/* Logo Section */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: theme.colors.surfaceLight + '80' }]}
-              onPress={handleBack}
-            >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <View style={styles.headerCenter}>
-              <Text style={[styles.title, { color: theme.colors.text }]}>
-                Create Account
-              </Text>
-              <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                Step {step} of 2
-              </Text>
+            <View style={styles.logoCircle}>
+              <Image
+                source={require('../../../assets/icon.png')}
+                style={styles.logo}
+              />
             </View>
-            <View style={styles.stepIndicatorContainer}>
-              <View style={[
-                styles.stepIndicator,
-                { backgroundColor: step >= 1 ? theme.colors.primary : theme.colors.surfaceLight }
-              ]} />
-              <View style={[
-                styles.stepIndicator,
-                { backgroundColor: step >= 2 ? theme.colors.primary : theme.colors.surfaceLight }
-              ]} />
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.7)' }]}>
+              Join ToryAi for smart inventory management
+            </Text>
+          </View>
+
+          {/* Form Card Content */}
+          <View style={[
+            styles.formCard, 
+            { 
+              backgroundColor: theme.colors.surface,
+              ...theme.shadows.md,
+            }
+          ]}>
+            <View style={styles.cardHeader}>
+              <TouchableOpacity
+                style={[styles.backButton, { backgroundColor: theme.colors.surfaceLight, borderColor: theme.colors.border, borderWidth: 1 }]}
+                onPress={handleBack}
+              >
+                <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+              </TouchableOpacity>
+              <View style={styles.stepIndicatorContainer}>
+                {[1, 2].map((i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.stepIndicator,
+                      {
+                        backgroundColor: step === i ? theme.colors.primary : theme.colors.border,
+                        width: step === i ? 24 : 10,
+                      }
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+            
+            <Text style={[styles.stepTitle, { color: theme.colors.text }]}>
+              {step === 1 ? 'Business Info' : 'Account Details'}
+            </Text>
+
+            {step === 1 ? renderStep1() : renderStep2()}
+            
+            {/* Action Buttons inside Card */}
+            <View style={styles.actionButtons}>
+              {step === 1 ? (
+                <GlassButton
+                  title="Continue"
+                  onPress={handleNext}
+                  icon="arrow-forward"
+                  size="large"
+                  variant="primary"
+                />
+              ) : (
+                <GlassButton
+                  title="Create Account"
+                  onPress={handleSubmit}
+                  loading={loading}
+                  icon="checkmark-circle-outline"
+                  size="large"
+                  variant="primary"
+                />
+              ) }
             </View>
           </View>
 
-          {/* Form Content */}
-          {step === 1 ? renderStep1() : renderStep2()}
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            {step === 1 ? (
-              <GlassButton
-                title="Continue"
-                onPress={handleNext}
-                icon="arrow-forward"
-                size="large"
-                variant="primary"
-              />
-            ) : (
-              <GlassButton
-                title="Create Account"
-                onPress={handleSubmit}
-                loading={loading}
-                icon="checkmark-circle-outline"
-                size="large"
-                variant="primary"
-              />
-            )}
-          </View>
-
-          {/* Footer */}
+          {/* Footer - Outside Card */}
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.footerText, { color: 'rgba(255,255,255,0.8)' }]}>
               Already have an account?
             </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
-                Sign in here
+              <Text style={[styles.footerLink, { color: '#FFFFFF' }]}>
+                {' '}Sign in here
               </Text>
             </TouchableOpacity>
           </View>
@@ -485,26 +507,51 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   header: {
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: Platform.OS === 'ios' ? 10 : 0,
+  },
+  logoCircle: {
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  logo: {
+    width: 36,
+    height: 36,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    maxWidth: '85%',
+  },
+  formCard: {
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+    borderRadius: 16,
+    marginBottom: 16,
+    elevation: 4,
+  },
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   backButton: {
     padding: 10,
     borderRadius: 12,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
   },
   stepIndicatorContainer: {
     flexDirection: 'row',
@@ -517,7 +564,8 @@ const styles = StyleSheet.create({
   },
   stepCard: {
     padding: 24,
-    borderRadius: 24,
+    borderRadius: 12,
+    borderWidth: 1,
     marginBottom: 24,
   },
   stepTitle: {

@@ -20,8 +20,8 @@ import config from "../../config";
 
 const API_URL = config.API_URL;
 const roles = [
-  { value: 'SALES_AGENT', label: 'Sales Agent', icon: 'person-outline' },
-  { value: 'SUPERVISOR', label: 'Store Manager', icon: 'people-outline' },
+  { value: 'SALES_AGENT', label: 'Branch Manager', icon: 'business-outline' },
+  { value: 'STAFF', label: 'Staff Member', icon: 'person-outline' },
 ];
 
 export default function AddStaffScreen({ navigation }: any) {
@@ -120,7 +120,7 @@ export default function AddStaffScreen({ navigation }: any) {
 
       Alert.alert(
         'Success',
-        `${formData.name} has been added as a ${formData.role === 'SALES_AGENT' ? 'Sales Agent' : 'Store Manager'}`,
+        `${formData.name} has been added as a ${formData.role === 'SALES_AGENT' ? 'Branch Manager' : 'Staff Member'}`,
         [
           {
             text: 'Add Another',
@@ -166,9 +166,9 @@ export default function AddStaffScreen({ navigation }: any) {
   const getRoleDescription = (role: string) => {
     switch (role) {
       case 'SALES_AGENT':
-        return 'Can log sales and view own sales history. Cannot access sensitive data.';
-      case 'SUPERVISOR':
-        return 'Can manage staff, conduct inventory checks, and view all reports.';
+        return 'Can manage staff under them, view branch reports, and log sales.';
+      case 'STAFF':
+        return 'Can log sales and view own performance. No administrative access.';
       default:
         return '';
     }

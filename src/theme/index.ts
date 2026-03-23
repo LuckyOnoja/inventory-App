@@ -1,24 +1,24 @@
-// Modern Industrial / Logistics inspired theme (Matches new logo)
+// Clean, simple, standard theme
 export const gradients = {
-  primary: ['#0033FF', '#001A99'] as const, // Vibrant Blue to Deep Blue
-  secondary: ['#001A99', '#000B4D'] as const,
-  accent: ['#3399FF', '#0033FF'] as const,
+  primary: ['#0033FF', '#000080'] as const, // Sharper, more vibrant bento blue
+  secondary: ['#64748B', '#334155'] as const,
+  accent: ['#0033FF', '#000080'] as const,
   success: ['#10B981', '#059669'] as const,
-  warning: ['#FBBF24', '#D97706'] as const,
-  error: ['#F87171', '#DC2626'] as const,
-  dark: ['#050B1A', '#02060D'] as const,
-  light: ['#F0F7FF', '#E0EFFF'] as const,
-  glass: ['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.05)'] as const,
-  glassDark: ['rgba(0, 51, 255, 0.1)', 'rgba(0, 0, 0, 0.4)'] as const,
+  warning: ['#F59E0B', '#D97706'] as const,
+  error: ['#EF4444', '#DC2626'] as const,
+  dark: ['#1E293B', '#0F172A'] as const,
+  light: ['#FFFFFF', '#F8FAFC'] as const,
+  glass: ['#FFFFFF', '#F8FAFC'] as const,
+  glassDark: ['#1E293B', '#0F172A'] as const,
 };
 
 export const lightColors = {
-  primary: '#0033FF', // Logo Blue
-  primaryDark: '#001A99',
-  primaryLight: '#3366FF',
-  secondary: '#64748B', // Professional Slate
+  primary: '#001AFF',
+  primaryDark: '#00008B',
+  primaryLight: '#4D66FF',
+  secondary: '#64748B',
   secondaryDark: '#475569',
-  accent: '#0033FF',
+  accent: '#001AFF',
   background: '#F8FAFC',
   surface: '#FFFFFF',
   surfaceLight: '#F1F5F9',
@@ -26,13 +26,13 @@ export const lightColors = {
   text: '#0F172A',
   textSecondary: '#475569',
   textTertiary: '#94A3B8',
-  error: '#EF4444',
+  error: '#DC2626',
   errorLight: '#FEE2E2',
-  warning: '#F59E0B',
+  warning: '#D97706',
   warningLight: '#FEF3C7',
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  info: '#3B82F6',
+  success: '#16A34A',
+  successLight: '#DCFCE7',
+  info: '#1A3FBB',
   infoLight: '#DBEAFE',
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
@@ -40,7 +40,7 @@ export const lightColors = {
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(15, 23, 42, 0.6)',
+  overlay: 'rgba(15, 23, 42, 0.5)',
   gray: {
     50: '#F9FAFB',
     100: '#F1F5F9',
@@ -55,35 +55,36 @@ export const lightColors = {
   }
 };
 
+// Dark theme uses the same clean palette as light but inverted
 export const darkColors = {
-  primary: '#3366FF', // Vibrant Blue
-  primaryDark: '#0033FF',
-  primaryLight: '#6699FF',
-  secondary: '#94A3B8', // Professional Slate
-  secondaryDark: '#64748B',
-  accent: '#3366FF',
-  background: '#020617', // Deep Navy / Near Black
-  surface: '#0F172A', // Navy Surface
-  surfaceLight: '#1E293B',
-  surfaceDark: '#020617',
+  primary: '#001AFF',
+  primaryDark: '#00008B',
+  primaryLight: '#4D66FF',
+  secondary: '#64748B',
+  secondaryDark: '#475569',
+  accent: '#001AFF',
+  background: '#080B11', // Richer deep black-blue
+  surface: '#121926',
+  surfaceLight: '#1C2738',
+  surfaceDark: '#080B11',
   text: '#F8FAFC',
   textSecondary: '#94A3B8',
   textTertiary: '#64748B',
   error: '#F87171',
-  errorLight: 'rgba(239, 68, 68, 0.2)',
+  errorLight: 'rgba(248, 113, 113, 0.15)',
   warning: '#FBBF24',
-  warningLight: 'rgba(245, 158, 11, 0.2)',
-  success: '#34D399',
-  successLight: 'rgba(16, 185, 129, 0.2)',
-  info: '#60A5FA',
-  infoLight: 'rgba(59, 130, 246, 0.2)',
+  warningLight: 'rgba(251, 191, 36, 0.15)',
+  success: '#4ADE80',
+  successLight: 'rgba(74, 222, 128, 0.15)',
+  info: '#456DFF',
+  infoLight: 'rgba(69, 109, 255, 0.15)',
   border: '#1E293B',
-  borderLight: '#334155',
-  card: 'rgba(15, 23, 42, 0.8)',
+  borderLight: '#121926',
+  card: '#121926',
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.8)',
+  overlay: 'rgba(0, 0, 0, 0.75)',
   gray: {
     50: '#F8FAFC',
     100: '#F1F5F9',
@@ -99,8 +100,8 @@ export const darkColors = {
 };
 
 const spacing = {
-  xs: 4,
-  sm: 8,
+  xs: 6,
+  sm: 10,
   md: 16,
   lg: 24,
   xl: 32,
@@ -109,51 +110,47 @@ const spacing = {
 };
 
 const borderRadius = {
-  xs: 4,
-  sm: 10,
-  md: 16,
-  lg: 24, // Matches the squircle feel of the logo
-  xl: 36,
+  xs: 6,
+  sm: 12,
+  md: 20,
+  lg: 24,
+  xl: 32,
   round: 9999,
 };
 
 const typography = {
   display: {
-    fontSize: 42,
-    fontWeight: '800' as const,
-    lineHeight: 52,
-    letterSpacing: -1,
+    fontSize: 36,
+    fontWeight: '700' as const,
+    lineHeight: 44,
   },
   h1: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '700' as const,
-    lineHeight: 42,
-    letterSpacing: -0.75,
+    lineHeight: 36,
   },
   h2: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '700' as const,
-    lineHeight: 34,
-    letterSpacing: -0.5,
+    lineHeight: 30,
   },
   h3: {
-    fontSize: 22,
-    fontWeight: '600' as const,
-    lineHeight: 30,
-    letterSpacing: -0.25,
-  },
-  h4: {
     fontSize: 18,
     fontWeight: '600' as const,
     lineHeight: 26,
   },
+  h4: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+  },
   bodyLarge: {
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '400' as const,
   },
   body: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 22,
     fontWeight: '400' as const,
   },
@@ -165,63 +162,58 @@ const typography = {
   caption: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600' as const,
-    letterSpacing: 0.75,
-    textTransform: 'uppercase' as const,
+    fontWeight: '500' as const,
   },
   button: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600' as const,
     lineHeight: 24,
-    letterSpacing: 0.5,
   },
   buttonSmall: {
     fontSize: 14,
     fontWeight: '600' as const,
     lineHeight: 20,
-    letterSpacing: 0.25,
   },
 };
 
-const getShadows = (color: string) => ({
+const shadows = {
   sm: {
-    shadowColor: color,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   md: {
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 4,
   },
   lg: {
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
     shadowRadius: 20,
-    elevation: 12,
+    elevation: 8,
   },
   glow: {
-    shadowColor: color,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 15,
-  }
-});
+    shadowColor: '#000', // Assuming glow also uses a fixed color now
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+};
 
-// Light theme
+// Light theme (default)
 export const lightTheme = {
   colors: lightColors,
   gradients: gradients,
   spacing,
   borderRadius,
   typography,
-  shadows: getShadows(lightColors.primary),
+  shadows,
   mode: 'light' as const,
 };
 
@@ -232,12 +224,12 @@ export const darkTheme = {
   spacing,
   borderRadius,
   typography,
-  shadows: getShadows(darkColors.primary),
+  shadows,
   mode: 'dark' as const,
 };
 
-// Default export
-export const theme = darkTheme;
-export const colors = darkColors;
+// Default export — light theme for a clean standard look
+export const theme = lightTheme;
+export const colors = lightColors;
 
-export type ThemeType = typeof darkTheme;
+export type ThemeType = typeof lightTheme;

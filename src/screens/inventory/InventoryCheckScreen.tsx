@@ -609,7 +609,7 @@ export default function InventoryCheckScreen({ navigation }: any) {
           
           <TouchableOpacity 
             style={[styles.historyButton, { borderColor: theme.colors.border }]}
-            onPress={() => Alert.alert('Check Archives', 'Historical audit logs are currently being re-indexed.')}
+            onPress={() => Alert.alert('Inventory Records', 'Historical logs are currently being updated.')}
           >
             <Ionicons name="time-outline" size={20} color={theme.colors.text} />
             <Text style={[styles.historyText, { color: theme.colors.text }]}>

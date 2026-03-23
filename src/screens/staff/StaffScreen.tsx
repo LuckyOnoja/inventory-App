@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -27,7 +28,7 @@ interface StaffMember {
   email: string;
   name: string;
   phone: string;
-  role: 'SALES_AGENT' | 'SUPERVISOR' | 'MANAGER';
+  role: 'SALES_AGENT' | 'STAFF' | 'MANAGER';
   status: 'active' | 'inactive';
   joinDate: string;
   lastActive: string;
@@ -45,11 +46,13 @@ export default function StaffScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const { theme } = useTheme();
   const { user, token } = useAuth();
 
   useEffect(() => {
     fetchStaff();
+    fetchLeaderboard();
   }, []);
 
   useEffect(() => {
@@ -97,12 +100,25 @@ export default function StaffScreen({ navigation }: any) {
     }
   };
 
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/users/leaderboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLeaderboard(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    }
+  };
+
   const getPermissionsByRole = (role: string): string[] => {
     switch (role) {
       case 'SALES_AGENT':
+        return ['sales', 'inventory_view', 'staff_manage'];
+      case 'STAFF':
         return ['sales', 'inventory_view'];
-      case 'SUPERVISOR':
-        return ['sales', 'inventory', 'staff_view'];
       default:
         return [];
     }
@@ -111,6 +127,7 @@ export default function StaffScreen({ navigation }: any) {
   const onRefresh = () => {
     setRefreshing(true);
     fetchStaff();
+    fetchLeaderboard();
   };
 
   const applyFilters = () => {
@@ -164,11 +181,11 @@ export default function StaffScreen({ navigation }: any) {
   const getRoleText = (role: string): string => {
     switch (role) {
       case 'SALES_AGENT':
-        return 'Sales Agent';
-      case 'SUPERVISOR':
-        return 'Supervisor';
+        return 'Branch Manager';
+      case 'STAFF':
+        return 'Staff Member';
       case 'MANAGER':
-        return 'Manager';
+        return 'Admin';
       default:
         return role;
     }
@@ -179,13 +196,13 @@ export default function StaffScreen({ navigation }: any) {
   };
 
   const handleEditStaff = (staffMember: StaffMember) => {
-    navigation.navigate('EditStaff', { staffId: staffMember.id });
+    navigation.navigate('StaffPerformance', { staffId: staffMember.id, name: staffMember.name });
   };
 
   const handleToggleStatus = async (staffMember: StaffMember) => {
     const newStatus = staffMember.status === 'active' ? false : true;
     const statusText = newStatus ? 'active' : 'inactive';
-    
+
     Alert.alert(
       'Change Status',
       `Change ${staffMember.name}'s status to ${statusText}?`,
@@ -223,37 +240,63 @@ export default function StaffScreen({ navigation }: any) {
   };
 
   const handleEditPermissions = (staffMember: StaffMember) => {
-    Alert.alert('Protocol Edit', 'Permission vector modification is restricted to the master terminal.');
+    Alert.alert('Access Restricted', 'Permission updates for this staff member are restricted to the business owner.');
   };
 
   const handleViewSales = (staffMember: StaffMember) => {
-    // Navigate to staff sales screen
-    navigation.navigate('StaffSales', { staffId: staffMember.id, staffName: staffMember.name });
+    // Navigate to staff performance screen
+    navigation.navigate('StaffPerformance', { staffId: staffMember.id, name: staffMember.name });
   };
 
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          Staff Management
+          Sales Leaderboard
         </Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-          {staff.filter(m => m.status === 'active').length} active • {staff.length} total
+          Top performing agents this month
         </Text>
       </View>
-      {user?.role === 'SUPER_ADMIN' && (
+      {(user?.role === 'SUPER_ADMIN' || user?.role === 'SALES_AGENT') && (
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
           onPress={handleAddStaff}
         >
           <Ionicons name="add" size={20} color={theme.colors.white} />
-          <Text style={[styles.addButtonText, { color: theme.colors.white }]}>
-            Add
-          </Text>
         </TouchableOpacity>
       )}
     </View>
   );
+
+  const renderLeaderboard = () => {
+    if (leaderboard.length === 0) return null;
+
+    return (
+      <View style={styles.leaderboardContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.leaderboardScroll}>
+          {leaderboard.slice(0, 5).map((item, index) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.leaderTile, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              onPress={() => navigation.navigate('StaffPerformance', { staffId: item.id, name: item.name })}
+            >
+              <View style={[styles.rankBadge, { backgroundColor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : theme.colors.primary + '20' }]}>
+                <Text style={[styles.rankText, { color: index < 3 ? '#000' : theme.colors.primary }]}>#{index + 1}</Text>
+              </View>
+              <Image
+                source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=${theme.colors.primary.replace('#', '')}&color=fff` }}
+                style={styles.leaderAvatar}
+              />
+              <Text style={[styles.leaderName, { color: theme.colors.text }]} numberOfLines={1}>{item.name.split(' ')[0]}</Text>
+              <Text style={[styles.leaderRevenue, { color: theme.colors.success }]}>₦{(item.totalRevenue || 0).toLocaleString()}</Text>
+              <Text style={[styles.leaderSales, { color: theme.colors.textTertiary }]}>{item.totalSales} Sales</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
 
   const renderSearchBar = () => (
     <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
@@ -329,7 +372,7 @@ export default function StaffScreen({ navigation }: any) {
 
   const renderStaffItem = ({ item }: { item: StaffMember }) => {
     const statusColor = getStatusColor(item.status);
-    
+
     return (
       <TouchableOpacity
         style={[styles.staffCard, { backgroundColor: theme.colors.surface }]}
@@ -344,7 +387,7 @@ export default function StaffScreen({ navigation }: any) {
             />
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
           </View>
-          
+
           <View style={styles.staffInfo}>
             <View style={styles.nameRow}>
               <Text style={[styles.staffName, { color: theme.colors.text }]}>
@@ -356,7 +399,7 @@ export default function StaffScreen({ navigation }: any) {
                 </Text>
               </View>
             </View>
-            
+
             <Text style={[styles.staffId, { color: theme.colors.textTertiary }]}>
               {item.staffId}
             </Text>
@@ -367,7 +410,7 @@ export default function StaffScreen({ navigation }: any) {
               📞 {item.phone}
             </Text>
           </View>
-          
+
           <TouchableOpacity
             style={styles.moreButton}
             onPress={() => {
@@ -379,8 +422,8 @@ export default function StaffScreen({ navigation }: any) {
                   { text: 'View Details', onPress: () => handleEditStaff(item) },
                   { text: 'View Sales', onPress: () => handleViewSales(item) },
                   { text: 'Edit Permissions', onPress: () => handleEditPermissions(item) },
-                  { 
-                    text: item.status === 'active' ? 'Deactivate' : 'Activate', 
+                  {
+                    text: item.status === 'active' ? 'Deactivate' : 'Activate',
                     style: item.status === 'active' ? 'destructive' : 'default',
                     onPress: () => handleToggleStatus(item)
                   },
@@ -401,9 +444,9 @@ export default function StaffScreen({ navigation }: any) {
               {new Date(item.joinDate).toLocaleDateString()}
             </Text>
           </View>
-          
+
           <View style={styles.statDivider} />
-          
+
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
               Last Active
@@ -412,9 +455,9 @@ export default function StaffScreen({ navigation }: any) {
               {new Date(item.lastActive).toLocaleDateString()}
             </Text>
           </View>
-          
+
           <View style={styles.statDivider} />
-          
+
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: theme.colors.textSecondary }]}>
               Status
@@ -467,6 +510,7 @@ export default function StaffScreen({ navigation }: any) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {renderHeader()}
+      {renderLeaderboard()}
       {renderSearchBar()}
       {renderFilterButtons()}
 
@@ -513,25 +557,21 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    gap: 6,
-    marginTop: 4,
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -563,6 +603,52 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
+  },
+  leaderboardContainer: {
+    marginBottom: 20,
+  },
+  leaderboardScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  leaderTile: {
+    width: 140,
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  rankText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  leaderAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 8,
+  },
+  leaderName: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  leaderRevenue: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  leaderSales: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   filterText: {
     fontSize: 14,

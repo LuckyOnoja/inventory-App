@@ -184,7 +184,7 @@ export default function CameraScreen({ navigation }: any) {
       <GlassButton
         size="small"
         variant="primary"
-        onPress={() => Alert.alert('Terminal Authorization', 'New node registration is restricted to authorized field engineers.')}
+        onPress={() => Alert.alert('Access Restricted', 'Registration of new camera devices is restricted to authorized personnel.')}
         icon="add"
         title="Add"
         style={{ width: "auto" }}
@@ -389,7 +389,7 @@ export default function CameraScreen({ navigation }: any) {
         <GlassButton
           size="medium"
           variant="primary"
-          onPress={() => Alert.alert('Terminal Authorization', 'New node registration is restricted to authorized field engineers.')}
+          onPress={() => Alert.alert('Access Restricted', 'Registration of new camera devices is restricted to authorized personnel.')}
           icon="add"
           title="Add Camera"
         />

@@ -1,35 +1,73 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar, StyleProp, ViewStyle, Platform } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    SafeAreaView,
+    StatusBar,
+    ViewStyle,
+    Platform,
+    Dimensions,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
+
+const { width, height } = Dimensions.get('window');
 
 interface ScreenWrapperProps {
     children: React.ReactNode;
-    style?: StyleProp<ViewStyle>;
-    contentContainerStyle?: StyleProp<ViewStyle>;
-    withScrollView?: boolean;
+    style?: ViewStyle;
+    variant?: 'default' | 'gradient';
 }
 
-export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
-    children,
-    style,
+/**
+ * ScreenWrapper provides a consistent layout with safe area,
+ * proper status bar handling, and optional rich gradient backgrounds.
+ */
+export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({ 
+    children, 
+    style, 
+    variant = 'default' 
 }) => {
     const { theme } = useTheme();
 
-    return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
-            <View style={StyleSheet.absoluteFill}>
-                <LinearGradient
-                    colors={theme.mode === 'dark' ? theme.gradients.dark : theme.gradients.light}
-                    style={StyleSheet.absoluteFill}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 0.3 }} // Subtle top gradient only
-                />
-            </View>
+    const isGradient = variant === 'gradient';
+    const isDark = theme.mode === 'dark';
 
-            <SafeAreaView style={[styles.content, style]} edges={['top', 'left', 'right']}>
+    return (
+        <View style={styles.container}>
+            <StatusBar
+                barStyle={isGradient || isDark ? 'light-content' : 'dark-content'}
+                backgroundColor="transparent"
+                translucent
+            />
+            
+            {isGradient ? (
+                <>
+                    <LinearGradient
+                        colors={theme.gradients.primary as unknown as [string, string, ...string[]]}
+                        style={StyleSheet.absoluteFill}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                    />
+                    {/* Subtle decorative "blobs" for background depth — keeping it clean */}
+                    <View style={[
+                        styles.blob, 
+                        { 
+                            width: width * 0.8, 
+                            height: width * 0.8, 
+                            borderRadius: width * 0.4,
+                            top: -height * 0.1,
+                            right: -width * 0.2,
+                            backgroundColor: 'white',
+                            opacity: 0.05,
+                        }
+                    ]} />
+                </>
+            ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
+            )}
+
+            <SafeAreaView style={[styles.safeArea, style]}>
                 {children}
             </SafeAreaView>
         </View>
@@ -40,34 +78,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    content: {
+    safeArea: {
         flex: 1,
+        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     blob: {
         position: 'absolute',
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        filter: Platform.OS === 'web' ? 'blur(80px)' : undefined, // Native blur would need different handling or image
-        // For native, we rely on opacity since blurring views is expensive or requires valid libraries.
-        // However, on modern Expo/RN, simple opacity blobs over a gradient look "glowy".
     },
-    blobTopLeft: {
-        top: -100,
-        left: -100,
-    },
-    blobBottomRight: {
-        bottom: -100,
-        right: -50,
-        width: 350,
-        height: 350,
-        borderRadius: 175,
-    },
-    blobMidRight: {
-        top: '30%',
-        right: -80,
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-    }
 });

@@ -162,6 +162,10 @@ export default function ProductsScreen({ navigation }: any) {
   };
 
   const handleProductPress = (product: Product) => {
+    if (user?.role === 'STAFF') {
+      // Sellers can't edit products, maybe show a toast or just do nothing
+      return;
+    }
     navigation.navigate('EditProduct', { productId: product.id });
   };
 
@@ -189,30 +193,32 @@ export default function ProductsScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={[styles.headerGreeting, { color: theme.colors.textTertiary }]}>OPERATIONAL INVENTORY</Text>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Intelligence Hub</Text>
+            <Text style={[styles.headerGreeting, { color: theme.colors.textTertiary }]}>Inventory</Text>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Products</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-            onPress={handleAddProduct}
-          >
-            <Ionicons name="add" size={24} color={theme.colors.white} />
-          </TouchableOpacity>
+          {user?.role !== 'STAFF' && (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleAddProduct}
+            >
+              <Ionicons name="add" size={24} color={theme.colors.white} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.statusRow}>
-          <GlassView style={styles.statusCard} intensity={15}>
+          <View style={[styles.statusCard, { width: '38%', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm, borderWidth: 1, borderColor: theme.colors.border }]}>
+            <Text style={[styles.statusLabel, { color: theme.colors.textTertiary }]}>SQUAD</Text>
             <Text style={[styles.statusValue, { color: theme.colors.text }]}>{products.length}</Text>
-            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>SKUs Indexed</Text>
-          </GlassView>
-          <GlassView style={styles.statusCard} intensity={15}>
+          </View>
+          <View style={[styles.statusCard, { width: '28%', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm, borderWidth: 1, borderColor: theme.colors.border }]}>
+            <Text style={[styles.statusLabel, { color: theme.colors.textTertiary }]}>LOW</Text>
             <Text style={[styles.statusValue, { color: lowStock > 0 ? theme.colors.warning : theme.colors.success }]}>{lowStock}</Text>
-            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>Alert States</Text>
-          </GlassView>
-          <GlassView style={styles.statusCard} intensity={15}>
+          </View>
+          <View style={[styles.statusCard, { width: '28%', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.lg, ...theme.shadows.sm, borderWidth: 1, borderColor: theme.colors.border }]}>
+            <Text style={[styles.statusLabel, { color: theme.colors.textTertiary }]}>VIEW</Text>
             <Text style={[styles.statusValue, { color: theme.colors.primary }]}>{filteredProducts.length}</Text>
-            <Text style={[styles.statusLabel, { color: theme.colors.textSecondary }]}>Query Results</Text>
-          </GlassView>
+          </View>
         </View>
       </View>
     );
@@ -224,7 +230,7 @@ export default function ProductsScreen({ navigation }: any) {
         <Ionicons name="search-outline" size={20} color={theme.colors.textTertiary} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.text }]}
-          placeholder="Query Catalog..."
+          placeholder="Search products..."
           placeholderTextColor={theme.colors.textTertiary}
           onChangeText={handleSearch}
           clearButtonMode="while-editing"
@@ -247,11 +253,11 @@ export default function ProductsScreen({ navigation }: any) {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <GlassView style={styles.emptyIconContainer} intensity={10}>
-        <Ionicons name="scan-outline" size={48} color={theme.colors.textTertiary} />
+        <Ionicons name="cube-outline" size={48} color={theme.colors.textTertiary} />
       </GlassView>
-      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Matches Found</Text>
+      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Products Found</Text>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        Your query returned zero results from the current operational catalog.
+        No products match your current search or filters.
       </Text>
       <TouchableOpacity
         style={[styles.emptyButton, { borderColor: theme.colors.primary, borderWidth: 1 }]}
@@ -265,7 +271,7 @@ export default function ProductsScreen({ navigation }: any) {
           });
         }}
       >
-        <Text style={[styles.emptyButtonText, { color: theme.colors.primary }]}>Reset Parameters</Text>
+        <Text style={[styles.emptyButtonText, { color: theme.colors.primary }]}>Clear Filters</Text>
       </TouchableOpacity>
     </View>
   );
@@ -294,7 +300,7 @@ export default function ProductsScreen({ navigation }: any) {
     return (
       <ScreenWrapper style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Parsing Catalog...</Text>
+        <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Loading products...</Text>
       </ScreenWrapper>
     );
   }
@@ -387,31 +393,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   statusCard: {
-    flex: 1,
     padding: 12,
-    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    height: 80,
   },
   statusValue: {
     fontSize: 18,
     fontWeight: '800',
   },
   statusLabel: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 8,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    marginTop: 2,
+    marginBottom: 2,
   },
   searchWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 54,
-    borderRadius: 27,
+    paddingHorizontal: 12,
+    height: 48,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },

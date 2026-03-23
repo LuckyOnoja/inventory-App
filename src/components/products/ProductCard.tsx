@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GlassCard } from '../ui/GlassCard';
 import { GlassView } from '../ui/GlassView';
@@ -36,6 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onQuickAction,
 }) => {
   const { theme } = useTheme();
+  const { user } = useAuth();
 
   const getStockStatus = () => {
     if (product.currentStock === 0) {
@@ -76,12 +78,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
       >
         <Ionicons name="cart-outline" size={20} color={theme.colors.white} />
       </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.actionButton, { backgroundColor: theme.colors.info }]}
-        onPress={() => onQuickAction('adjust')}
-      >
-        <Ionicons name="create-outline" size={20} color={theme.colors.white} />
-      </TouchableOpacity>
+      {user?.role !== 'STAFF' && (
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: theme.colors.info }]}
+          onPress={() => onQuickAction('adjust')}
+        >
+          <Ionicons name="create-outline" size={20} color={theme.colors.white} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 

@@ -44,6 +44,7 @@ import StaffScreen from "../screens/staff/StaffScreen";
 import AddStaffScreen from "../screens/staff/AddStaffScreen";
 import EditStaffScreen from "../screens/staff/EditStaffScreen";
 import StaffSalesScreen from "../screens/staff/StaffSalesScreen";
+import StaffPerformanceScreen from "../screens/staff/StaffPerformanceScreen";
 import CameraScreen from "../screens/camera/CameraScreen";
 import ReportsScreen from "../screens/reports/ReportsScreen";
 
@@ -104,7 +105,7 @@ function SalesAgentTabs() {
 
           return (
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name={iconName as any} size={24} color={color} />
+              <Ionicons name={iconName as any} size={20} color={color} />
             </View>
           );
         },
@@ -112,36 +113,18 @@ function SalesAgentTabs() {
         tabBarInactiveTintColor: theme.colors.textTertiary,
         tabBarBackground: () => <GlassTabBarBackground />,
         tabBarStyle: {
-          backgroundColor: 'transparent',
-          position: 'absolute',
-          borderTopWidth: 0,
-          bottom: 25,
-          marginHorizontal: 16,
-          borderRadius: 24, // Matches new theme lg
-          height: 65,
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 10,
-          },
-          shadowOpacity: 0.15,
-          shadowRadius: 15,
-          elevation: 8,
-          paddingBottom: 0,
-          paddingTop: 0,
+          backgroundColor: theme.colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 32 : 12,
+          paddingTop: 8,
+          paddingHorizontal: 12,
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '600',
-          marginBottom: 10,
-          marginTop: -5,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 8,
-          borderRadius: 24,
-          height: 65,
-          justifyContent: 'center',
-          alignItems: 'center',
+          fontWeight: '500',
+          marginTop: 2,
         },
         headerBackground: () => <GlassHeaderBackground />,
         headerStyle: {
@@ -283,9 +266,8 @@ const SideMenu = ({
           activeOpacity={1}
           onPress={onClose}
         />
-        <GlassView
-          intensity={95}
-          style={[styles.sideMenuContainer, { borderRadius: 0, borderRightWidth: 1, borderRightColor: theme.colors.border }]}
+        <View
+          style={[styles.sideMenuContainer, { backgroundColor: theme.colors.surface, borderRightWidth: 1, borderRightColor: theme.colors.border }]}
         >
           <View style={[styles.sideMenuContent, { paddingTop: Platform.OS === 'ios' ? 50 : 20 }]}>
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
@@ -332,7 +314,7 @@ const SideMenu = ({
                 {menuItems.map((item) => (
                   <TouchableOpacity
                     key={item.name}
-                    style={[styles.menuItem, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}
+                    style={[styles.menuItem, { borderBottomColor: theme.colors.border }]}
                     onPress={() => navigateTo(item.screen)}
                     activeOpacity={0.7}
                   >
@@ -376,7 +358,7 @@ const SideMenu = ({
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </GlassView>
+        </View>
       </View>
     </Modal>
   );
@@ -535,6 +517,11 @@ function SuperAdminNavigator() {
         <SuperAdminStack.Screen
           name="StaffSales"
           component={StaffSalesScreen}
+          options={{ headerShown: false }}
+        />
+        <SuperAdminStack.Screen
+          name="StaffPerformance"
+          component={StaffPerformanceScreen}
           options={{ headerShown: false }}
         />
         <SuperAdminStack.Screen
@@ -846,6 +833,13 @@ export default function AppNavigator() {
                   </View>
                 );
               }
+            }}
+          />
+          <Stack.Screen
+            name="StaffPerformance"
+            component={StaffPerformanceScreen}
+            options={{
+              headerShown: false,
             }}
           />
         </Stack.Group>

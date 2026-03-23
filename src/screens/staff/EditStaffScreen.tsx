@@ -196,8 +196,8 @@ export default function EditStaffScreen({ navigation, route }: any) {
   };
 
   const roles = [
-    { value: 'SALES_AGENT', label: 'Sales Agent', icon: 'person-outline' },
-    { value: 'SUPERVISOR', label: 'Supervisor', icon: 'people-outline' },
+    { value: 'SALES_AGENT', label: 'Branch Manager', icon: 'business-outline' },
+    { value: 'STAFF', label: 'Staff Member', icon: 'person-outline' },
   ];
 
   if (loadingData) {
