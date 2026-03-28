@@ -8,6 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -63,6 +67,7 @@ interface SaleDetail {
   status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
   items: SaleItem[];
   notes: string | null;
+  cancelReason?: string | null;
 }
 
 export default function SaleDetailScreen({ route, navigation }: any) {
@@ -71,6 +76,17 @@ export default function SaleDetailScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [cancelReasonText, setCancelReasonText] = useState('');
+
+  const CANCELLATION_REASONS = [
+    'Customer requested refund',
+    'Duplicate entry',
+    'Incorrect items recorded',
+    'Payment failed or declined',
+    'Other'
+  ];
   const { theme } = useTheme();
   const { user, token } = useAuth(); // Get auth token
 
@@ -251,21 +267,32 @@ export default function SaleDetailScreen({ route, navigation }: any) {
       [
         { text: 'No', style: 'cancel' },
         {
-          text: 'Yes, Cancel Sale',
+          text: 'Yes',
           style: 'destructive',
-          onPress: () => confirmCancelSale()
+          onPress: () => {
+            setSelectedReason('');
+            setCancelReasonText('');
+            setShowCancelModal(true);
+          }
         },
       ]
     );
   };
 
   const confirmCancelSale = async () => {
+    const finalReason = selectedReason === 'Other' ? cancelReasonText.trim() : selectedReason;
+    
+    if (!finalReason) {
+      Alert.alert('Required', 'Please select or enter a reason for cancelling this sale.');
+      return;
+    }
+    
     try {
       setCanceling(true);
 
       const response = await axios.put(
         `${API_URL}/sales/${saleId}/cancel`,
-        {},
+        { cancelReason: finalReason },
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -280,8 +307,10 @@ export default function SaleDetailScreen({ route, navigation }: any) {
           setSale({
             ...sale,
             status: 'CANCELLED',
+            cancelReason: finalReason,
           });
         }
+        setShowCancelModal(false);
         // Emit event to refresh sales list
         // navigation.navigate('Sales', { refresh: true });
       }
@@ -465,6 +494,15 @@ export default function SaleDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
           )}
+
+          {sale.status === 'CANCELLED' && sale.cancelReason && (
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: theme.colors.error }]}>Cancel Reason</Text>
+              <Text style={[styles.infoValue, { color: theme.colors.text }]}>
+                {sale.cancelReason}
+              </Text>
+            </View>
+          )}
         </GlassView>
 
         {/* Items List */}
@@ -569,7 +607,7 @@ export default function SaleDetailScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {sale.status === 'COMPLETED' && user?.role !== 'SALES_AGENT' && (
+        {sale.status === 'COMPLETED' && (user?.role === 'SUPER_ADMIN' || user?.role === 'SUPERVISOR') && (
           <View style={styles.actionsContainer}>
             <GlassButton
               title="Cancel Sale"
@@ -583,6 +621,88 @@ export default function SaleDetailScreen({ route, navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      {/* Cancel Modal */}
+      <Modal
+        visible={showCancelModal}
+        transparent
+        animationType="fade"
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Cancel Sale</Text>
+              <TouchableOpacity onPress={() => setShowCancelModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={[styles.modalLabel, { color: theme.colors.textSecondary }]}>
+                Please state the reason for cancelling this sale:
+              </Text>
+
+              {CANCELLATION_REASONS.map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reasonOption,
+                    { 
+                      borderColor: selectedReason === reason ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: selectedReason === reason ? theme.colors.primary + '10' : 'transparent'
+                    }
+                  ]}
+                  onPress={() => setSelectedReason(reason)}
+                >
+                  <View style={[
+                    styles.radioCircle,
+                    { borderColor: selectedReason === reason ? theme.colors.primary : theme.colors.border }
+                  ]}>
+                    {selectedReason === reason && <View style={[styles.radioDot, { backgroundColor: theme.colors.primary }]} />}
+                  </View>
+                  <Text style={[
+                    styles.reasonText,
+                    { color: selectedReason === reason ? theme.colors.primary : theme.colors.text }
+                  ]}>{reason}</Text>
+                </TouchableOpacity>
+              ))}
+
+              {selectedReason === 'Other' && (
+                <GlassView intensity={10} style={[styles.inputWrapper, { borderColor: theme.colors.border, marginTop: 12 }]}>
+                  <TextInput
+                    style={[styles.input, { color: theme.colors.text }]}
+                    placeholder="Type your custom reason here..."
+                    placeholderTextColor={theme.colors.textTertiary}
+                    value={cancelReasonText}
+                    onChangeText={setCancelReasonText}
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+                </GlassView>
+              )}
+            </View>
+            <View style={styles.modalFooter}>
+              <GlassButton
+                title="Cancel"
+                onPress={() => setShowCancelModal(false)}
+                variant="secondary"
+                style={{ flex: 1, marginRight: 8 }}
+              />
+              <GlassButton
+                title="Confirm"
+                onPress={confirmCancelSale}
+                loading={canceling}
+                variant="danger"
+                style={{ flex: 1, backgroundColor: theme.colors.error }}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </ScreenWrapper>
   );
 }
@@ -784,5 +904,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 32,
     gap: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    padding: 16,
+  },
+  modalLabel: {
+    fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  inputWrapper: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+  },
+  input: {
+    fontSize: 15,
+    minHeight: 80,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingTop: 0,
+  },
+  reasonOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  radioCircle: {
+    height: 18,
+    width: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioDot: {
+    height: 8,
+    width: 8,
+    borderRadius: 4,
+  },
+  reasonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

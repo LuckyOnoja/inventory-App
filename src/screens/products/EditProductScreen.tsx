@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -21,18 +22,14 @@ import config from '../../config';
 
 const API_URL = config.API_URL;
 
-const categories = [
-  'Beverages',
-  'Food',
-  'Snacks',
-  'Dairy',
-  'Household',
-  'Personal Care',
-  'Electronics',
-  'Clothing',
-  'Pharmaceuticals',
-  'Other',
-];
+const BASE_CATEGORIES = [
+  'Accessories', 'Alcohol & Tobacco', 'Automotive', 'Baby Products',
+  'Beauty & Personal Care', 'Beverages', 'Books & Stationery', 'Cleaning Supplies',
+  'Clothing', 'Computers', 'Electricals', 'Electronics', 'Food', 'Furniture',
+  'Groceries', 'Hardware & Tools', 'Health & Wellness', 'Home & Kitchen',
+  'Office Supplies', 'Pet Supplies', 'Pharmaceuticals', 'Phones & Tablets',
+  'Shoes', 'Snacks', 'Sports & Outdoors', 'Toys & Games', 'Other'
+].sort();
 
 const units = [
   'Piece',
@@ -51,6 +48,8 @@ export default function EditProductScreen({ route, navigation }: any) {
   const { productId } = route.params;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -140,12 +139,14 @@ export default function EditProductScreen({ route, navigation }: any) {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors in the form');
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      const firstError = Object.values(validationErrors)[0];
+      Alert.alert('Validation Error', firstError);
       return;
     }
 
@@ -367,37 +368,30 @@ export default function EditProductScreen({ route, navigation }: any) {
                 <Text style={[styles.label, { color: theme.colors.text }]}>
                   Category *
                 </Text>
-                <View style={styles.categoryGrid}>
-                  {categories.map((category) => (
-                    <TouchableOpacity
-                      key={category}
-                      activeOpacity={0.7}
-                      style={[
-                        styles.categoryButton,
-                        {
-                          backgroundColor: formData.category === category
-                            ? theme.colors.primary + '30'
-                            : theme.colors.surfaceLight + '20',
-                          borderColor: formData.category === category
-                            ? theme.colors.primary
-                            : theme.colors.border,
-                        }
-                      ]}
-                      onPress={() => handleInputChange('category', category)}
-                    >
-                      <Text style={[
-                        styles.categoryButtonText,
-                        {
-                          color: formData.category === category
-                            ? theme.colors.primary
-                            : theme.colors.text
-                        }
-                      ]}>
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.inputContainer,
+                    {
+                      backgroundColor: theme.colors.surfaceLight + '40',
+                      borderColor: errors.category ? theme.colors.error : theme.colors.border,
+                      justifyContent: 'space-between'
+                    }
+                  ]}
+                  onPress={() => setShowCategoryModal(true)}
+                >
+                  <Text style={[
+                    styles.input, 
+                    { 
+                      color: formData.category ? theme.colors.text : theme.colors.textTertiary,
+                      paddingHorizontal: 0,
+                      borderWidth: 0,
+                      paddingTop: 16
+                    }
+                  ]}>
+                    {formData.category || 'Select a category'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
                 {errors.category && (
                   <Text style={[styles.errorText, { color: theme.colors.error }]}>
                     {errors.category}
@@ -673,6 +667,68 @@ export default function EditProductScreen({ route, navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal visible={showCategoryModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Select Category</Text>
+              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalSearchContainer, { backgroundColor: theme.colors.background }]}>
+              <Ionicons name="search" size={20} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
+              <TextInput
+                style={[styles.modalSearchInput, { color: theme.colors.text }]}
+                placeholder="Search or add new category..."
+                placeholderTextColor={theme.colors.textTertiary}
+                value={categorySearch}
+                onChangeText={setCategorySearch}
+              />
+            </View>
+            <ScrollView style={styles.modalList} contentContainerStyle={{ paddingBottom: 20 }}>
+              {categorySearch.trim().length > 0 && !BASE_CATEGORIES.some(c => c.toLowerCase() === categorySearch.trim().toLowerCase()) && (
+                <TouchableOpacity
+                  style={[styles.modalListItem, { borderBottomColor: theme.colors.border }]}
+                  onPress={() => {
+                    handleInputChange('category', categorySearch.trim());
+                    setCategorySearch('');
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} style={{ marginRight: 12 }} />
+                  <Text style={[styles.modalListItemText, { color: theme.colors.primary, fontWeight: 'bold' }]}>
+                    Add "{categorySearch.trim()}"
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {BASE_CATEGORIES.filter(c => c.toLowerCase().includes(categorySearch.toLowerCase())).map(category => (
+                <TouchableOpacity
+                  key={category}
+                  style={[styles.modalListItem, { borderBottomColor: theme.colors.border }]}
+                  onPress={() => {
+                    handleInputChange('category', category);
+                    setCategorySearch('');
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.modalListItemText, 
+                    { color: formData.category === category ? theme.colors.primary : theme.colors.text }
+                  ]}>
+                    {category}
+                  </Text>
+                  {formData.category === category && (
+                    <Ionicons name="checkmark" size={24} color={theme.colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </ScreenWrapper>
   );
 }
@@ -840,5 +896,53 @@ const styles = StyleSheet.create({
   saveButtons: {
     flexDirection: 'row',
     gap: 0, // Handled by marginLeft in button style
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: '70%',
+    padding: 20,
+    paddingBottom: 0,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 50,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  modalList: {
+    flex: 1,
+  },
+  modalListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalListItemText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

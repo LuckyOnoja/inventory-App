@@ -8,6 +8,8 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../context/ThemeContext";
@@ -54,6 +56,7 @@ interface DashboardStats {
 
 interface RecentActivity {
   id: string;
+  sourceId: string; // original sale ID or notification ID
   type:
   | "sale"
   | "device_offline"
@@ -90,14 +93,16 @@ export default function DashboardScreen({ navigation }: any) {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(
     []
   );
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { theme } = useTheme();
-  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardData();
+    }, [])
+  );
 
   const fetchDashboardData = async () => {
     try {
@@ -129,6 +134,7 @@ export default function DashboardScreen({ navigation }: any) {
     data.recentSales.slice(0, 2).forEach((sale) => {
       activities.push({
         id: sale.id,
+        sourceId: sale.id,
         type: "sale",
         title: "Sale Completed",
         message: `Sale ${sale.saleNumber} - ₦${sale.totalAmount.toLocaleString()}`,
@@ -174,6 +180,7 @@ export default function DashboardScreen({ navigation }: any) {
 
       activities.push({
         id: notification.id,
+        sourceId: notification.id,
         type: activityType,
         title: notification.title,
         message: notification.message,
@@ -336,6 +343,14 @@ export default function DashboardScreen({ navigation }: any) {
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const isSalesAgent = user?.role === "SALES_AGENT";
   const isSupervisor = user?.role === "SUPERVISOR";
+
+  const handleActivityPress = (activity: RecentActivity) => {
+    if (activity.type === "sale") {
+      navigation.navigate("SaleDetail", { saleId: activity.sourceId });
+    } else {
+      navigation.navigate("Notifications");
+    }
+  };
 
   const handleInventoryNavigation = () => {
     if (isSuperAdmin || isSupervisor) navigation.navigate("Inventory");
@@ -501,7 +516,7 @@ export default function DashboardScreen({ navigation }: any) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Recent Activity</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
+            <TouchableOpacity onPress={() => navigation.navigate("Sales")}>
               <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -510,7 +525,11 @@ export default function DashboardScreen({ navigation }: any) {
             {recentActivities.length > 0 ? (
               recentActivities.map((activity, index) => (
                 <View key={activity.id}>
-                  <View style={styles.activityItem}>
+                  <TouchableOpacity
+                    style={styles.activityItem}
+                    onPress={() => handleActivityPress(activity)}
+                    activeOpacity={0.65}
+                  >
                     <View style={[styles.activityDot, { backgroundColor: activity.color + '20' }]}>
                       <Ionicons name={activity.icon as any} size={16} color={activity.color} />
                     </View>
@@ -521,7 +540,8 @@ export default function DashboardScreen({ navigation }: any) {
                       </View>
                       <Text style={[styles.activityMessage, { color: theme.colors.textSecondary }]}>{activity.message}</Text>
                     </View>
-                  </View>
+                    <Ionicons name="chevron-forward" size={14} color={theme.colors.textTertiary} style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
                   {index < recentActivities.length - 1 && (
                     <View style={[styles.activityDivider, { backgroundColor: theme.colors.border }]} />
                   )}

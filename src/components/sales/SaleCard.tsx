@@ -30,7 +30,8 @@ const SaleCard: React.FC<SaleCardProps> = ({ sale, onPress }) => {
   const { theme } = useTheme();
 
   const getStatusConfig = () => {
-    switch (sale.status) {
+    const s = sale.status ? sale.status.toLowerCase() : '';
+    switch (s) {
       case 'completed':
         return { color: theme.colors.success, label: 'VERIFIED', variant: 'default' as const };
       case 'pending':

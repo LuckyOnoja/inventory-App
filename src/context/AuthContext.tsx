@@ -22,7 +22,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: "SUPER_ADMIN" | "SALES_AGENT" | "STAFF";
+  role: "SUPER_ADMIN" | "SALES_AGENT" | "STAFF" | "SUPERVISOR";
   business?: {
     id: string;
     name: string;
@@ -45,6 +45,11 @@ interface AuthContextType {
   updateUser: (userData: Partial<User>) => void;
 }
 
+interface AuthProviderProps {
+  children: ReactNode;
+  onReady?: () => void;
+}
+
 interface RegisterData {
   email: string;
   password: string;
@@ -64,8 +69,9 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
+  onReady,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -92,6 +98,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Failed to load stored auth:", error);
     } finally {
       setIsLoading(false);
+      // Notify App.tsx that auth is resolved so the splash screen can be hidden
+      onReady?.();
     }
   };
 

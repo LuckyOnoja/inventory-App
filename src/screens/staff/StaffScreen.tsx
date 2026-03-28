@@ -240,7 +240,11 @@ export default function StaffScreen({ navigation }: any) {
   };
 
   const handleEditPermissions = (staffMember: StaffMember) => {
-    Alert.alert('Access Restricted', 'Permission updates for this staff member are restricted to the business owner.');
+    if (user?.role === 'SUPER_ADMIN' || user?.role === 'SUPERVISOR') {
+      navigation.navigate('EditStaff', { staffId: staffMember.id });
+    } else {
+      Alert.alert('Access Restricted', 'Permission updates for this staff member are restricted to the business owner.');
+    }
   };
 
   const handleViewSales = (staffMember: StaffMember) => {

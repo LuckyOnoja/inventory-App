@@ -579,18 +579,6 @@ export default function AppNavigator() {
     }
   }, []);
 
-  if (isLoading) {
-    return (
-      <View style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: theme.colors.background
-      }}>
-        <Text style={{ color: theme.colors.text, fontSize: 16 }}>Loading...</Text>
-      </View>
-    );
-  }
 
   return (
     <NavigationContainer

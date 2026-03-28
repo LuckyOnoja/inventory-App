@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -60,9 +61,11 @@ export default function ProductsScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts();
+    }, [])
+  );
 
   useEffect(() => {
     applyFilters();

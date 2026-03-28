@@ -9,6 +9,8 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { ScreenWrapper } from '../../components/ui/ScreenWrapper';
@@ -45,6 +47,7 @@ export default function SalesScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     period: 'today',
@@ -54,18 +57,20 @@ export default function SalesScreen({ navigation, route }: any) {
   });
   const { theme } = useTheme();
 
-  useEffect(() => {
-    fetchSales();
-    
-    // Check for initial filters passed from Dashboard
-    if (route.params?.initialFilter) {
-      setFilters(prev => ({ ...prev, ...route.params.initialFilter }));
-    }
-  }, [route.params]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchSales();
+      
+      // Check for initial filters passed from Dashboard
+      if (route.params?.initialFilter) {
+        setFilters(prev => ({ ...prev, ...route.params.initialFilter }));
+      }
+    }, [route.params])
+  );
 
   useEffect(() => {
     applyFilters();
-  }, [sales, filters, searchQuery]);
+  }, [sales, filters, searchQuery, activeTab]);
 
   const fetchSales = async () => {
     try {
@@ -87,6 +92,12 @@ export default function SalesScreen({ navigation, route }: any) {
 
   const applyFilters = () => {
     let filtered = [...sales];
+
+    if (activeTab === 'active') {
+      filtered = filtered.filter(sale => sale.status.toLowerCase() !== 'cancelled');
+    } else {
+      filtered = filtered.filter(sale => sale.status.toLowerCase() === 'cancelled');
+    }
 
     if (searchQuery.trim()) {
       filtered = filtered.filter(sale =>
@@ -223,6 +234,27 @@ export default function SalesScreen({ navigation, route }: any) {
     </View>
   );
 
+  const renderTabs = () => (
+    <View style={styles.tabsContainer}>
+      <TouchableOpacity
+        style={[styles.tabButton, activeTab === 'active' && { backgroundColor: theme.colors.primary }]}
+        onPress={() => setActiveTab('active')}
+      >
+        <Text style={[styles.tabText, activeTab === 'active' ? { color: theme.colors.white } : { color: theme.colors.textSecondary }]}>
+          Active Sales
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tabButton, activeTab === 'deleted' && { backgroundColor: theme.colors.error }]}
+        onPress={() => setActiveTab('deleted')}
+      >
+        <Text style={[styles.tabText, activeTab === 'deleted' ? { color: theme.colors.white } : { color: theme.colors.textSecondary }]}>
+          Deleted Sales
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <GlassView style={styles.emptyIconContainer} intensity={10}>
@@ -264,6 +296,7 @@ export default function SalesScreen({ navigation, route }: any) {
         ListHeaderComponent={() => (
           <>
             {renderHeader()}
+            {renderTabs()}
             {renderSearchBar()}
           </>
         )}
@@ -423,6 +456,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 12,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(150, 150, 150, 0.1)',
+  },
+  tabText: {
     fontSize: 14,
     fontWeight: '700',
   },
